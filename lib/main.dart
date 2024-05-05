@@ -1,4 +1,6 @@
-import 'package:draw_and_guess_promax/Screen/HomePage.dart';
+import 'package:draw_and_guess_promax/Screen/home_page.dart';
+import 'package:draw_and_guess_promax/Screen/information.dart';
+import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:draw_and_guess_promax/Screen/Drawing.dart';
 
@@ -22,8 +24,17 @@ class MyApp extends StatelessWidget {
           fontWeight: FontWeight.w600,
           height: 0,
         ),
+        bodyMedium: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w300,
+          height: 0,
+        ),
       )),
-      home: HomePage(),
+      home: Scaffold(
+        body: HomePage(),
+      ),
     );
   }
 }
