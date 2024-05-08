@@ -149,7 +149,7 @@ class _Drawing extends State<Drawing> {
                         child: GestureDetector(
                           key: _selectmenu,
                           onTap: () {
-                            _setColor(Theme.of(context).backgroundColor);
+                            _setColor(Theme.of(context).scaffoldBackgroundColor);
                             _setSelectIcon(Icons.add);
                             RenderBox buttonBox = _selectmenu.currentContext!
                                 .findRenderObject() as RenderBox;
@@ -701,7 +701,7 @@ class _Drawing extends State<Drawing> {
                             ),
                             child: GestureDetector(
                               onTap: () {
-                                _setColor(Theme.of(context).backgroundColor);
+                                _setColor(Theme.of(context).scaffoldBackgroundColor);
                                 _setSelectIcon(Icons.add);
                                 _toggleSelectMenuVisibility(Offset(0, 0));
                               },

@@ -59,7 +59,7 @@ class Information extends StatelessWidget {
               _onCloseClick(context);
             },
             style: ElevatedButton.styleFrom(
-              fixedSize: const Size(150, 150),
+              fixedSize: const Size(130, 130), // Chỉnh kích thước nhỏ lại để tránh overflow, nếu muốn kích thước cũ thì để SingleChildScrollView
               backgroundColor: const Color.fromARGB(0, 0, 0, 0),
               shadowColor: const Color.fromARGB(0, 0, 0, 0),
               surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),

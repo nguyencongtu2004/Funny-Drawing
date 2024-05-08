@@ -32,7 +32,6 @@ class MoreDrawer extends StatelessWidget {
               end: Alignment(0, 1),
               colors: [Color(0xFF00C4A0), Color(0xFFD05700)])),
       child: Column(
-        //mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 35),
@@ -54,74 +53,82 @@ class MoreDrawer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 100),
-          TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'TRANG CHỦ',
-                style: Theme.of(context).textTheme.titleLarge,
-              )),
-          const SizedBox(height: 5),
-          TextButton(
-              onPressed: () {},
-              child: Text(
-                'BẠN BÈ',
-                style: Theme.of(context).textTheme.titleLarge,
-              )),
-          const SizedBox(height: 5),
-          TextButton(
-              onPressed: () {
-                _launchURL(); // Gọi hàm _launchURL khi button được nhấn
-              },
-              child: Text(
-                'LIÊN HỆ',
-                style: Theme.of(context).textTheme.titleLarge,
-              )),
-          const SizedBox(height: 5),
-          TextButton(
-              onPressed: () {},
-              child: Text(
-                'GÓP Ý',
-                style: Theme.of(context).textTheme.titleLarge,
-              )),
-          const SizedBox(height: 200),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
+          Column( // Bọc các TextButton vào Column để không chiếm không gian các Button dưới, tránh bị overflow
             children: [
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  fixedSize: buttonSize,
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'TRANG CHỦ',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                child: Image.asset('assets/images/facebook.png'),
               ),
-              ElevatedButton(
+              const SizedBox(height: 5),
+              TextButton(
                 onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  fixedSize: buttonSize,
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                child: Text(
+                  'BẠN BÈ',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                child: Image.asset('assets/images/youtube.png'),
               ),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  fixedSize: buttonSize,
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+              const SizedBox(height: 5),
+              TextButton(
+                onPressed: () {
+                  _launchURL(); // Gọi hàm _launchURL khi button được nhấn
+                },
+                child: Text(
+                  'LIÊN HỆ',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                child: Image.asset('assets/images/instagram.png'),
+              ),
+              const SizedBox(height: 5),
+              TextButton(
+                onPressed: () {},
+                child: Text(
+                  'GÓP Ý',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              const SizedBox(height: 100),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: buttonSize,
+                      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                      shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                      surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                    ),
+                    child: Image.asset('assets/images/facebook.png'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: buttonSize,
+                      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                      shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                      surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                    ),
+                    child: Image.asset('assets/images/youtube.png'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: buttonSize,
+                      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                      shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                      surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                    ),
+                    child: Image.asset('assets/images/instagram.png'),
+                  ),
+                ],
               ),
             ],
-          )
+          ),
         ],
       ),
     );
