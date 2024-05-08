@@ -1,5 +1,7 @@
+import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/information.dart';
 import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
+import 'package:draw_and_guess_promax/Widget/Button.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -7,12 +9,6 @@ class HomePage extends StatelessWidget {
 
   // Khai báo một TextEditingController để lưu giữ nội dung của trường nhập văn bản
   final TextEditingController _textEditingController = TextEditingController();
-
-  // Hàm để in tên ra console
-  void _printName() {
-    String name = _textEditingController.text;
-    print('Tên: $name');
-  }
 
   void _onMoreClick(context) {
     // Xử lý khi nút more được nhấn
@@ -24,6 +20,18 @@ class HomePage extends StatelessWidget {
     // Xử lý khi nút information được nhấn
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const Information()));
+  }
+
+  void _findRoomClick(context) {
+    String name = _textEditingController.text;
+    print('Tên: $name');
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (ctx) => const FindRoom()));
+  }
+
+  void _createRoomClick(context) {
+    String name = _textEditingController.text;
+    print('Tên: $name');
   }
 
   @override
@@ -130,31 +138,22 @@ class HomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 50),
-          ElevatedButton(
-            onPressed:
-                _printName, // Gọi hàm để in tên ra console khi nút được nhấn
-            style: ElevatedButton.styleFrom(
-              fixedSize: const Size(170, 60),
-              backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-              shadowColor: const Color.fromARGB(0, 0, 0, 0),
-              surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10)),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Button(
+                onClick: _findRoomClick,
+                imageAsset: 'assets/images/search.png',
+                title: 'Tìm phòng',
               ),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.play_arrow_rounded),
-                const SizedBox(width: 5),
-                Text(
-                  'Bắt đầu',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: Colors.black),
-                ),
-              ],
-            ),
+              const SizedBox(height: 20),
+              Button(
+                onClick: _createRoomClick,
+                imageAsset: 'assets/images/plus.png',
+                title: 'Tạo phòng',
+              ),
+            ],
           )
         ],
       ),

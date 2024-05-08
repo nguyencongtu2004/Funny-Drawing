@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 class MoreDrawer extends StatelessWidget {
   const MoreDrawer({super.key});
@@ -8,6 +10,16 @@ class MoreDrawer extends StatelessWidget {
   void _onCloseClick(context) {
     // Xử lý khi nút Close được nhấn
     Navigator.pop(context);
+  }
+
+  // MỚI ÁP DỤNG CHO 'LIÊN HỆ'
+  _launchURL() async {
+    final uri = Uri.parse("https://flutter.io");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      // can't launch url
+    }
   }
 
   @override
@@ -43,7 +55,9 @@ class MoreDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 100),
           TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
               child: Text(
                 'TRANG CHỦ',
                 style: Theme.of(context).textTheme.titleLarge,
@@ -57,7 +71,9 @@ class MoreDrawer extends StatelessWidget {
               )),
           const SizedBox(height: 5),
           TextButton(
-              onPressed: () {},
+              onPressed: () {
+                _launchURL(); // Gọi hàm _launchURL khi button được nhấn
+              },
               child: Text(
                 'LIÊN HỆ',
                 style: Theme.of(context).textTheme.titleLarge,
