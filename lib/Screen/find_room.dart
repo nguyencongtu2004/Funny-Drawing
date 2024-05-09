@@ -1,4 +1,4 @@
-import 'package:draw_and_guess_promax/Widget/Button.dart';
+import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:draw_and_guess_promax/Widget/play_mode.dart';
 import 'package:draw_and_guess_promax/data/room_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';

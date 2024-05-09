@@ -1,7 +1,7 @@
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/information.dart';
 import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
-import 'package:draw_and_guess_promax/Widget/Button.dart';
+import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
