@@ -112,6 +112,23 @@ class HomePage extends StatelessWidget {
                     ),
                     shape: CircleBorder(),
                   ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            icon: Image.asset('assets/images/edit.png'),
+                            onPressed: () {},
+                            padding: const EdgeInsets.all(0),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
                 // Trường nhập tên
                 Padding(

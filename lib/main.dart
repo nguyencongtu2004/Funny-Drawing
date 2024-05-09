@@ -36,10 +36,17 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.w300,
             height: 0,
           ),
+          bodySmall: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w200,
+            height: 0,
+          ),
         ),
       ),
       home: Scaffold(
-        body: HomePage(),
+        body: FindRoom(),
       ),
     );
   }
