@@ -1,6 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:async';
 
 class MoreDrawer extends StatelessWidget {
   const MoreDrawer({super.key});
@@ -12,9 +13,8 @@ class MoreDrawer extends StatelessWidget {
     Navigator.pop(context);
   }
 
-  // MỚI ÁP DỤNG CHO 'LIÊN HỆ'
-  _launchURL() async {
-    final uri = Uri.parse("https://flutter.io");
+  _launchURL(String link) async {
+    final uri = Uri.parse(link);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -31,82 +31,112 @@ class MoreDrawer extends StatelessWidget {
               begin: Alignment(0.00, -1.00),
               end: Alignment(0, 1),
               colors: [Color(0xFF00C4A0), Color(0xFFD05700)])),
-      child: Column(
-        //mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          const SizedBox(height: 35),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _onCloseClick(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  fixedSize: const Size(90, 90),
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+          // App bar
+          Positioned(
+            top: 35,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _onCloseClick(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: const Size(90, 90),
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                  ),
+                  child: Image.asset('assets/images/close.png'),
                 ),
-                child: Image.asset('assets/images/close.png'),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 100),
-          TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'TRANG CHỦ',
-                style: Theme.of(context).textTheme.titleLarge,
-              )),
-          const SizedBox(height: 5),
-          TextButton(
-              onPressed: () {
-                _launchURL(); // Gọi hàm _launchURL khi button được nhấn
-              },
-              child: Text(
-                'GÓP Ý',
-                style: Theme.of(context).textTheme.titleLarge,
-              )),
-          const SizedBox(height: 300),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  fixedSize: buttonSize,
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+          // Logo + nút
+          Positioned(
+            top: 135,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                SizedBox(
+                  width: 160,
+                  height: 150,
+                  child: Image.asset('assets/images/logo.png'),
                 ),
-                child: Image.asset('assets/images/facebook.png'),
-              ),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  fixedSize: buttonSize,
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                const SizedBox(height: 10),
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'TRANG CHỦ',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )),
+                const SizedBox(height: 5),
+                TextButton(
+                    onPressed: () {
+                      _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
+                    },
+                    child: Text(
+                      'GÓP Ý',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )),
+              ],
+            ),
+          ),
+
+          // Nút liên hệ
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: buttonSize,
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                  ),
+                  child: Image.asset('assets/images/facebook.png'),
                 ),
-                child: Image.asset('assets/images/youtube.png'),
-              ),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  fixedSize: buttonSize,
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                ElevatedButton(
+                  onPressed: () {
+                    _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: buttonSize,
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                  ),
+                  child: Image.asset('assets/images/youtube.png'),
                 ),
-                child: Image.asset('assets/images/instagram.png'),
-              ),
-            ],
+                ElevatedButton(
+                  onPressed: () {
+                    _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: buttonSize,
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                  ),
+                  child: Image.asset('assets/images/instagram.png'),
+                ),
+              ],
+            ),
           )
         ],
       ),

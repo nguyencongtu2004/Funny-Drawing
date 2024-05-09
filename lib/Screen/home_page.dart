@@ -41,6 +41,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
+      height: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment(0.00, -1.00),
@@ -48,132 +49,151 @@ class HomePage extends StatelessWidget {
           colors: [Color(0xFF00C4A0), Color(0xFFD05700)],
         ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
         children: [
-          const SizedBox(height: 35),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _onMoreClick(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  fixedSize: const Size(90, 90),
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
-                ),
-                child: Image.asset('assets/images/more.png'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  _onInformationClick(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  fixedSize: const Size(90, 90),
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
-                ),
-                child: Image.asset('assets/images/information.png'),
-              ),
-            ],
-          ),
-          Container(
-            width: 160,
-            height: 120,
-            child: Image.asset('assets/images/logo.png'),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: 310,
-            height: 250,
-            decoration: ShapeDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment(0.00, -1.00),
-                end: Alignment(0, 1),
-                colors: [Color(0xFFD6FFBE), Color(0xFFC29191)],
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
+          // Logo
+          Positioned(
+            top: 60,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              width: 160,
+              height: 150,
+              child: Image.asset('assets/images/logo.png'),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          ),
+          // App bar
+          Positioned(
+            top: 35,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(height: 5),
-                Container(
-                  width: 123.20,
-                  height: 123.20,
-                  decoration: const ShapeDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/avatar.png'),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: CircleBorder(),
+                ElevatedButton(
+                  onPressed: () {
+                    _onMoreClick(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: const Size(90, 90),
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: IconButton(
-                            icon: Image.asset('assets/images/edit.png'),
-                            onPressed: () {},
-                            padding: const EdgeInsets.all(0),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
+                  child: Image.asset('assets/images/more.png'),
                 ),
-                // Trường nhập tên
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: TextField(
-                    controller: _textEditingController,
-                    // Gán TextEditingController cho trường nhập văn bản
-                    decoration: InputDecoration(
-                      hintText: 'Nhập thông tin',
-                      hintStyle: const TextStyle(color: Colors.white),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.white),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.white),
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.white),
+                ElevatedButton(
+                  onPressed: () {
+                    _onInformationClick(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: const Size(90, 90),
+                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
                   ),
+                  child: Image.asset('assets/images/information.png'),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 50),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Button(
-                onClick: _findRoomClick,
-                imageAsset: 'assets/images/search.png',
-                title: 'Tìm phòng',
+          // Nơi nhập thông tin
+          Positioned(
+            top: 220,
+            left: 20,
+            right: 20,
+            child: Container(
+              width: 310,
+              height: 250,
+              decoration: ShapeDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment(0.00, -1.00),
+                  end: Alignment(0, 1),
+                  colors: [Color(0xFFD6FFBE), Color(0xFFC29191)],
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              const SizedBox(height: 20),
-              Button(
-                onClick: _createRoomClick,
-                imageAsset: 'assets/images/plus.png',
-                title: 'Tạo phòng',
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 5),
+                  Container(
+                    width: 123.20,
+                    height: 123.20,
+                    decoration: const ShapeDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/images/avatar.png'),
+                        fit: BoxFit.fill,
+                      ),
+                      shape: CircleBorder(),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: SizedBox(
+                            width: 40,
+                            height: 40,
+                            child: IconButton(
+                              icon: Image.asset('assets/images/edit.png'),
+                              onPressed: () {},
+                              padding: const EdgeInsets.all(0),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  // Trường nhập tên
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: TextField(
+                      controller: _textEditingController,
+                      // Gán TextEditingController cho trường nhập văn bản
+                      decoration: InputDecoration(
+                        hintText: 'Tên của bạn',
+                        hintStyle: const TextStyle(color: Colors.white),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Colors.white),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Colors.white),
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
+          ),
+
+          Positioned(
+            top: 470 + (MediaQuery.of(context).size.height - 470) / 2 - 120 / 2,
+            left: 0,
+            right: 0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Button(
+                  onClick: _findRoomClick,
+                  imageAsset: 'assets/images/search.png',
+                  title: 'Tìm phòng',
+                ),
+                const SizedBox(height: 20),
+                Button(
+                  onClick: _createRoomClick,
+                  imageAsset: 'assets/images/plus.png',
+                  title: 'Tạo phòng',
+                ),
+              ],
+            ),
           )
         ],
       ),
