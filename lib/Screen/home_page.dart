@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/information.dart';
 import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
@@ -32,6 +33,8 @@ class HomePage extends StatelessWidget {
   void _createRoomClick(context) {
     String name = _textEditingController.text;
     print('Tên: $name');
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (ctx) => const CreateRoom()));
   }
 
   @override

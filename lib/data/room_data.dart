@@ -8,7 +8,7 @@ final availableRoom = [
     maxPlayer: 5,
     isPrivate: true,
     roomId: '111111',
-  ),
+      password: 'qwe'),
   Room(
     mode: 'Tam sao thất bản',
     curPlayer: 2,
@@ -36,7 +36,7 @@ final availableRoom = [
     maxPlayer: 5,
     isPrivate: true,
     roomId: '225222',
-  ),
+      password: 'qwe'),
   Room(
     mode: 'Thường',
     curPlayer: 2,
@@ -45,3 +45,10 @@ final availableRoom = [
     roomId: '111911',
   ),
 ];
+
+/*
+final availabeMode = [
+  Mode(mode: 'Thường', description: 'd'),
+  Mode(mode: 'Tam sao thất bản', description: 'd'),
+  Mode(mode: 'Tuyệt tác', description: 'd'),
+];*/

@@ -1,5 +1,5 @@
 import 'package:draw_and_guess_promax/Widget/button.dart';
-import 'package:draw_and_guess_promax/Widget/play_mode.dart';
+import 'package:draw_and_guess_promax/Widget/room_to_play.dart';
 import 'package:draw_and_guess_promax/data/room_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:flutter/material.dart';
@@ -13,12 +13,62 @@ class FindRoom extends StatefulWidget {
 
 class _FindRoomState extends State<FindRoom> {
   final selecting = ValueNotifier<String>('none');
+  final password = ValueNotifier<String>('');
   final TextEditingController _idController = TextEditingController();
   String dropdownValue = 'Tất cả';
   List<Room> filteredRoom = availableRoom;
 
+  /*void _onPasswordChange(value) {
+    password.value = value;
+  }*/
+
+  void _showAlertDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            "Thông báo",
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                  color: Colors.black,
+                ),
+          ),
+          content: Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color: Colors.black,
+                ),
+          ),
+          icon: Icon(Icons.warning_rounded),
+          backgroundColor: Color.fromARGB(255, 0, 217, 64),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                "OK",
+                style: TextStyle(color: Colors.black),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng hộp thoại cảnh báo
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _onStartClick(BuildContext context) {
     print(selecting.value);
+    print(password.value);
+    final selectedRoom =
+        availableRoom.firstWhere((room) => room.roomId == selecting.value);
+    print('Password của phòng: ${selectedRoom.password}');
+    if (selectedRoom.isPrivate && password.value != selectedRoom.password) {
+      print('Sai mật khẩu');
+      _showAlertDialog(context, 'Sai mật khẩu!');
+    } else {
+      print('Đúng mật khẩu');
+    }
   }
 
   void _onFilterRoom() {
@@ -139,6 +189,7 @@ class _FindRoomState extends State<FindRoom> {
             ],
           ),
         ),
+        // Thanh lọc phòng
         Positioned(
           top: 120,
           child: Padding(
@@ -247,13 +298,14 @@ class _FindRoomState extends State<FindRoom> {
                   onTap: () {
                     selecting.value = filteredRoom[index].roomId;
                   },
-                  child: PlayMode(
+                  child: RoomToPlay(
                     mode: filteredRoom[index].mode,
                     curPlayer: filteredRoom[index].curPlayer,
                     maxPlayer: filteredRoom[index].maxPlayer,
                     roomId: filteredRoom[index].roomId,
                     isPrivate: filteredRoom[index].isPrivate,
                     selecting: selecting,
+                    password: password,
                   ),
                 ),
               );
@@ -268,12 +320,13 @@ class _FindRoomState extends State<FindRoom> {
             children: [
               Button(
                 onClick: _onStartClick,
-                title: 'Bắt đầu',
+                title: 'Vào phòng',
                 imageAsset: 'assets/images/play.png',
+                color: const Color(0xFF00C472),
               )
             ],
           ),
-        )
+        ),
       ]),
     );
   }
