@@ -1,7 +1,8 @@
+import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/information.dart';
 import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
-import 'package:draw_and_guess_promax/Widget/Button.dart';
+import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
@@ -32,6 +33,8 @@ class HomePage extends StatelessWidget {
   void _createRoomClick(context) {
     String name = _textEditingController.text;
     print('Tên: $name');
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (ctx) => const CreateRoom()));
   }
 
   @override
@@ -111,6 +114,23 @@ class HomePage extends StatelessWidget {
                       fit: BoxFit.fill,
                     ),
                     shape: CircleBorder(),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: IconButton(
+                            icon: Image.asset('assets/images/edit.png'),
+                            onPressed: () {},
+                            padding: const EdgeInsets.all(0),
+                          ),
+                        ),
+                      )
+                    ],
                   ),
                 ),
                 // Trường nhập tên

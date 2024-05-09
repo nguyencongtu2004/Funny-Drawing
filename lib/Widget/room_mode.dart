@@ -1,26 +1,22 @@
 import 'package:flutter/material.dart';
 
-class PlayMode extends StatefulWidget {
-  const PlayMode({
+class RoomMode extends StatefulWidget {
+  const RoomMode({
     super.key,
-    required this.imageAsset,
-    required this.title,
-    required this.roomId,
-    this.isLocked = false,
+    required this.mode,
+    required this.description,
     required this.selecting,
   });
 
-  final String imageAsset;
-  final String title;
-  final String roomId;
-  final bool isLocked;
+  final String mode;
+  final String description;
   final ValueNotifier<String> selecting;
 
   @override
-  State<PlayMode> createState() => _PlayModeState();
+  State<RoomMode> createState() => _RoomModeState();
 }
 
-class _PlayModeState extends State<PlayMode> {
+class _RoomModeState extends State<RoomMode> {
   late final ValueListenableBuilder<String> _valueListenableBuilder;
 
   @override
@@ -33,10 +29,10 @@ class _PlayModeState extends State<PlayMode> {
             shape: RoundedRectangleBorder(
                 borderRadius: const BorderRadius.all(Radius.circular(10)),
                 side: BorderSide(
-                    color: value == widget.title
+                    color: value == widget.mode
                         ? const Color.fromARGB(255, 44, 104, 44)
                         : Colors.transparent,
-                    width: value == widget.title ? 4.0 : 0.0,
+                    width: value == widget.mode ? 4.0 : 0.0,
                     strokeAlign: BorderSide.strokeAlignCenter)),
             child: Row(
               children: [
@@ -45,35 +41,33 @@ class _PlayModeState extends State<PlayMode> {
                   width: 110,
                   child: Padding(
                     padding: const EdgeInsets.all(8),
-                    child: Image.asset(widget.imageAsset),
+                    child: Image.asset(widget.mode == 'Thường'
+                        ? 'assets/images/thuong_mode.png'
+                        : widget.mode == 'Tam sao thất bản'
+                            ? 'assets/images/tam_sao_that_ban_mode.png'
+                            : 'assets/images/tuyet_tac_mode.png'),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: SizedBox(
-                    width: 180,
+                    width: MediaQuery.of(context).size.width - 150,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.title,
+                          widget.mode,
                           style:
                               Theme.of(context).textTheme.titleLarge!.copyWith(
                                     color: Colors.black,
                                   ),
                         ),
+                        const SizedBox(height: 5),
                         Text(
-                          'Số người: ?/?',
+                          widget.description,
                           style:
-                              Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                    color: Colors.black,
-                                  ),
-                        ),
-                        Text(
-                          'ID phòng: ${widget.roomId}',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              Theme.of(context).textTheme.bodySmall!.copyWith(
                                     color: Colors.black,
                                   ),
                         ),
@@ -81,11 +75,6 @@ class _PlayModeState extends State<PlayMode> {
                     ),
                   ),
                 ),
-                if (widget.isLocked)
-                  SizedBox(
-                    height: 40,
-                    child: Image.asset('assets/images/lock.png'),
-                  ),
               ],
             ),
           );
