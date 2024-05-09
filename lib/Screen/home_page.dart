@@ -1,6 +1,6 @@
 import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
-import 'package:draw_and_guess_promax/Screen/information.dart';
+import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
 import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,7 @@ class HomePage extends StatelessWidget {
   void _onInformationClick(context) {
     // Xử lý khi nút information được nhấn
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (ctx) => const Information()));
+        .push(MaterialPageRoute(builder: (ctx) => const HowToPlay()));
   }
 
   void _findRoomClick(context) {

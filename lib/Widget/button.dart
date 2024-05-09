@@ -8,7 +8,7 @@ class Button extends StatelessWidget {
     this.imageAsset,
     this.title = 'Button',
     this.color = Colors.white,
-    this.width = 180,
+    this.width = 190,
   });
 
   final void Function(BuildContext context) onClick;

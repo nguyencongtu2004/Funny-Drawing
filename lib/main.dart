@@ -1,6 +1,7 @@
 import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
+import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
 import 'package:flutter/material.dart';
 
 void main() {

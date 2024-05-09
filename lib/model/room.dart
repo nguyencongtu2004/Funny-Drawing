@@ -16,12 +16,4 @@ class Room {
   final String? password;
 }
 
-/*class Mode {
-  Mode({
-    required this.mode,
-    required this.description,
-});
 
-  final String mode;
-  final String description;
-}*/
