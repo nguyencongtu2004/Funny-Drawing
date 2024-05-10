@@ -2,6 +2,7 @@ import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:draw_and_guess_promax/Widget/room_to_play.dart';
 import 'package:draw_and_guess_promax/data/room_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:flutter/material.dart';
 
 class FindRoom extends StatefulWidget {
@@ -69,6 +70,7 @@ class _FindRoomState extends State<FindRoom> {
     } else {
       print('Đúng mật khẩu');
     }
+    Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => NormalModeRoom(roomId: selecting.value)));
   }
 
   void _onFilterRoom() {
@@ -297,6 +299,7 @@ class _FindRoomState extends State<FindRoom> {
                 child: InkWell(
                   onTap: () {
                     selecting.value = filteredRoom[index].roomId;
+                    print("here");
                   },
                   child: RoomToPlay(
                     mode: filteredRoom[index].mode,

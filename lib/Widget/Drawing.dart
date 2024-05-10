@@ -4,7 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class Drawing extends StatefulWidget {
-  const Drawing({Key? key}) : super(key: key);
+  const Drawing({
+    Key? key,
+    required this.height,
+    required this.width,
+  }) : super(key: key);
+  final double height;
+  final double width;
 
   @override
   State<Drawing> createState() => _Drawing();
@@ -16,6 +22,8 @@ class _Drawing extends State<Drawing> {
   late Offset _containerPositionSize;
   late bool _isSelectMenuVisible;
   late Color _paintColor;
+  late Color _preColor;
+  late bool _isErase;
   late double _paintSize;
   late IconData _selectIcon;
   final GlobalKey _sizemenu = GlobalKey();
@@ -29,10 +37,12 @@ class _Drawing extends State<Drawing> {
     _isSelectMenuVisible = false;
     _containerPosition = Offset.zero;
     _paintColor = Colors.black;
+    _preColor = Colors.black;
     _paintSize = 5;
     _selectIcon = Icons.draw;
     _isSizeMenuVisible = false;
     _containerPositionSize = Offset.zero;
+    _isErase = false;
   }
 
   void _toggleSelectMenuVisibility(Offset position) {
@@ -53,6 +63,7 @@ class _Drawing extends State<Drawing> {
   }
 
   void _setColor(Color cl) {
+    if(_isErase) return;
     setState(() {
       _paintColor = cl;
     });
@@ -67,6 +78,12 @@ class _Drawing extends State<Drawing> {
   void _setSelectIcon(IconData ic) {
     setState(() {
       _selectIcon = ic;
+    });
+  }
+
+  void _setChose(String mode) {
+    setState(() {
+      chose = mode;
     });
   }
 
@@ -86,15 +103,15 @@ class _Drawing extends State<Drawing> {
             children: [
               ClipRect(
                   child: SizedBox(
-                height: MediaQuery.of(context).size.height / 2,
-                width: MediaQuery.of(context).size.width,
+                height: widget.height,
+                width: widget.width,
                 child: PaintBoard(
                   key: _paintBoardKey,
                   chose: chose,
                   paintColor: _paintColor,
                   paintSize: _paintSize,
-                  height: MediaQuery.of(context).size.height / 2,
-                  width: MediaQuery.of(context).size.width,
+                  height: widget.height,
+                  width: widget.width,
                 ),
               ))
             ],
@@ -102,16 +119,18 @@ class _Drawing extends State<Drawing> {
         ),
         // ----------------------  MenuBar ----------------------
         Positioned(
-          top: MediaQuery.of(context).size.height / 2,
+          top: widget.height-100,
           left: 0,
           child: Container(
-              height: 70,
+              padding: EdgeInsets.only(top: 10.0),
+              height: 100,
               width: size.width,
               color: mainColor,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_selectIcon != Icons.add)
+                  if (_selectIcon != Icons.add && _selectIcon != Icons.minimize)
                     Container(
                       height: 50,
                       width: 50,
@@ -158,7 +177,34 @@ class _Drawing extends State<Drawing> {
                             _toggleSelectMenuVisibility(buttonPosition);
                           },
                           child: Image.asset(
-                            'assets/eraser.png', // Đường dẫn đến hình ảnh cục tẩy
+                            'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
+                            width: 10,
+                            height: 10,
+                            color: Colors.black, // Màu của hình ảnh
+                          ),
+                        )),
+                  if (_selectIcon == Icons.minimize)
+                    Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(
+                              7.0), // Bán kính cong của đường viền
+                        ),
+                        child: GestureDetector(
+                          key: _selectmenu,
+                          onTap: () {
+                            _setColor(Theme.of(context).scaffoldBackgroundColor);
+                            _setSelectIcon(Icons.minimize);
+                            RenderBox buttonBox = _selectmenu.currentContext!
+                                .findRenderObject() as RenderBox;
+                            Offset buttonPosition =
+                            buttonBox.localToGlobal(Offset.zero);
+                            _toggleSelectMenuVisibility(buttonPosition);
+                          },
+                          child: Image.asset(
+                            'assets/images/draw_line.png', // Đường dẫn đến hình ảnh cục tẩy
                             width: 10,
                             height: 10,
                             color: Colors.black, // Màu của hình ảnh
@@ -682,6 +728,7 @@ class _Drawing extends State<Drawing> {
                           child: IconButton(
                             onPressed: () {
                               _paintBoardKey.currentState!.clearPoints();
+                              _isErase = false;
                             },
                             icon: Icon(
                               Icons.delete, // Biểu tượng
@@ -701,16 +748,20 @@ class _Drawing extends State<Drawing> {
                             ),
                             child: GestureDetector(
                               onTap: () {
+                                _preColor = _paintColor;
                                 _setColor(Theme.of(context).scaffoldBackgroundColor);
                                 _setSelectIcon(Icons.add);
                                 _toggleSelectMenuVisibility(Offset(0, 0));
+                                _isErase = true;
+
                               },
-                              child: Image.asset(
-                                'assets/eraser.png', // Đường dẫn đến hình ảnh cục tẩy
-                                width: 10,
-                                height: 10,
-                                color: Colors.black, // Màu của hình ảnh
-                              ),
+                              child: Image.asset('assets/images/erase.png')
+                              // Image.asset(
+                              //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
+                              //   width: 10,
+                              //   height: 10,
+                              //   color: Colors.black, // Màu của hình ảnh
+                              // ),
                             )),
                       ],
                     ),
@@ -727,9 +778,11 @@ class _Drawing extends State<Drawing> {
                           ),
                           child: IconButton(
                             onPressed: () {
+                              _isErase = false;
                               _setSelectIcon(Icons.draw);
                               _toggleSelectMenuVisibility(Offset(0, 0));
-                              _setColor(Colors.black);
+                              _setColor(_preColor);
+                              _setChose("Draw");
                             },
                             icon: Icon(
                               Icons.draw, // Biểu tượng
@@ -747,14 +800,23 @@ class _Drawing extends State<Drawing> {
                             borderRadius: BorderRadius.circular(
                                 7.0), // Bán kính cong của đường viền
                           ),
-                          child: IconButton(
-                            onPressed: () {
-                              // Xử lý khi nút được nhấn
-                            },
-                            icon: Icon(
-                              Icons.delete, // Biểu tượng
-                              color: Colors.black, // Màu của biểu tượng
-                            ),
+                          child: GestureDetector(
+                              onTap: () {
+                                _setSelectIcon(Icons.minimize);
+                                _toggleSelectMenuVisibility(Offset(0, 0));
+                                _setChose("DrawLine");
+                              },
+                              child: Image.asset(
+                                'assets/images/draw_line.png',
+                                width: 20,
+                                height: 20,
+                              )
+                            // Image.asset(
+                            //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
+                            //   width: 10,
+                            //   height: 10,
+                            //   color: Colors.black, // Màu của hình ảnh
+                            // ),
                           ),
                         ),
                       ],
@@ -834,6 +896,7 @@ class _PaintBoardState extends State<PaintBoard> {
   late List<Offset> tmp = [];
   late Queue<List<Offset>> Qpn = Queue<List<Offset>>();
   late Queue<Paint> Qpt = Queue<Paint>();
+  late bool isDrawLine = false;
   bool isInBox(Offset point) {
     if (point != null) {
       return point.dx >= 0 &&
@@ -885,6 +948,7 @@ class _PaintBoardState extends State<PaintBoard> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     String chose = widget.chose;
@@ -893,7 +957,6 @@ class _PaintBoardState extends State<PaintBoard> {
         setState(() {
           if (chose == "Fill") {
             RenderBox renderBox = context.findRenderObject() as RenderBox;
-            // points[cnt].add(Offset(-1, -1));
           } else {
             Paint paint = Paint()
               ..color = widget.paintColor
@@ -916,6 +979,12 @@ class _PaintBoardState extends State<PaintBoard> {
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
             // points[cnt].add(setValid(pos));
+          }
+          else if(chose == "DrawLine") {
+            if(tmp.length > 1) tmp.removeLast();
+            RenderBox renderBox = context.findRenderObject() as RenderBox;
+            Offset pos = renderBox.globalToLocal(details.globalPosition);
+            tmp.add(setValid(pos));
           }
         });
       },

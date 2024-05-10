@@ -1,6 +1,7 @@
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/player_in_room_data.dart';
+import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:flutter/material.dart';
 
 import '../Widget/button.dart';
@@ -144,7 +145,7 @@ class _CreateRoomState extends State<CreateRoom> {
                 ),
                 const SizedBox(width: 20),
                 Button(
-                  onClick: (ctx) {},
+                  onClick: (ctx) {Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => NormalModeRoom(roomId: selecting.value)));},
                   title: 'Bắt đầu',
                   imageAsset: 'assets/images/play.png',
                   width: 150,
