@@ -30,29 +30,6 @@ class _HowToPlayState extends State<HowToPlay> {
               colors: [Color(0xFF00C4A0), Color(0xFFD05700)])),
       child: Stack(
         children: [
-          const SizedBox(height: 35),
-          /*Positioned(
-            top: 35,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    _onCloseClick(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size(90, 90),
-                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
-                  ),
-                  child: Image.asset('assets/images/close.png'),
-                ),
-              ],
-            ),
-          ),*/
           Positioned(
             top: 60,
             left: 0,
@@ -153,20 +130,22 @@ class _HowToPlayState extends State<HowToPlay> {
           ),
           // Nút ok
           Positioned(
-            bottom: 35,
+            bottom: 0,
             left: 0,
             right: 0,
-            child: ElevatedButton(
-              onPressed: () {
-                _onCloseClick(context);
-              },
-              style: ElevatedButton.styleFrom(
-                fixedSize: const Size(80, 80),
-                backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  _onCloseClick(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(150, 150),
+                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                  shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                  surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                ),
+                child: Image.asset('assets/images/ok.png'),
               ),
-              child: Image.asset('assets/images/ok.png'),
             ),
           ),
         ],

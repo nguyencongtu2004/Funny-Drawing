@@ -1,11 +1,11 @@
 import 'package:draw_and_guess_promax/model/player_in_room.dart';
 
 final List<PlayerInRoom> availablePlayer = [
-  PlayerInRoom(name: 'player1', linkAvatar: 'dd'),
-  PlayerInRoom(name: 'player2', linkAvatar: 'dd'),
-  PlayerInRoom(name: 'player3', linkAvatar: 'dd'),
-  PlayerInRoom(name: 'player4', linkAvatar: 'dd'),
-  PlayerInRoom(name: 'player5', linkAvatar: 'dd'),
-  PlayerInRoom(name: 'player6', linkAvatar: 'dd'),
-  PlayerInRoom(name: 'player7', linkAvatar: 'dd'),
+  PlayerInRoom(name: 'player1', avatarIndex: 1),
+  PlayerInRoom(name: 'player2', avatarIndex: 2),
+  PlayerInRoom(name: 'player3', avatarIndex: 3),
+  PlayerInRoom(name: 'player4', avatarIndex: 4),
+  PlayerInRoom(name: 'player5', avatarIndex: 5),
+  PlayerInRoom(name: 'player6', avatarIndex: 6),
+  PlayerInRoom(name: 'player7', avatarIndex: 7),
 ];

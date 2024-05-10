@@ -64,13 +64,29 @@ flutter:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
   assets:
+    - assets/images/logo.png
+
+    - assets/images/avatars/avatar0.png
+    - assets/images/avatars/avatar1.png
+    - assets/images/avatars/avatar2.png
+    - assets/images/avatars/avatar3.png
+    - assets/images/avatars/avatar4.png
+    - assets/images/avatars/avatar5.png
+    - assets/images/avatars/avatar6.png
+    - assets/images/avatars/avatar7.png
+    - assets/images/avatars/avatar8.png
+    - assets/images/avatars/avatar9.png
+    - assets/images/avatars/avatar10.png
+    - assets/images/avatars/avatar11.png
+    - assets/images/avatars/avatar12.png
+
     - assets/images/facebook.png
     - assets/images/instagram.png
     - assets/images/youtube.png
-    - assets/images/logo.png
-    - assets/images/avatar.png
+
     - assets/images/information.png
     - assets/images/more.png
+
     - assets/images/ok.png
     - assets/images/close.png
     - assets/images/erase.png

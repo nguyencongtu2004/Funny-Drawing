@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
@@ -5,11 +7,20 @@ import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+Random random = Random();
+
+class HomePage extends StatefulWidget {
   HomePage({super.key});
 
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   // Khai báo một TextEditingController để lưu giữ nội dung của trường nhập văn bản
   final TextEditingController _textEditingController = TextEditingController();
+
+  var _avaterIndex = random.nextInt(13);
 
   void _onMoreClick(context) {
     // Xử lý khi nút more được nhấn
@@ -34,7 +45,52 @@ class HomePage extends StatelessWidget {
     String name = _textEditingController.text;
     print('Tên: $name');
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (ctx) => const CreateRoom()));
+        .push(MaterialPageRoute(builder: (ctx) => CreateRoom()));
+  }
+
+  void _pickAvatar(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Center(
+              child: Text(
+            'Chọn Avatar',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge!
+                .copyWith(color: Colors.black),
+          )),
+          content: SingleChildScrollView(
+            child: GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, // Số cột trong lưới
+                crossAxisSpacing: 8.0, // Khoảng cách giữa các cột
+                mainAxisSpacing: 8.0, // Khoảng cách giữa các hàng
+              ),
+              itemCount: 13, // Số lượng avatar
+              itemBuilder: (BuildContext context, int index) {
+                // Tạo một avatar từ index
+                return GestureDetector(
+                  onTap: () {
+                    // Xử lý khi người dùng chọn một avatar
+                    setState(() {
+                      _avaterIndex = index;
+                    });
+                    Navigator.of(context).pop(); // Đóng hộp thoại sau khi chọn
+                  },
+                  child: CircleAvatar(
+                    backgroundImage:
+                        AssetImage('assets/images/avatars/avatar$index.png'),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -122,12 +178,13 @@ class HomePage extends StatelessWidget {
                   Container(
                     width: 123.20,
                     height: 123.20,
-                    decoration: const ShapeDecoration(
+                    decoration: ShapeDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/images/avatar.png'),
+                        image: AssetImage(
+                            'assets/images/avatars/avatar$_avaterIndex.png'),
                         fit: BoxFit.fill,
                       ),
-                      shape: CircleBorder(),
+                      shape: const CircleBorder(),
                     ),
                     child: Stack(
                       children: [
@@ -139,7 +196,9 @@ class HomePage extends StatelessWidget {
                             height: 40,
                             child: IconButton(
                               icon: Image.asset('assets/images/edit.png'),
-                              onPressed: () {},
+                              onPressed: () {
+                                _pickAvatar(context);
+                              },
                               padding: const EdgeInsets.all(0),
                             ),
                           ),

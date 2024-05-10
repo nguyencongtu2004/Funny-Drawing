@@ -16,12 +16,13 @@ class Player extends StatelessWidget {
         Container(
           width: 60,
           height: 60,
-          decoration: const ShapeDecoration(
+          decoration: ShapeDecoration(
             image: DecorationImage(
-              image: AssetImage('assets/images/avatar.png'),
+              image: AssetImage(
+                  'assets/images/avatars/avatar${player.avatarIndex}.png'),
               fit: BoxFit.fill,
             ),
-            shape: CircleBorder(),
+            shape: const CircleBorder(),
           ),
         ),
         const SizedBox(width: 5),

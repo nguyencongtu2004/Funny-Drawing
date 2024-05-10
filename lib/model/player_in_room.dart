@@ -1,9 +1,9 @@
 class PlayerInRoom {
   PlayerInRoom({
     required this.name,
-    required this.linkAvatar,
+    required this.avatarIndex,
   });
 
   final String name;
-  final String linkAvatar;
+  final int avatarIndex;
 }
