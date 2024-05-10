@@ -45,10 +45,3 @@ final availableRoom = [
     roomId: '111911',
   ),
 ];
-
-/*
-final availabeMode = [
-  Mode(mode: 'Thường', description: 'd'),
-  Mode(mode: 'Tam sao thất bản', description: 'd'),
-  Mode(mode: 'Tuyệt tác', description: 'd'),
-];*/
