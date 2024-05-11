@@ -37,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   void _findRoomClick(context) {
     String name = _textEditingController.text;
     print('Tên: $name');
+    print('Avatar index: $_avaterIndex');
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const FindRoom()));
   }
@@ -44,6 +45,7 @@ class _HomePageState extends State<HomePage> {
   void _createRoomClick(context) {
     String name = _textEditingController.text;
     print('Tên: $name');
+    print('Avatar index: $_avaterIndex');
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => CreateRoom()));
   }

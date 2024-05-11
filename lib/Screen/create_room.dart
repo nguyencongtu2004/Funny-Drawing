@@ -1,4 +1,7 @@
+import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
+import 'package:draw_and_guess_promax/data/play_mode_data.dart';
+import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:flutter/material.dart';
 
 import '../Widget/button.dart';
@@ -20,9 +23,23 @@ class CreateRoom extends StatefulWidget {
     }
   }
 
-  void _startClick() {
+  final selecting = ValueNotifier<String>('none');
+
+  void _startClick(context) {
     print(_passwordController.text);
     print(_maxPlayer);
+    print(selecting.value);
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (ctx) => WaitingRoom(
+              selectedRoom: Room(
+                  roomId: '??????',
+                  password: _passwordController.text,
+                  isPrivate: _passwordController.text == '' ? false : true,
+                  maxPlayer: _maxPlayer,
+                  curPlayer: 9999,
+                  mode: selecting.value),
+              isGuest: true,
+            )));
   }
 
   @override
@@ -30,8 +47,6 @@ class CreateRoom extends StatefulWidget {
 }
 
 class _CreateRoomState extends State<CreateRoom> {
-  final selecting = ValueNotifier<String>('none');
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,43 +144,23 @@ class _CreateRoomState extends State<CreateRoom> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Column(
                     children: [
-                      InkWell(
-                        onTap: () {
-                          print('Thường');
-                          selecting.value = 'Thường';
-                        },
-                        child: RoomMode(
-                          mode: 'Thường',
-                          description: 'Chế độ cơ bản nhất, vẽ và đoán từ.',
-                          selecting: selecting,
+                      for (final mode in availabePlayMode)
+                        Column(
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                print(mode.mode);
+                                widget.selecting.value = mode.mode;
+                              },
+                              child: RoomMode(
+                                mode: mode.mode,
+                                description: mode.description,
+                                selecting: widget.selecting,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () {
-                          print('Tam sao thất bản');
-                          selecting.value = 'Tam sao thất bản';
-                        },
-                        child: RoomMode(
-                          mode: 'Tam sao thất bản',
-                          description:
-                              'Nghệ thuật biến một câu chuyện đơn giản thành... một vở kịch dài tập.',
-                          selecting: selecting,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () {
-                          print('Tuyệt tác');
-                          selecting.value = 'Tuyệt tác';
-                        },
-                        child: RoomMode(
-                          mode: 'Tuyệt tác',
-                          description:
-                              'Chọn 1 từ và biến nó thành tác phẩm nghệ thuật đỉnh cao.',
-                          selecting: selecting,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -287,7 +282,7 @@ class _CreateRoomState extends State<CreateRoom> {
               children: [
                 Button(
                   onClick: (ctx) {
-                    widget._startClick();
+                    widget._startClick(ctx);
                   },
                   title: 'Tạo phòng',
                   imageAsset: 'assets/images/play.png',

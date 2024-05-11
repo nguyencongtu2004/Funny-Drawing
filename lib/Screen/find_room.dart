@@ -1,10 +1,11 @@
+import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:draw_and_guess_promax/Widget/room_to_play.dart';
 import 'package:draw_and_guess_promax/data/room_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+
+import '../data/play_mode_data.dart';
 
 class FindRoom extends StatefulWidget {
   const FindRoom({super.key});
@@ -70,6 +71,11 @@ class _FindRoomState extends State<FindRoom> {
       _showAlertDialog(context, 'Sai mật khẩu!');
     } else {
       print('Đúng mật khẩu');
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) => WaitingRoom(
+                selectedRoom: selectedRoom,
+                isGuest: true,
+              )));
     }
   }
 

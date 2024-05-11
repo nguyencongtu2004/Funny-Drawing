@@ -8,4 +8,6 @@ final List<PlayerInRoom> availablePlayer = [
   PlayerInRoom(name: 'player5', avatarIndex: 5),
   PlayerInRoom(name: 'player6', avatarIndex: 6),
   PlayerInRoom(name: 'player7', avatarIndex: 7),
+  PlayerInRoom(name: 'player7', avatarIndex: 8),
+  PlayerInRoom(name: 'player7', avatarIndex: 10),
 ];

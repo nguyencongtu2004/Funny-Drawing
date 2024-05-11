@@ -2,6 +2,9 @@ import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
+import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
+import 'package:draw_and_guess_promax/Widget/Drawing.dart';
+import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -49,6 +52,11 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         body: HomePage(),
+        /*body: WaitingRoom(
+                selectedRoom: selectedRoom,
+                isGuest: true,
+              ),*/
+        //body: Drawing(height: MediaQuery.of(context).size.height, width: MediaQuery.of(context).size.width),
       ),
     );
   }
