@@ -14,6 +14,16 @@ class Room {
   final int maxPlayer;
   final bool isPrivate;
   final String? password;
+
+  factory Room.fromRTDB(Map<String, dynamic> data) {
+    return Room(
+        roomId: data['roomId'],
+        password: data['password'],
+        isPrivate: data['isPrivate'],
+        maxPlayer: data['maxPlayer'],
+        curPlayer: data['curPlayer'],
+        mode: data['mode']);
+  }
 }
 
 

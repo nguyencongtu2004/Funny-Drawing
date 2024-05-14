@@ -1,22 +1,35 @@
-import 'package:draw_and_guess_promax/Screen/create_room.dart';
-import 'package:draw_and_guess_promax/Screen/find_room.dart';
+import 'dart:io';
+
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
-import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
-import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
-import 'package:draw_and_guess_promax/Widget/Drawing.dart';
-import 'package:draw_and_guess_promax/data/play_mode_data.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  // Kết nối Firebase
+  WidgetsFlutterBinding.ensureInitialized();
+  Platform.isAndroid
+      ? await Firebase.initializeApp(
+          options: const FirebaseOptions(
+          apiKey: 'AIzaSyAN5w4LhO_J86gaM530epJOtprZ0QAOjdc',
+          appId: '1:289465409378:android:348e2044d1f7d800de163b',
+          messagingSenderId: '289465409378',
+          projectId: 'draw-and-guest',
+          storageBucket: 'draw-and-guest.appspot.com',
+          databaseURL:
+              'https://draw-and-guest-default-rtdb.asia-southeast1.firebasedatabase.app',
+        ))
+      : await Firebase.initializeApp();
+
+  runApp(const DrawAndGuestApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DrawAndGuestApp extends StatelessWidget {
+  const DrawAndGuestApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    Widget content = HomePage();
+
     return MaterialApp(
       theme: ThemeData().copyWith(
         textTheme: const TextTheme().copyWith(
@@ -50,14 +63,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: Scaffold(
-        body: HomePage(),
-        /*body: WaitingRoom(
-                selectedRoom: selectedRoom,
-                isGuest: true,
-              ),*/
-        //body: Drawing(height: MediaQuery.of(context).size.height, width: MediaQuery.of(context).size.width),
-      ),
+      home: Scaffold(body: content),
     );
   }
 }

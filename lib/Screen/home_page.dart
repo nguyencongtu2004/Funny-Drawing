@@ -5,6 +5,7 @@ import 'package:draw_and_guess_promax/Screen/find_room.dart';
 import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
 import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
+import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:flutter/material.dart';
 
 Random random = Random();
@@ -19,7 +20,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   // Khai báo một TextEditingController để lưu giữ nội dung của trường nhập văn bản
   final TextEditingController _textEditingController = TextEditingController();
-
   var _avaterIndex = random.nextInt(13);
 
   void _onMoreClick(context) {
@@ -34,18 +34,32 @@ class _HomePageState extends State<HomePage> {
         .push(MaterialPageRoute(builder: (ctx) => const HowToPlay()));
   }
 
-  void _findRoomClick(context) {
+  void _findRoomClick(context) async {
     String name = _textEditingController.text;
+    if (name == '') return;
+
     print('Tên: $name');
     print('Avatar index: $_avaterIndex');
+
+    // Tạo tham chiếu đến mục users trên firebase
+    final usersRef = database.child('/users/$name');
+    await usersRef.update({'avatarIndex': _avaterIndex});
+
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const FindRoom()));
   }
 
-  void _createRoomClick(context) {
+  void _createRoomClick(context) async {
     String name = _textEditingController.text;
+    if (name == '') return;
+
     print('Tên: $name');
     print('Avatar index: $_avaterIndex');
+
+    // Tạo tham chiếu đến mục users trên firebase
+    final usersRef = database.child('/users/$name');
+    await usersRef.update({'avatarIndex': _avaterIndex});
+
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => CreateRoom()));
   }

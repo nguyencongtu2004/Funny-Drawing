@@ -3,8 +3,12 @@ import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:flutter/material.dart';
+import 'package:draw_and_guess_promax/firebase.dart';
 
 import '../Widget/button.dart';
+import 'dart:math';
+
+final random = Random();
 
 class CreateRoom extends StatefulWidget {
   CreateRoom({super.key});
@@ -25,20 +29,41 @@ class CreateRoom extends StatefulWidget {
 
   final selecting = ValueNotifier<String>('none');
 
-  void _startClick(context) {
+  String _pickRandomRoomId() {
+    final number = random.nextInt(1000000);
+    final roomId = number.toString().padLeft(6, '0');
+    return roomId;
+  }
+
+  void _startClick(context) async {
+    if (selecting.value == 'none') return;
+
     print(_passwordController.text);
     print(_maxPlayer);
     print(selecting.value);
+
+    final createdRoom = Room(
+        roomId: _pickRandomRoomId(),
+        password: _passwordController.text,
+        isPrivate: _passwordController.text == '' ? false : true,
+        maxPlayer: _maxPlayer,
+        curPlayer: 0,
+        mode: selecting.value);
+
+    // Tạo tham chiếu đến mục rooms trên firebase
+    final roomsRef = database.child('/rooms/${createdRoom.roomId}');
+    await roomsRef.update({
+      'password': createdRoom.password,
+      'isPrivate': createdRoom.isPrivate,
+      'maxPlayer': createdRoom.maxPlayer,
+      'curPlayer': createdRoom.curPlayer,
+      'mode': createdRoom.mode
+    });
+
     Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (ctx) => WaitingRoom(
-              selectedRoom: Room(
-                  roomId: '??????',
-                  password: _passwordController.text,
-                  isPrivate: _passwordController.text == '' ? false : true,
-                  maxPlayer: _maxPlayer,
-                  curPlayer: 9999,
-                  mode: selecting.value),
-              isGuest: true,
+              selectedRoom: createdRoom,
+              isGuest: false,
             )));
   }
 

@@ -1,11 +1,10 @@
 import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
-import 'package:draw_and_guess_promax/Widget/room_to_play.dart';
-import 'package:draw_and_guess_promax/data/room_data.dart';
+import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:flutter/material.dart';
 
-import '../data/play_mode_data.dart';
+import '../Widget/room_to_play.dart';
 
 class FindRoom extends StatefulWidget {
   const FindRoom({super.key});
@@ -19,11 +18,35 @@ class _FindRoomState extends State<FindRoom> {
   final password = ValueNotifier<String>('');
   final TextEditingController _idController = TextEditingController();
   String dropdownValue = 'Tất cả';
-  List<Room> filteredRoom = availableRoom;
 
-  /*void _onPasswordChange(value) {
-    password.value = value;
-  }*/
+  late final List<Room> rooms = [];
+  late List<Room> filteredRoom = [];
+
+  @override
+  void initState() {
+    super.initState();
+    database.child('/rooms').onValue.listen((event) {
+      // Quan trọng
+      final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>);
+
+      for (final room in data.entries) {
+        final nextRoom = Room(
+          roomId: room.key,
+          mode: room.value['mode'],
+          curPlayer: room.value['curPlayer'],
+          maxPlayer: room.value['maxPlayer'],
+          isPrivate: room.value['isPrivate'],
+          password: room.value['password'],
+        );
+        rooms.add(nextRoom);
+      }
+
+      setState(() {
+        filteredRoom = List.from(rooms);
+      });
+    });
+  }
 
   void _showAlertDialog(BuildContext context, String message) {
     showDialog(
@@ -64,7 +87,7 @@ class _FindRoomState extends State<FindRoom> {
     print(selecting.value);
     print(password.value);
     final selectedRoom =
-        availableRoom.firstWhere((room) => room.roomId == selecting.value);
+        rooms.firstWhere((room) => room.roomId == selecting.value);
     print('Password của phòng: ${selectedRoom.password}');
     if (selectedRoom.isPrivate && password.value != selectedRoom.password) {
       print('Sai mật khẩu');
@@ -87,16 +110,14 @@ class _FindRoomState extends State<FindRoom> {
 
     setState(() {
       if (roomId.isEmpty && filter == 'Tất cả') {
-        filteredRoom = availableRoom;
+        filteredRoom = rooms;
       } else if (roomId.isEmpty && filter != 'Tất cả') {
-        filteredRoom =
-            availableRoom.where((room) => room.mode == filter).toList();
+        filteredRoom = rooms.where((room) => room.mode == filter).toList();
       } else if (roomId.isNotEmpty && filter == 'Tất cả') {
-        filteredRoom = availableRoom
-            .where((room) => room.roomId.contains(roomId))
-            .toList();
+        filteredRoom =
+            rooms.where((room) => room.roomId.contains(roomId)).toList();
       } else {
-        filteredRoom = availableRoom
+        filteredRoom = rooms
             .where(
                 (room) => room.roomId.contains(roomId) && room.mode == filter)
             .toList();

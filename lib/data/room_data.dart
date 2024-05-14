@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 
 // Thay list này bằng data trên firebase
@@ -8,7 +9,8 @@ final availableRoom = [
     maxPlayer: 5,
     isPrivate: true,
     roomId: '111111',
-      password: 'qwe'),
+    password: 'qwe',
+  ),
   Room(
     mode: 'Tam sao thất bản',
     curPlayer: 2,
@@ -31,11 +33,11 @@ final availableRoom = [
     roomId: '547454',
   ),
   Room(
-    mode: 'Tam sao thất bản',
-    curPlayer: 2,
-    maxPlayer: 5,
-    isPrivate: true,
-    roomId: '225222',
+      mode: 'Tam sao thất bản',
+      curPlayer: 2,
+      maxPlayer: 5,
+      isPrivate: true,
+      roomId: '225222',
       password: 'qwe'),
   Room(
     mode: 'Thường',
