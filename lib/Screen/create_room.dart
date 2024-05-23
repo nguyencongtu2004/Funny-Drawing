@@ -40,7 +40,15 @@ class CreateRoom extends ConsumerStatefulWidget {
   }
 
   void _startClick(BuildContext context, WidgetRef ref) async {
-    if (selecting.value == 'none') return;
+    if (selecting.value == 'none') {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn chế độ chơi'),
+        ),
+      );
+      return;
+    }
 
     print(_passwordController.text);
     print(_maxPlayer);
