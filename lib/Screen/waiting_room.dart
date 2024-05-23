@@ -14,7 +14,7 @@ import '../model/user.dart';
 import '../provider/user_provider.dart';
 
 class WaitingRoom extends ConsumerStatefulWidget {
-  WaitingRoom({
+  const WaitingRoom({
     super.key,
     required this.selectedRoom,
     this.isGuest = true,
@@ -181,10 +181,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                               final isQuit = await _showDialog('Cảnh báo',
                                   'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
                               if (!isQuit) return;
-
-                              await _playOutRoom(ref);
                             }
 
+                            await _playOutRoom(ref);
                             Navigator.of(context).pop();
                           },
                           icon: Image.asset('assets/images/back.png'),
