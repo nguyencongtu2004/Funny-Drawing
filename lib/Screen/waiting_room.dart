@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
-import 'package:draw_and_guess_promax/data/player_in_room_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Widget/button.dart';
+import '../firebase.dart';
+import '../model/user.dart';
+import '../provider/user_provider.dart';
 
-class WaitingRoom extends StatelessWidget {
+class WaitingRoom extends ConsumerStatefulWidget {
   WaitingRoom({
     super.key,
     required this.selectedRoom,
@@ -17,6 +23,121 @@ class WaitingRoom extends StatelessWidget {
   final Room selectedRoom;
   final bool isGuest;
 
+  @override
+  ConsumerState<WaitingRoom> createState() => _WaitingRoomState();
+}
+
+class _WaitingRoomState extends ConsumerState<WaitingRoom> {
+  late DatabaseReference _roomRef;
+  late DatabaseReference _playersInRoomRef;
+  var currentPlayers = <User>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
+    _playersInRoomRef =
+        database.child('/players_in_room/${widget.selectedRoom.roomId}');
+
+    _roomRef.onValue.listen((event) async {
+      if (event.snapshot.value == null) {
+        // Room has been deleted
+        if (widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
+          Navigator.of(context).pop();
+        }
+      }
+    });
+
+    _playersInRoomRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>);
+
+      setState(() {
+        currentPlayers.clear();
+        for (var player in data.entries) {
+          currentPlayers.add(User(
+            id: player.key,
+            name: player.value['name'],
+            avatarIndex: player.value['avatarIndex'],
+          ));
+        }
+      });
+    });
+  }
+
+  Completer<bool> _completer = Completer<bool>();
+
+  Future<bool> _showDialog(String title, String content,
+      {bool isKicked = false}) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          backgroundColor: const Color(0xFF00C4A0),
+          actions: [
+            if (!isKicked)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _completer.complete(false); // Hoàn thành với giá trị true
+                },
+                child: const Text(
+                  'Hủy',
+                  style: TextStyle(
+                    color: Color(0xFF000000),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _completer.complete(true); // Hoàn thành với giá trị true
+              },
+              child: Text(
+                isKicked ? 'OK' : 'Thoát',
+                style: TextStyle(
+                  color: isKicked ? Colors.black : Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return _completer.future; // Trả về Future từ Completer
+  }
+
+  Future<void> _playOutRoom(WidgetRef ref) async {
+    final userId = ref.read(userProvider).id;
+    if (userId == null) return;
+
+    if (widget.selectedRoom.roomOwner == userId) {
+      // Chủ phòng thoát, xóa phòng
+      await _roomRef.remove();
+      await _playersInRoomRef.remove();
+    } else {
+      // Người chơi thoát, xóa người chơi trong phòng
+      final playerRef = database
+          .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
+      await playerRef.remove();
+
+      // Cập nhật thông tin phòng
+      final currentPlayerCount =
+          (await _roomRef.child('curPlayer').get()).value as int;
+      if (currentPlayerCount > 0) {
+        await _roomRef.update({
+          'curPlayer': currentPlayerCount - 1,
+        });
+      }
+    }
+  }
+
   void _startClick() {
     print('bắt đầu');
   }
@@ -24,8 +145,6 @@ class WaitingRoom extends StatelessWidget {
   void _inviteClick() {
     print('đã mời');
   }
-
-  final selecting = ValueNotifier<String>('none');
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +174,12 @@ class WaitingRoom extends StatelessWidget {
                         height: 45,
                         width: 45,
                         child: IconButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            final isQuit = await _showDialog('Cảnh báo',
+                                'Nếu bạn thoát, những người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                            if (!isQuit) return;
+
+                            _playOutRoom(ref);
                             Navigator.of(context).pop();
                           },
                           icon: Image.asset('assets/images/back.png'),
@@ -77,20 +201,21 @@ class WaitingRoom extends StatelessWidget {
           ),
           // id phòng
           Positioned(
-              top: 100,
-              left: 0,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8, right: 8, left: 8),
-                child: Text(
-                  selectedRoom.isPrivate
-                      ? 'Id phòng: ${selectedRoom.roomId}\nMật khẩu: ${selectedRoom.password}'
-                      : 'Id phòng: ${selectedRoom.roomId}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              )),
+            top: 100,
+            left: 0,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, right: 8, left: 8),
+              child: Text(
+                widget.selectedRoom.isPrivate
+                    ? 'Id phòng: ${widget.selectedRoom.roomId}\nMật khẩu: ${widget.selectedRoom.password}'
+                    : 'Id phòng: ${widget.selectedRoom.roomId}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ),
           // Thông tin
           Positioned(
-            top: selectedRoom.isPrivate ? 162 : 138,
+            top: widget.selectedRoom.isPrivate ? 162 : 138,
             bottom: 120,
             left: 0,
             right: 0,
@@ -113,10 +238,10 @@ class WaitingRoom extends StatelessWidget {
                   child: Column(
                     children: [
                       RoomMode(
-                        mode: selectedRoom.mode,
+                        mode: widget.selectedRoom.mode,
                         description: availabePlayMode
                             .firstWhere(
-                                (mode) => mode.mode == selectedRoom.mode)
+                                (mode) => mode.mode == widget.selectedRoom.mode)
                             .description,
                         selecting: ValueNotifier<String>(
                             'bla'), // dòng này không cần thiết nhưng lỡ thiết kế vậy rồi :((
@@ -129,10 +254,11 @@ class WaitingRoom extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                   child: Text(
-                    'Người chơi trong phòng (${availablePlayer.length}/?):',
+                    'Người chơi trong phòng (${currentPlayers.length}/${widget.selectedRoom.maxPlayer}):',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
+                // Danh sách người chơi
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: GridView.builder(
@@ -146,12 +272,12 @@ class WaitingRoom extends StatelessWidget {
                       crossAxisSpacing: 20, // Khoảng cách giữa các cột
                       mainAxisSpacing: 20, // Khoảng cách giữa các hàng
                     ),
-                    itemCount: availablePlayer.length,
+                    itemCount: currentPlayers.length,
                     // Số lượng avatar
                     itemBuilder: (BuildContext context, int index) {
                       // Tạo một avatar từ index
                       return Player(
-                        player: availablePlayer[index],
+                        player: currentPlayers[index],
                       );
                     },
                   ),
@@ -162,7 +288,7 @@ class WaitingRoom extends StatelessWidget {
           ),
           // Nút
           // Khách tham gia phòng
-          if (isGuest)
+          if (widget.isGuest)
             Positioned(
               bottom: 50,
               left: MediaQuery.of(context).size.width / 2 - (150) / 2,
@@ -209,14 +335,17 @@ class WaitingRoom extends StatelessWidget {
             ),
           // Lời nhắc vui
           Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Text(
-                isGuest ? 'Chờ chủ phòng bắt đầu...' : 'Bắt đầu thôi nào!!',
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ))
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Text(
+              widget.isGuest
+                  ? 'Chờ chủ phòng bắt đầu...'
+                  : 'Bắt đầu thôi nào!!',
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );

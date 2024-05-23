@@ -3,13 +3,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+import '../model/user.dart';
+
 class Player extends StatelessWidget {
   const Player({
     super.key,
     required this.player,
   });
 
-  final PlayerInRoom player;
+  final User player;
 
   @override
   Widget build(BuildContext context) {

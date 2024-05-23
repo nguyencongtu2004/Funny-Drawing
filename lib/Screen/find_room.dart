@@ -2,24 +2,27 @@ import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Widget/room_to_play.dart';
+import '../model/user.dart';
 
-class FindRoom extends StatefulWidget {
+class FindRoom extends ConsumerStatefulWidget {
   const FindRoom({super.key});
 
   @override
-  State<FindRoom> createState() => _FindRoomState();
+  ConsumerState<FindRoom> createState() => _FindRoomState();
 }
 
-class _FindRoomState extends State<FindRoom> {
+class _FindRoomState extends ConsumerState<FindRoom> {
   final selecting = ValueNotifier<String>('none');
   final password = ValueNotifier<String>('');
   final TextEditingController _idController = TextEditingController();
   String dropdownValue = 'Tất cả';
 
-  late final List<Room> rooms = [];
+  var rooms = <Room>[];
   late List<Room> filteredRoom = [];
 
   @override
@@ -30,60 +33,29 @@ class _FindRoomState extends State<FindRoom> {
       final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>);
 
-      for (final room in data.entries) {
-        final nextRoom = Room(
-          roomId: room.key,
-          mode: room.value['mode'],
-          curPlayer: room.value['curPlayer'],
-          maxPlayer: room.value['maxPlayer'],
-          isPrivate: room.value['isPrivate'],
-          password: room.value['password'],
-        );
-        rooms.add(nextRoom);
-      }
-
       setState(() {
+        // Xóa các phòng không tồn tại trong cơ sở dữ liệu Firebase khỏi danh sách rooms
+        rooms = []; // TODO: không cập nhật khi phòng bị xóa
+
+        // Cập nhật lại các phòng còn tồn tại trong cơ sở dữ liệu Firebase
+        for (final room in data.entries) {
+          final nextRoom = Room(
+            roomId: room.key,
+            roomOwner: room.value['roomOwner'],
+            mode: room.value['mode'],
+            curPlayer: room.value['curPlayer'],
+            maxPlayer: room.value['maxPlayer'],
+            isPrivate: room.value['isPrivate'],
+            password: room.value['password'],
+          );
+          rooms.add(nextRoom);
+        }
         filteredRoom = List.from(rooms);
       });
     });
   }
 
-  void _showAlertDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            "Thông báo",
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  color: Colors.black,
-                ),
-          ),
-          content: Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Colors.black,
-                ),
-          ),
-          icon: Icon(Icons.warning_rounded),
-          backgroundColor: Color.fromARGB(255, 0, 217, 64),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                "OK",
-                style: TextStyle(color: Colors.black),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // Đóng hộp thoại cảnh báo
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _onStartClick(BuildContext context) {
+  Future<void> _onStartClick(BuildContext context, WidgetRef ref) async {
     print(selecting.value);
     print(password.value);
     final selectedRoom =
@@ -91,9 +63,35 @@ class _FindRoomState extends State<FindRoom> {
     print('Password của phòng: ${selectedRoom.password}');
     if (selectedRoom.isPrivate && password.value != selectedRoom.password) {
       print('Sai mật khẩu');
-      _showAlertDialog(context, 'Sai mật khẩu!');
+
+      // Hiển thị thông báo khi nhập sai mật khẩu
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sai mật khẩu!'),
+        ),
+      );
     } else {
       print('Đúng mật khẩu');
+
+      // Cập nhật thông tin người chơi trong phòng
+      final User player = ref.read(userProvider);
+
+      final playersInRoomRef =
+          database.child('/players_in_room/${selectedRoom.roomId}');
+      await playersInRoomRef.update({
+        player.id!: {
+          'name': player.name,
+          'avatarIndex': player.avatarIndex,
+        },
+      });
+
+      // Cập nhật thông tin phòng
+      final roomsRef = database.child('/rooms/${selectedRoom.roomId}');
+      await roomsRef.update({
+        'curPlayer': selectedRoom.curPlayer + 1,
+      });
+
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => WaitingRoom(
                 selectedRoom: selectedRoom,
@@ -344,16 +342,19 @@ class _FindRoomState extends State<FindRoom> {
           ),
         ),
 
+        // Nút
         Positioned(
           bottom: 50,
           left: MediaQuery.of(context).size.width / 2 - 180 / 2,
           child: Row(
             children: [
               Button(
-                onClick: _onStartClick,
+                onClick: (ctx) {
+                  _onStartClick(ctx, ref);
+                },
                 title: 'Vào phòng',
                 imageAsset: 'assets/images/play.png',
-                color: const Color(0xFF00C472),
+                color: const Color(0xFFC45F00),
               )
             ],
           ),

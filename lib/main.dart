@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   // Kết nối Firebase
@@ -20,7 +21,7 @@ void main() async {
         ))
       : await Firebase.initializeApp();
 
-  runApp(const DrawAndGuestApp());
+  runApp(const ProviderScope(child: DrawAndGuestApp()));
 }
 
 class DrawAndGuestApp extends StatelessWidget {
