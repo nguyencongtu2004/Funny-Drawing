@@ -67,10 +67,11 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
     });
   }
 
-  Completer<bool> _completer = Completer<bool>();
+  late Completer<bool> _completer;
 
   Future<bool> _showDialog(String title, String content,
       {bool isKicked = false}) async {
+    _completer = Completer<bool>();
     showDialog(
       context: context,
       builder: (BuildContext context) {

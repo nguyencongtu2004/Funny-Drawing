@@ -312,53 +312,66 @@ class _FindRoomState extends ConsumerState<FindRoom> {
           ),
         ),
         // Danh sách các phòng
-        Padding(
-          padding: const EdgeInsets.only(top: 170),
-          child: ListView.builder(
-            key: ValueKey(filteredRoom),
-            padding: EdgeInsets.zero,
-            itemCount: filteredRoom.length,
-            itemBuilder: (ctx, index) {
-              final isLastItem = index == filteredRoom.length - 1;
-              return Padding(
-                padding: EdgeInsets.only(
-                    left: 8, right: 8, bottom: isLastItem ? 120 : 8),
-                child: InkWell(
-                  onTap: () {
-                    selecting.value = filteredRoom[index].roomId;
-                  },
-                  child: RoomToPlay(
-                    mode: filteredRoom[index].mode,
-                    curPlayer: filteredRoom[index].curPlayer,
-                    maxPlayer: filteredRoom[index].maxPlayer,
-                    roomId: filteredRoom[index].roomId,
-                    isPrivate: filteredRoom[index].isPrivate,
-                    selecting: selecting,
-                    password: password,
+        if (filteredRoom.isEmpty)
+          Center(
+            child: Text(
+              'Hiện không có phòng nào\nHãy tạo phòng mới!',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium!
+                  .copyWith(color: Colors.black),
+              textAlign: TextAlign.center,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(top: 170),
+            child: ListView.builder(
+              key: ValueKey(filteredRoom),
+              padding: EdgeInsets.zero,
+              itemCount: filteredRoom.length,
+              itemBuilder: (ctx, index) {
+                final isLastItem = index == filteredRoom.length - 1;
+                return Padding(
+                  padding: EdgeInsets.only(
+                      left: 8, right: 8, bottom: isLastItem ? 120 : 8),
+                  child: InkWell(
+                    onTap: () {
+                      selecting.value = filteredRoom[index].roomId;
+                    },
+                    child: RoomToPlay(
+                      mode: filteredRoom[index].mode,
+                      curPlayer: filteredRoom[index].curPlayer,
+                      maxPlayer: filteredRoom[index].maxPlayer,
+                      roomId: filteredRoom[index].roomId,
+                      isPrivate: filteredRoom[index].isPrivate,
+                      selecting: selecting,
+                      password: password,
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
 
         // Nút
-        Positioned(
-          bottom: 50,
-          left: MediaQuery.of(context).size.width / 2 - 180 / 2,
-          child: Row(
-            children: [
-              Button(
-                onClick: (ctx) {
-                  _onStartClick(ctx, ref);
-                },
-                title: 'Vào phòng',
-                imageAsset: 'assets/images/play.png',
-                color: const Color(0xFFC45F00),
-              )
-            ],
+        if (filteredRoom.isNotEmpty)
+          Positioned(
+            bottom: 50,
+            left: MediaQuery.of(context).size.width / 2 - 180 / 2,
+            child: Row(
+              children: [
+                Button(
+                  onClick: (ctx) {
+                    _onStartClick(ctx, ref);
+                  },
+                  title: 'Vào phòng',
+                  imageAsset: 'assets/images/play.png',
+                  color: const Color(0xFFC45F00),
+                )
+              ],
+            ),
           ),
-        ),
       ]),
     );
   }
