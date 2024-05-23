@@ -176,11 +176,15 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                         width: 45,
                         child: IconButton(
                           onPressed: () async {
-                            final isQuit = await _showDialog('Cảnh báo',
-                                'Nếu bạn thoát, những người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
-                            if (!isQuit) return;
+                            if (ref.read(userProvider).id ==
+                                widget.selectedRoom.roomOwner) {
+                              final isQuit = await _showDialog('Cảnh báo',
+                                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                              if (!isQuit) return;
 
-                            _playOutRoom(ref);
+                              await _playOutRoom(ref);
+                            }
+
                             Navigator.of(context).pop();
                           },
                           icon: Image.asset('assets/images/back.png'),
