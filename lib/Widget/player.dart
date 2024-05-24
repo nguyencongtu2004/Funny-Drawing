@@ -9,15 +9,21 @@ class Player extends StatelessWidget {
   const Player({
     super.key,
     required this.player,
+    required this.sizeimg,
   });
 
+<<<<<<< Thinh
+  final PlayerInRoom player;
+  final double sizeimg;
+=======
   final User player;
+>>>>>>> main
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 100,
-      height: 100,
+      width: sizeimg,
+      height: sizeimg,
       child: Stack(
         children: [
           Positioned(

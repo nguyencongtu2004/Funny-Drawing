@@ -73,7 +73,7 @@ class CreateRoom extends ConsumerStatefulWidget {
       'isPrivate': createdRoom.isPrivate,
       'maxPlayer': createdRoom.maxPlayer,
       'curPlayer': createdRoom.curPlayer,
-      'mode': createdRoom.mode
+      'mode': createdRoom.mode,
     });
 
     final User player = ref.read(userProvider);
