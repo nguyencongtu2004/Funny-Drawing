@@ -85,7 +85,7 @@ class _Chat extends State<Chat> {
             ),
             const Divider(height: 10, color: Colors.white),
             Expanded(
-              child: ChatArea(roomId: widget.roomId,width: width), // No height needed
+              child: ChatArea(roomId: widget.roomId,width: width),
             ),
           ],
 
