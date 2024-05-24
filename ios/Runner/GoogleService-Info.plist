@@ -25,6 +25,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
+	<key>DATABASE_URL</key>
+    <string>https://draw-and-guest-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 	<string>1:289465409378:ios:e201c7f592add358de163b</string>
 </dict>
 </plist>

@@ -4,6 +4,7 @@ import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -139,8 +140,10 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
     }
   }
 
-  void _startClick() {
+  void _startClick(context) {
     print('bắt đầu');
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (ctx) => NormalModeRoom(roomId: widget.selectedRoom.roomId)));
   }
 
   void _inviteClick() {
@@ -282,6 +285,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       // Tạo một avatar từ index
                       return Player(
                         player: currentPlayers[index],
+                        sizeimg: 100,
                       );
                     },
                   ),
@@ -328,7 +332,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   const SizedBox(width: 10),
                   Button(
                     onClick: (ctx) {
-                      _startClick();
+                      _startClick(ctx);
                     },
                     title: 'Bắt đầu',
                     imageAsset: 'assets/images/play.png',
