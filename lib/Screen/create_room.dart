@@ -1,16 +1,20 @@
+import 'dart:math';
+
 import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
+import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:flutter/material.dart';
-import 'package:draw_and_guess_promax/firebase.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Widget/button.dart';
-import 'dart:math';
+import '../model/user.dart';
+import '../provider/user_provider.dart';
 
 final random = Random();
 
-class CreateRoom extends StatefulWidget {
+class CreateRoom extends ConsumerStatefulWidget {
   CreateRoom({super.key});
 
   final TextEditingController _passwordController = TextEditingController();
@@ -35,29 +39,52 @@ class CreateRoom extends StatefulWidget {
     return roomId;
   }
 
-  void _startClick(context) async {
-    if (selecting.value == 'none') return;
+  void _startClick(BuildContext context, WidgetRef ref) async {
+    if (selecting.value == 'none') {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn chế độ chơi'),
+        ),
+      );
+      return;
+    }
 
     print(_passwordController.text);
     print(_maxPlayer);
     print(selecting.value);
 
+    final user = ref.read(userProvider);
+
     final createdRoom = Room(
         roomId: _pickRandomRoomId(),
+        roomOwner: user.id,
         password: _passwordController.text,
         isPrivate: _passwordController.text == '' ? false : true,
         maxPlayer: _maxPlayer,
-        curPlayer: 0,
+        curPlayer: 1,
         mode: selecting.value);
 
     // Tạo tham chiếu đến mục rooms trên firebase
     final roomsRef = database.child('/rooms/${createdRoom.roomId}');
     await roomsRef.update({
+      'roomOwner': user.id,
       'password': createdRoom.password,
       'isPrivate': createdRoom.isPrivate,
       'maxPlayer': createdRoom.maxPlayer,
       'curPlayer': createdRoom.curPlayer,
       'mode': createdRoom.mode,
+    });
+
+    final User player = ref.read(userProvider);
+
+    final playersInRoomRef =
+        database.child('/players_in_room/${createdRoom.roomId}');
+    await playersInRoomRef.update({
+      player.id!: {
+        'name': player.name,
+        'avatarIndex': player.avatarIndex,
+      }
     });
 
     Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -68,10 +95,10 @@ class CreateRoom extends StatefulWidget {
   }
 
   @override
-  State<CreateRoom> createState() => _CreateRoomState();
+  ConsumerState<CreateRoom> createState() => _CreateRoomState();
 }
 
-class _CreateRoomState extends State<CreateRoom> {
+class _CreateRoomState extends ConsumerState<CreateRoom> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,32 +147,7 @@ class _CreateRoomState extends State<CreateRoom> {
               ],
             ),
           ),
-          // Players (bị loại bỏ)
-          /*Positioned(
-            top: 120,
-            left: 0, // Thiết lập left thành 0 để cuộn (chiếm hết không gian)
-            right: 0, // Thiết lập right thành 0 để cuộn (chiếm hết không gian)
-            child: Column(
-              children: [
-                Text(
-                  'Người chơi trong phòng',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (final player in availablePlayer)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Player(player: player),
-                        )
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),*/
+          // Các thành phần giao diện khác
           Positioned(
             top: 100,
             bottom: 120,
@@ -307,7 +309,7 @@ class _CreateRoomState extends State<CreateRoom> {
               children: [
                 Button(
                   onClick: (ctx) {
-                    widget._startClick(ctx);
+                    widget._startClick(ctx, ref);
                   },
                   title: 'Tạo phòng',
                   imageAsset: 'assets/images/play.png',

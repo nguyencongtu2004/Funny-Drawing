@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+import '../model/user.dart';
+
 class Player extends StatelessWidget {
   const Player({
     super.key,
@@ -10,8 +12,12 @@ class Player extends StatelessWidget {
     required this.sizeimg,
   });
 
+<<<<<<< Thinh
   final PlayerInRoom player;
   final double sizeimg;
+=======
+  final User player;
+>>>>>>> main
 
   @override
   Widget build(BuildContext context) {
