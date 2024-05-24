@@ -57,7 +57,7 @@ class CreateRoom extends StatefulWidget {
       'isPrivate': createdRoom.isPrivate,
       'maxPlayer': createdRoom.maxPlayer,
       'curPlayer': createdRoom.curPlayer,
-      'mode': createdRoom.mode
+      'mode': createdRoom.mode,
     });
 
     Navigator.of(context).pushReplacement(MaterialPageRoute(

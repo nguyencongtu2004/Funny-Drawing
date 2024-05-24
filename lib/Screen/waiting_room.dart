@@ -1,3 +1,5 @@
+import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
+import 'package:draw_and_guess_promax/Widget/Drawing.dart';
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
@@ -17,8 +19,10 @@ class WaitingRoom extends StatelessWidget {
   final Room selectedRoom;
   final bool isGuest;
 
-  void _startClick() {
+  void _startClick(context) {
     print('bắt đầu');
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (ctx) => NormalModeRoom(roomId: selectedRoom.roomId)));
   }
 
   void _inviteClick() {
@@ -152,6 +156,7 @@ class WaitingRoom extends StatelessWidget {
                       // Tạo một avatar từ index
                       return Player(
                         player: availablePlayer[index],
+                        sizeimg: 100,
                       );
                     },
                   ),
@@ -198,7 +203,7 @@ class WaitingRoom extends StatelessWidget {
                   const SizedBox(width: 10),
                   Button(
                     onClick: (ctx) {
-                      _startClick();
+                      _startClick(ctx);
                     },
                     title: 'Bắt đầu',
                     imageAsset: 'assets/images/play.png',
