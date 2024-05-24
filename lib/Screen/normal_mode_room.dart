@@ -66,7 +66,7 @@ class _NormalModeRoomState extends State<NormalModeRoom> {
                   )
               ),
               AnimatedPositioned(
-                bottom: _isOpenChat ? -constraints.maxHeight*2/3 : 0,
+                bottom: _isOpenChat ? 0 : -constraints.maxHeight*2/3,
                 left: 0.0,
                 duration: const Duration(milliseconds: 300), // Adjust animation duration
                 curve: Curves.easeInCubic, // Customize animation curve

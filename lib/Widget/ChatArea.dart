@@ -14,18 +14,17 @@ class ChatArea extends StatefulWidget {
 }
 
 class _ChatArea extends State<ChatArea> {
-  late List<String> chat = ["ABCCC", "BBBBC"];
+  late List<String> chat = ["Player1: Con cho", "Player2: Con ga"];
   final TextEditingController _controller = TextEditingController();
   @override
   void initState() {
     super.initState();
-    chat.add("ABC");
-    chat.add("BCD");
   }
 
   void _addNewChat() {
     setState(() {
       final String message = _controller.text;
+      chat.add("Player 7: $message");
       print("New message: $message");
       _controller.clear();
     });
@@ -37,32 +36,33 @@ class _ChatArea extends State<ChatArea> {
     final width = widget.width;
     return Container(
       width: width,
-      color: Colors.blue,
       child: Column(
         children: [
           Expanded(
               child: Container(
                 padding: EdgeInsets.all(15),
                 width: width,
-                color: Colors.amberAccent,
                 child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal, // Scroll horizontally
-                  child: Row(
+                  scrollDirection: Axis.vertical, // Scroll horizontally
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       for (var item in chat)
-                        Text(item),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0), // Add bottom padding
+                          child: Text(item,
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
+                        ),
                     ],
                   ),
                 ),
           )),
           Container(
-            height: 80,
-            color: Colors.amber,
-            padding: EdgeInsets.all(15),
+            height: 100,
+             padding: const EdgeInsets.only(bottom: 15.0, top: 0.0, left: 15.0, right: 15.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 Expanded(
                   child: TextField(

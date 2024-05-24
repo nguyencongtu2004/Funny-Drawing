@@ -63,6 +63,22 @@ class _Chat extends State<Chat> {
                       player: availablePlayer[3],
                       sizeimg: 70,
                     ),
+                    Player(
+                      player: availablePlayer[3],
+                      sizeimg: 70,
+                    ),
+                    Player(
+                      player: availablePlayer[3],
+                      sizeimg: 70,
+                    ),
+                    Player(
+                      player: availablePlayer[3],
+                      sizeimg: 70,
+                    ),
+                    Player(
+                      player: availablePlayer[3],
+                      sizeimg: 70,
+                    ),
                   ],
                 ),
               ),
