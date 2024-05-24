@@ -1,10 +1,5 @@
-<<<<<<< Thinh
-import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
-import 'package:draw_and_guess_promax/Widget/Drawing.dart';
-=======
 import 'dart:async';
 
->>>>>>> main
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
@@ -28,9 +23,6 @@ class WaitingRoom extends ConsumerStatefulWidget {
   final Room selectedRoom;
   final bool isGuest;
 
-<<<<<<< Thinh
-  void _startClick(context) {
-=======
   @override
   ConsumerState<WaitingRoom> createState() => _WaitingRoomState();
 }
@@ -148,10 +140,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   void _startClick() {
->>>>>>> main
     print('bắt đầu');
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (ctx) => NormalModeRoom(roomId: selectedRoom.roomId)));
   }
 
   void _inviteClick() {
@@ -292,12 +281,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                     itemBuilder: (BuildContext context, int index) {
                       // Tạo một avatar từ index
                       return Player(
-<<<<<<< Thinh
-                        player: availablePlayer[index],
-                        sizeimg: 100,
-=======
                         player: currentPlayers[index],
->>>>>>> main
                       );
                     },
                   ),
@@ -344,7 +328,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   const SizedBox(width: 10),
                   Button(
                     onClick: (ctx) {
-                      _startClick(ctx);
+                      _startClick();
                     },
                     title: 'Bắt đầu',
                     imageAsset: 'assets/images/play.png',
