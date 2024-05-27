@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:flutter/material.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
@@ -5,10 +6,10 @@ import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 class NormalModeRoom extends StatefulWidget {
   NormalModeRoom({
     super.key,
-    required this.roomId
+    required this.selectedRoom
   });
 
-  final String roomId;
+  final Room selectedRoom;
   @override
   State<NormalModeRoom> createState() => _NormalModeRoomState();
 }
@@ -62,6 +63,7 @@ class _NormalModeRoomState extends State<NormalModeRoom> {
                     child: Drawing(
                       height: constraints.maxHeight,
                       width: constraints.maxWidth,
+                      selectedRoom: widget.selectedRoom,
                     ),
                   )
               ),
@@ -74,7 +76,7 @@ class _NormalModeRoomState extends State<NormalModeRoom> {
                   height: constraints.maxHeight*2/3,
                   width: constraints.maxWidth,
                   color: Colors.white, // Or your preferred chat background color
-                  child: Chat(roomId: widget.roomId, height: constraints.maxHeight*2/3, width: constraints.maxWidth),
+                  child: Chat(roomId: widget.selectedRoom.roomId, height: constraints.maxHeight*2/3, width: constraints.maxWidth),
                 ),
               ),
             ],

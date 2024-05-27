@@ -143,7 +143,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   void _startClick(context) {
     print('bắt đầu');
     Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (ctx) => NormalModeRoom(roomId: widget.selectedRoom.roomId)));
+        builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
   }
 
   void _inviteClick() {
