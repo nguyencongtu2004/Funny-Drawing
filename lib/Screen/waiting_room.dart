@@ -48,6 +48,15 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
               isKicked: true);
           Navigator.of(context).pop();
         }
+      } else {
+        final data = Map<String, dynamic>.from(
+            event.snapshot.value as Map<dynamic, dynamic>);
+
+        if (data['isPlayed'] == true) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (ctx) =>
+                  NormalModeRoom(selectedRoom: widget.selectedRoom)));
+        }
       }
     });
 
@@ -142,6 +151,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
 
   void _startClick(context) {
     print('bắt đầu');
+    _roomRef.update({'isPlayed': true});
+
     Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
   }

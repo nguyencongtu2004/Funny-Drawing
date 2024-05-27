@@ -63,7 +63,8 @@ class CreateRoom extends ConsumerStatefulWidget {
         isPrivate: _passwordController.text == '' ? false : true,
         maxPlayer: _maxPlayer,
         curPlayer: 1,
-        mode: selecting.value);
+        mode: selecting.value,
+        isPlayed: false);
 
     // Tạo tham chiếu đến mục rooms trên firebase
     final roomsRef = database.child('/rooms/${createdRoom.roomId}');
@@ -73,7 +74,8 @@ class CreateRoom extends ConsumerStatefulWidget {
       'isPrivate': createdRoom.isPrivate,
       'maxPlayer': createdRoom.maxPlayer,
       'curPlayer': createdRoom.curPlayer,
-      'mode': createdRoom.mode
+      'mode': createdRoom.mode,
+      'isPlayed': createdRoom.isPlayed,
     });
 
     final User player = ref.read(userProvider);
