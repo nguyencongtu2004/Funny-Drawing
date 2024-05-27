@@ -1,7 +1,12 @@
+import 'package:draw_and_guess_promax/provider/user_provider.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatArea extends StatefulWidget {
-  ChatArea({
+import '../firebase.dart';
+
+class ChatArea extends ConsumerStatefulWidget {
+  const ChatArea({
     super.key,
     required this.roomId,
     required this.width,
@@ -9,27 +14,45 @@ class ChatArea extends StatefulWidget {
 
   final String roomId;
   final double width;
+
   @override
-  State<ChatArea> createState() => _ChatArea();
+  ConsumerState<ChatArea> createState() => _ChatArea();
 }
 
-class _ChatArea extends State<ChatArea> {
-  late List<String> chat = ["Player1: Con cho", "Player2: Con ga"];
+class _ChatArea extends ConsumerState<ChatArea> {
+  late List<String> chat = [];
   final TextEditingController _controller = TextEditingController();
+  late DatabaseReference _chatRef;
+
   @override
   void initState() {
     super.initState();
+
+    _chatRef = database.child('/chat/${widget.roomId}');
+    _chatRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      setState(() {
+        chat.clear();
+        for (final message in data.entries) {
+          chat.add("${message.value['userName']}: ${message.value['message']}");
+        }
+      });
+    });
   }
 
   void _addNewChat() {
     setState(() {
       final String message = _controller.text;
-      chat.add("Player 7: $message");
-      print("New message: $message");
+
+      _chatRef.push().set({
+        'userName': ref.read(userProvider).name,
+        'message': message,
+      });
       _controller.clear();
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -40,27 +63,33 @@ class _ChatArea extends State<ChatArea> {
         children: [
           Expanded(
               child: Container(
-                padding: EdgeInsets.all(15),
-                width: width,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical, // Scroll horizontally
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var item in chat)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0), // Add bottom padding
-                          child: Text(item,
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
-                        ),
-                    ],
-                  ),
-                ),
-              )),
+            padding: const EdgeInsets.all(15),
+            width: width,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical, // Scroll horizontally
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var item in chat)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10.0),
+                      // Add bottom padding
+                      child: Text(
+                        item,
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          )),
           Container(
             height: 100,
-            padding: const EdgeInsets.only(bottom: 15.0, top: 0.0, left: 15.0, right: 15.0),
+            padding: const EdgeInsets.only(
+                bottom: 15.0, top: 0.0, left: 15.0, right: 15.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
