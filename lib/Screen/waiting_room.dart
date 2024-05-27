@@ -296,7 +296,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       // Tạo một avatar từ index
                       return Player(
                         player: currentPlayers[index],
-                        sizeimg: 100,
+                        sizeImg: 100,
                       );
                     },
                   ),
