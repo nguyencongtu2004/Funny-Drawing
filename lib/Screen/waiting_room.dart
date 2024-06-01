@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
-import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,8 +153,15 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
     print('bắt đầu');
     _roomRef.update({'isPlayed': true});
 
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
+    Widget? selectedMode;
+    if (widget.selectedRoom.mode == 'Thường') {
+      selectedMode = NormalModeRoom(selectedRoom: widget.selectedRoom);
+    } else {
+      // Các chế độ chơi khác
+    }
+
+    if (selectedMode == null) return;
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (ctx) => selectedMode!));
   }
 
   void _inviteClick() {
