@@ -24,6 +24,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late String _wordToDraw;
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
+  late DatabaseReference _chatRef;
+  late DatabaseReference _drawingRef;
 
   @override
   void initState() {
@@ -31,6 +33,9 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
+    _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
+    _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
+
     _wordToDraw = "Con ga";
 
     _roomRef.onValue.listen((event) async {
@@ -120,6 +125,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       // Chủ phòng thoát, xóa phòng
       await _roomRef.remove();
       await _playersInRoomRef.remove();
+      await _chatRef.remove();
+      await _drawingRef.remove();
     } else {
       // Người chơi thoát, xóa người chơi trong phòng
       final playerRef = database
