@@ -921,12 +921,15 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       print("id1: " + widget.selectedRoom.roomOwner.toString());
       print("id2: " + ref.read(userProvider).id.toString());
       if(widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
-        print("even: " + event.snapshot.value.toString());
+        //print("even: " + event.snapshot.value.toString());
         if (event.snapshot.value is Map) {
           final data = (event.snapshot.value as Map).map((key, value) {
             return MapEntry(key.toString(), value.toString());
           });
-          print(data);
+          print('data: $data');
+          print(data.runtimeType.toString());
+          print("Offset: " + data["Offset"]!);
+          print("Color: " + data["Color"]!);
 
           setState(() {
             points = decodeOffsetList(data["Offset"]!);
@@ -978,6 +981,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       Qpt.add(paints[paints.length - 1]);
       points.removeLast();
       paints.removeLast();
+
+      updatePoints();
     });
   }
 
@@ -990,6 +995,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       Qpn.removeLast();
       Qpt.removeLast();
       print("Ctrl + Y");
+
+      updatePoints();
     });
   }
 
@@ -1007,22 +1014,28 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   }
 // Hàm decode chuỗi JSON thành List<List<Offset>>
   List<List<Offset>> decodeOffsetList(String jsonStr) {
-    List<List<double>> decodedList = [];
     List<List<Offset>> offsetList = [];
 
     if (jsonStr != null && jsonStr.isNotEmpty) {
-      decodedList = List<List<double>>.from(json.decode(jsonStr));
-      decodedList.forEach((innerList) {
-        List<Offset> tempList = [];
-        for (int i = 0; i < innerList.length; i += 2) {
-          tempList.add(Offset(innerList[i], innerList[i + 1]));
+      // Decode the JSON string
+      List<dynamic> decodedList = json.decode(jsonStr);
+
+      // Process each inner list
+      decodedList.forEach((dynamic innerList) {
+        if (innerList is List) {
+          List<Offset> tempList = [];
+          for (int i = 0; i < innerList.length; i += 2) {
+            tempList.add(
+                Offset(innerList[i] as double, innerList[i + 1] as double));
+          }
+          offsetList.add(tempList);
         }
-        offsetList.add(tempList);
       });
     }
 
     return offsetList;
   }
+
   String encodePaintList(List<Paint> paintList) {
     List<Map<String, dynamic>> encodedList = paintList.map((paint) {
       return {
