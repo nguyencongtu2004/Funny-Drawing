@@ -5,7 +5,6 @@ import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,6 +18,7 @@ class Drawing extends StatefulWidget {
   final double height;
   final double width;
   final Room selectedRoom;
+
   @override
   State<Drawing> createState() => _Drawing();
 }
@@ -51,7 +51,7 @@ class _Drawing extends State<Drawing> {
     _isSizeMenuVisible = false;
     _containerPositionSize = Offset.zero;
     _isErase = false;
-    
+
     _drawRef = database.child('/draw/${widget.selectedRoom}');
   }
 
@@ -73,7 +73,7 @@ class _Drawing extends State<Drawing> {
   }
 
   void _setColor(Color cl) {
-    if(_isErase) return;
+    if (_isErase) return;
     setState(() {
       _paintColor = cl;
     });
@@ -130,7 +130,7 @@ class _Drawing extends State<Drawing> {
         ),
         // ----------------------  MenuBar ----------------------
         Positioned(
-          top: widget.height-100,
+          top: widget.height - 100,
           left: 0,
           child: Container(
               padding: EdgeInsets.only(top: 10.0),
@@ -179,7 +179,8 @@ class _Drawing extends State<Drawing> {
                         child: GestureDetector(
                           key: _selectmenu,
                           onTap: () {
-                            _setColor(Theme.of(context).scaffoldBackgroundColor);
+                            _setColor(
+                                Theme.of(context).scaffoldBackgroundColor);
                             _setSelectIcon(Icons.add);
                             RenderBox buttonBox = _selectmenu.currentContext!
                                 .findRenderObject() as RenderBox;
@@ -188,7 +189,8 @@ class _Drawing extends State<Drawing> {
                             _toggleSelectMenuVisibility(buttonPosition);
                           },
                           child: Image.asset(
-                            'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
+                            'assets/images/erase.png',
+                            // Đường dẫn đến hình ảnh cục tẩy
                             width: 10,
                             height: 10,
                             color: Colors.black, // Màu của hình ảnh
@@ -206,16 +208,18 @@ class _Drawing extends State<Drawing> {
                         child: GestureDetector(
                           key: _selectmenu,
                           onTap: () {
-                            _setColor(Theme.of(context).scaffoldBackgroundColor);
+                            _setColor(
+                                Theme.of(context).scaffoldBackgroundColor);
                             _setSelectIcon(Icons.minimize);
                             RenderBox buttonBox = _selectmenu.currentContext!
                                 .findRenderObject() as RenderBox;
                             Offset buttonPosition =
-                            buttonBox.localToGlobal(Offset.zero);
+                                buttonBox.localToGlobal(Offset.zero);
                             _toggleSelectMenuVisibility(buttonPosition);
                           },
                           child: Image.asset(
-                            'assets/images/draw_line.png', // Đường dẫn đến hình ảnh cục tẩy
+                            'assets/images/draw_line.png',
+                            // Đường dẫn đến hình ảnh cục tẩy
                             width: 10,
                             height: 10,
                             color: Colors.black, // Màu của hình ảnh
@@ -277,8 +281,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.black),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -300,8 +304,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.white),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -323,8 +327,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.grey),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -346,8 +350,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.red),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -369,8 +373,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.yellow),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -392,8 +396,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.green),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -415,8 +419,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.blue),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -443,8 +447,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.pink),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -466,8 +470,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.brown),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -489,8 +493,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.cyanAccent),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -512,8 +516,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.greenAccent),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -535,8 +539,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.orange),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -558,8 +562,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.purple),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -581,8 +585,8 @@ class _Drawing extends State<Drawing> {
                                     ),
                                     backgroundColor: Colors.teal),
                                 child: SizedBox(
-                                  width:
-                                      sizePickColor, // Kích thước của hình vuông
+                                  width: sizePickColor,
+                                  // Kích thước của hình vuông
                                   height: sizePickColor,
                                 ),
                               ),
@@ -758,22 +762,22 @@ class _Drawing extends State<Drawing> {
                                   7.0), // Bán kính cong của đường viền
                             ),
                             child: GestureDetector(
-                              onTap: () {
-                                _preColor = _paintColor;
-                                _setColor(Theme.of(context).scaffoldBackgroundColor);
-                                _setSelectIcon(Icons.add);
-                                _toggleSelectMenuVisibility(Offset(0, 0));
-                                _isErase = true;
-
-                              },
-                              child: Image.asset('assets/images/erase.png')
-                              // Image.asset(
-                              //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
-                              //   width: 10,
-                              //   height: 10,
-                              //   color: Colors.black, // Màu của hình ảnh
-                              // ),
-                            )),
+                                onTap: () {
+                                  _preColor = _paintColor;
+                                  _setColor(Theme.of(context)
+                                      .scaffoldBackgroundColor);
+                                  _setSelectIcon(Icons.add);
+                                  _toggleSelectMenuVisibility(Offset(0, 0));
+                                  _isErase = true;
+                                },
+                                child: Image.asset('assets/images/erase.png')
+                                // Image.asset(
+                                //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
+                                //   width: 10,
+                                //   height: 10,
+                                //   color: Colors.black, // Màu của hình ảnh
+                                // ),
+                                )),
                       ],
                     ),
                     Row(
@@ -822,13 +826,13 @@ class _Drawing extends State<Drawing> {
                                 width: 20,
                                 height: 20,
                               )
-                            // Image.asset(
-                            //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
-                            //   width: 10,
-                            //   height: 10,
-                            //   color: Colors.black, // Màu của hình ảnh
-                            // ),
-                          ),
+                              // Image.asset(
+                              //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
+                              //   width: 10,
+                              //   height: 10,
+                              //   color: Colors.black, // Màu của hình ảnh
+                              // ),
+                              ),
                         ),
                       ],
                     ),
@@ -891,6 +895,7 @@ class PaintBoard extends ConsumerStatefulWidget {
   final double height;
   final double width;
   final Room selectedRoom;
+
   PaintBoard(
       {required this.key,
       required this.chose,
@@ -899,6 +904,7 @@ class PaintBoard extends ConsumerStatefulWidget {
       required this.paintColor,
       required this.paintSize,
       required this.selectedRoom});
+
   @override
   _PaintBoardState createState() => _PaintBoardState();
 }
@@ -911,35 +917,41 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late Queue<Paint> Qpt = Queue<Paint>();
   late bool isDrawLine = false;
   late DatabaseReference drawRef;
+  late DatabaseReference _normalModeDataRef;
+  var userTurn = "";
 
   @override
-  void initState() {
+  initState() {
     super.initState();
     drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
-    print("BCS");
-    drawRef.onValue.listen((event)async {
-      print("id1: " + widget.selectedRoom.roomOwner.toString());
-      print("id2: " + ref.read(userProvider).id.toString());
-      if(widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
-        //print("even: " + event.snapshot.value.toString());
+    _normalModeDataRef =
+        database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+
+    _normalModeDataRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      setState(() {
+        userTurn = data['turn'];
+      });
+    });
+
+    drawRef.onValue.listen((event) async {
+      // Khi có sự thay đổi dữ liệu trên Firebase
+      if (event.snapshot.value == null) {
+        clearPoints();
+      }
+
+      if (userTurn != ref.read(userProvider).id) {
         if (event.snapshot.value is Map) {
           final data = (event.snapshot.value as Map).map((key, value) {
             return MapEntry(key.toString(), value.toString());
           });
-          print('data: $data');
-          print(data.runtimeType.toString());
-          print("Offset: " + data["Offset"]!);
-          print("Color: " + data["Color"]!);
-
           setState(() {
             points = decodeOffsetList(data["Offset"]!);
             paints = decodePaintList(data["Color"]!);
           });
-        } else {
-          print("event.snapshot.value is not a Map");
         }
-        // print("data: " + data.runtimeType.toString());
-
       }
     });
   }
@@ -1012,6 +1024,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     });
     return json.encode(encodedList);
   }
+
 // Hàm decode chuỗi JSON thành List<List<Offset>>
   List<List<Offset>> decodeOffsetList(String jsonStr) {
     List<List<Offset>> offsetList = [];
@@ -1051,7 +1064,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
 // Hàm decode chuỗi JSON thành List<Paint>
   List<Paint> decodePaintList(String jsonStr) {
-    List<Map<String, dynamic>> decodedList = List<Map<String, dynamic>>.from(json.decode(jsonStr));
+    List<Map<String, dynamic>> decodedList =
+        List<Map<String, dynamic>>.from(json.decode(jsonStr));
     return decodedList.map((paintMap) {
       Paint paint = Paint()
         ..color = Color(paintMap['color'])
@@ -1062,21 +1076,17 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       return paint;
     }).toList();
   }
-  
+
   void updatePoints() async {
     print("OK?");
     List<List<Offset>> fbpush = points;
-    if(tmp != null && tmp.length > 0)fbpush.add(tmp);
+    if (tmp != null && tmp.length > 0) fbpush.add(tmp);
 
-    await drawRef.update({
-      'Offset' : encodeOffsetList(fbpush),
-      'Color' : encodePaintList(paints)
-    });
+    await drawRef.update(
+        {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
   }
 
-  void getData()  {
-
-  }
+  void getData() {}
 
   @override
   Widget build(BuildContext context) {
@@ -1110,9 +1120,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
             tmp.add(setValid(pos));
             // updatePoints();
             // points[cnt].add(setValid(pos));
-          }
-          else if(chose == "DrawLine") {
-            if(tmp.length > 1) tmp.removeLast();
+          } else if (chose == "DrawLine") {
+            if (tmp.length > 1) tmp.removeLast();
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
@@ -1143,7 +1152,9 @@ class PaintCanvas extends CustomPainter {
   final List<List<Offset>> points;
   final List<Offset> tmp;
   final List<Paint> paints;
+
   PaintCanvas({required this.points, required this.tmp, required this.paints});
+
   @override
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint()

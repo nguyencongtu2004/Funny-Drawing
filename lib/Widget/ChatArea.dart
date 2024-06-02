@@ -23,13 +23,23 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
   late List<Map<String, dynamic>> chat = [];
   final TextEditingController _controller = TextEditingController();
   late DatabaseReference _chatRef;
+  late DatabaseReference _normalModeDataRef;
   final ScrollController _scrollController = ScrollController();
+  var wordToGuess = '';
 
   @override
   void initState() {
     super.initState();
-
     _chatRef = database.child('/chat/${widget.roomId}');
+    _normalModeDataRef = database.child('/normal_mode_data/${widget.roomId}');
+
+    _normalModeDataRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      wordToGuess = data['wordToDraw'];
+    });
+
     _chatRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
@@ -52,6 +62,16 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
           curve: Curves.easeOut,
         );
       });
+
+      // Kiểm tra đoán đúng không
+      for (var item in chat) {
+        if ((item['message'] as String).toLowerCase() ==
+            wordToGuess.toLowerCase()) {
+          _normalModeDataRef.update({
+            'userGuessed': ref.watch(userProvider).id,
+          });
+        }
+      }
     });
   }
 
@@ -64,6 +84,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
       'message': message,
       'timestamp': timestamp,
     });
+
     _controller.clear();
   }
 

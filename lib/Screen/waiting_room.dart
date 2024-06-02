@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:draw_and_guess_promax/Widget/player.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Widget/button.dart';
+import '../data/word_to_guess.dart';
 import '../firebase.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart';
@@ -53,9 +55,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
             event.snapshot.value as Map<dynamic, dynamic>);
 
         if (data['isPlayed'] == true) {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-              builder: (ctx) =>
-                  NormalModeRoom(selectedRoom: widget.selectedRoom)));
+          startMode(widget.selectedRoom.mode);
         }
       }
     });
@@ -149,19 +149,33 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
     }
   }
 
+  void startMode(String mode) {
+    if (mode == 'Thường') {
+      // Chuyển sang màn hình chơi
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
+
+      var normalModeDataRef =
+          database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+      // Khởi tạo trạng thái của phòng
+      normalModeDataRef.update({
+        'wordToDraw': pickRandomWordToGuess(),
+        'turn': currentPlayers[Random().nextInt(currentPlayers.length)].id,
+        'timeLeft': 60,
+      });
+    } else if (mode == 'Tam sao thất bản') {
+      // TODO
+    } else if (mode == 'Tuyệt tác') {
+      // TODO
+    } else {
+      throw 'Unknown mode: $mode';
+    }
+  }
+
   void _startClick(context) {
     print('bắt đầu');
     _roomRef.update({'isPlayed': true});
-
-    Widget? selectedMode;
-    if (widget.selectedRoom.mode == 'Thường') {
-      selectedMode = NormalModeRoom(selectedRoom: widget.selectedRoom);
-    } else {
-      // Các chế độ chơi khác
-    }
-
-    if (selectedMode == null) return;
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (ctx) => selectedMode!));
+    startMode(widget.selectedRoom.mode);
   }
 
   void _inviteClick() {

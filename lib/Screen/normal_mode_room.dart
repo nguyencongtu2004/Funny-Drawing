@@ -2,16 +2,18 @@ import 'dart:async';
 
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
+import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
+import '../model/user.dart';
 import '../provider/user_provider.dart';
 
 class NormalModeRoom extends ConsumerStatefulWidget {
-  NormalModeRoom({super.key, required this.selectedRoom});
+  const NormalModeRoom({super.key, required this.selectedRoom});
 
   final Room selectedRoom;
 
@@ -20,12 +22,20 @@ class NormalModeRoom extends ConsumerStatefulWidget {
 }
 
 class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
-  // MediaQuery.of(context).size.height
-  late String _wordToDraw;
+  String _wordToDraw = '';
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
+  late DatabaseReference _normalModeDataRef;
+  late final List<User> _playersInRoom = [];
+  late List<String> _playersInRoomId = [];
+  int currentPlayerTurnIndex = 0;
+
+  var isMyTurn = false;
+  var _timeLeft = -1;
+
+  Timer? _timer;
 
   @override
   void initState() {
@@ -35,9 +45,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
     _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
+    _normalModeDataRef =
+        database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
 
-    _wordToDraw = "Con ga";
-
+    // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
       if (event.snapshot.value == null) {
         // Room has been deleted
@@ -48,18 +59,97 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         }
       }
     });
+
+    // Lấy thông tin người chơi trong phòng
+    _playersInRoomRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      _playersInRoom.clear();
+      for (final player in data.entries) {
+        _playersInRoom.add(User(
+          id: player.key,
+          name: player.value['name'],
+          avatarIndex: player.value['avatarIndex'],
+        ));
+      }
+      _playersInRoomId.clear();
+      _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
+    });
+
+    // Lấy thông tin từ cần vẽ và lượt chơi
+    _normalModeDataRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      setState(() {
+        _wordToDraw = data['wordToDraw'] as String;
+      });
+      final turn = data['turn'] as String;
+      final userGuessed = data['userGuessed'] as String?;
+
+      final timeLeft = data['timeLeft'] as int;
+      setState(() {
+        _timeLeft = timeLeft;
+      });
+
+      // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
+      _startTimer();
+
+      // Lấy vị trí của người chơi hiện tại
+      currentPlayerTurnIndex = _playersInRoomId.indexOf(turn);
+      setState(() {
+        if (turn == ref.read(userProvider).id) {
+          isMyTurn = true;
+        } else {
+          isMyTurn = false;
+        }
+      });
+
+      // Chủ phòng cập nhật lượt chơi khi có người đoán đúng từ hoặc hết giờ
+      if ((userGuessed != null || timeLeft == 0) &&
+          ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
+        currentPlayerTurnIndex =
+            (currentPlayerTurnIndex + 1) % _playersInRoomId.length;
+        _normalModeDataRef.update({
+          'userGuessed': null,
+          'turn': _playersInRoomId[currentPlayerTurnIndex],
+          'wordToDraw': pickRandomWordToGuess(),
+          'timeLeft': 60,
+        });
+        // Xóa bảng vẽ
+        _drawingRef.remove();
+      }
+    });
+  }
+
+  void _startTimer() {
+    if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+      _timer?.cancel(); // Hủy Timer nếu đã tồn tại
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (_timeLeft > 0) {
+          _normalModeDataRef.update({'timeLeft': _timeLeft - 1});
+        } else {
+          timer.cancel(); // Hủy Timer khi thời gian kết thúc
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Hủy Timer khi widget bị dispose
+    super.dispose();
   }
 
   void _showChat() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      // Cho phép Bottom Sheet chiếm nhiều không gian hơn
       backgroundColor: const Color(0xFF00C4A1),
       builder: (ctx) {
         return Container(
-          height:
-              MediaQuery.of(ctx).size.height * 0.8, // 80% chiều cao màn hình
+          height: MediaQuery.of(ctx).size.height * 0.8,
           child: Chat(
             roomId: widget.selectedRoom.roomId,
             height: MediaQuery.of(ctx).size.height,
@@ -87,7 +177,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  _completer.complete(false); // Hoàn thành với giá trị true
+                  _completer.complete(false);
                 },
                 child: const Text(
                   'Hủy',
@@ -100,7 +190,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _completer.complete(true); // Hoàn thành với giá trị true
+                _completer.complete(true);
               },
               child: Text(
                 isKicked ? 'OK' : 'Thoát',
@@ -114,7 +204,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         );
       },
     );
-    return _completer.future; // Trả về Future từ Completer
+    return _completer.future;
   }
 
   Future<void> _playOutRoom(WidgetRef ref) async {
@@ -122,18 +212,16 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     if (userId == null) return;
 
     if (widget.selectedRoom.roomOwner == userId) {
-      // Chủ phòng thoát, xóa phòng
       await _roomRef.remove();
       await _playersInRoomRef.remove();
       await _chatRef.remove();
       await _drawingRef.remove();
+      await _normalModeDataRef.remove();
     } else {
-      // Người chơi thoát, xóa người chơi trong phòng
       final playerRef = database
           .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
       await playerRef.remove();
 
-      // Cập nhật thông tin phòng
       final currentPlayerCount =
           (await _roomRef.child('curPlayer').get()).value as int;
       if (currentPlayerCount > 0) {
@@ -147,7 +235,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
-      // Appbar
       Container(
         width: double.infinity,
         height: 100,
@@ -186,7 +273,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 ),
                 Expanded(
                   child: Text(
-                    _wordToDraw,
+                    'Thường',
                     style: Theme.of(context)
                         .textTheme
                         .titleLarge!
@@ -211,17 +298,47 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           ],
         ),
       ),
-      // Chat
       Positioned(
-          //top: 100,
-          child: Padding(
-        padding: const EdgeInsets.only(top: 100),
-        child: Drawing(
-          height: MediaQuery.of(context).size.height - 100,
-          width: MediaQuery.of(context).size.width,
-          selectedRoom: widget.selectedRoom,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 100),
+          child: Drawing(
+            height: MediaQuery.of(context).size.height - 100,
+            width: MediaQuery.of(context).size.width,
+            selectedRoom: widget.selectedRoom,
+          ),
         ),
-      )),
+      ),
+      Positioned(
+        top: 100,
+        left: 0,
+        right: 0,
+        child: Container(
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    isMyTurn ? 'Hãy vẽ: $_wordToDraw' : '',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                        .copyWith(color: Colors.black),
+                  ),
+                ),
+                Text(
+                  _timeLeft.toString(),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge!
+                      .copyWith(color: Colors.black),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
     ]);
   }
 }
