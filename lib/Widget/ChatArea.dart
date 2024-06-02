@@ -1,7 +1,12 @@
+import 'package:draw_and_guess_promax/provider/user_provider.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatArea extends StatefulWidget {
-  ChatArea({
+import '../firebase.dart';
+
+class ChatArea extends ConsumerStatefulWidget {
+  const ChatArea({
     super.key,
     required this.roomId,
     required this.width,
@@ -9,27 +14,58 @@ class ChatArea extends StatefulWidget {
 
   final String roomId;
   final double width;
+
   @override
-  State<ChatArea> createState() => _ChatArea();
+  _ChatAreaState createState() => _ChatAreaState();
 }
 
-class _ChatArea extends State<ChatArea> {
-  late List<String> chat = ["Player1: Con cho", "Player2: Con ga"];
+class _ChatAreaState extends ConsumerState<ChatArea> {
+  late List<Map<String, dynamic>> chat = [];
   final TextEditingController _controller = TextEditingController();
+  late DatabaseReference _chatRef;
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-  }
 
-  void _addNewChat() {
-    setState(() {
-      final String message = _controller.text;
-      chat.add("Player 7: $message");
-      print("New message: $message");
-      _controller.clear();
+    _chatRef = database.child('/chat/${widget.roomId}');
+    _chatRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      setState(() {
+        chat.clear();
+        for (final message in data.entries) {
+          chat.add({
+            "userName": message.value['userName'],
+            "message": message.value['message'],
+            "timestamp": message.value['timestamp'],
+          });
+        }
+        // Sắp xếp danh sách tin nhắn theo timestamp
+        chat.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+        // Cuộn xuống dòng cuối cùng
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
     });
   }
 
+  void _addNewChat() {
+    final String message = _controller.text;
+    final int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    _chatRef.push().set({
+      'userName': ref.read(userProvider).name,
+      'message': message,
+      'timestamp': timestamp,
+    });
+    _controller.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,51 +75,71 @@ class _ChatArea extends State<ChatArea> {
       child: Column(
         children: [
           Expanded(
-              child: Container(
-                padding: EdgeInsets.all(15),
-                width: width,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical, // Scroll horizontally
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var item in chat)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0), // Add bottom padding
-                          child: Text(item,
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              width: width,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                reverse: true, // Kéo ngược để hiển thị dòng cuối cùng trên cùng
+                scrollDirection: Axis.vertical,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var item in chat)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10.0),
+                        child: Text(
+                          "${item['userName']}: ${item['message']}",
+                          style:
+                              Theme.of(context).textTheme.bodySmall!.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
-          )),
+              ),
+            ),
+          ),
           Container(
-            height: 100,
-             padding: const EdgeInsets.only(bottom: 15.0, top: 0.0, left: 15.0, right: 15.0),
+            padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     decoration: InputDecoration(
                       hintText: 'Nhập đáp án',
+                      hintStyle: const TextStyle(
+                        color: Colors.black45,
+                        fontWeight: FontWeight.normal,
+                        fontSize: 18,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(50),
                       ),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () {
-                    _addNewChat();
-                  },
+                SizedBox(
+                  height: 50,
+                  width: 50,
+                  child: IconButton(
+                    onPressed: _addNewChat,
+                    icon: Image.asset('assets/images/send.png'),
+                    iconSize: 45,
+                  ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

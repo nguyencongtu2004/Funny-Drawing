@@ -1,49 +1,66 @@
 import 'dart:math';
 
-import 'package:draw_and_guess_promax/Screen/create_room.dart';
-import 'package:draw_and_guess_promax/Screen/find_room.dart';
-import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
-import 'package:draw_and_guess_promax/Screen/more_drawer.dart';
-import 'package:draw_and_guess_promax/Widget/button.dart';
-import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../Widget/button.dart';
+import '../firebase.dart';
+import '../model/user.dart';
+import '../provider/user_provider.dart'; // Đảm bảo bạn import user_provider đúng cách
+import 'create_room.dart';
+import 'find_room.dart';
+import 'how_to_play.dart';
+import 'more_drawer.dart';
 
 Random random = Random();
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  // Khai báo một TextEditingController để lưu giữ nội dung của trường nhập văn bản
+class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _textEditingController = TextEditingController();
-  var _avaterIndex = random.nextInt(13);
+  var _avatarIndex = random.nextInt(13);
 
   void _onMoreClick(context) {
-    // Xử lý khi nút more được nhấn
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const MoreDrawer()));
   }
 
   void _onInformationClick(context) {
-    // Xử lý khi nút information được nhấn
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const HowToPlay()));
   }
 
   void _findRoomClick(context) async {
     String name = _textEditingController.text;
-    if (name == '') return;
+    if (name.isEmpty) {
+      // Hiển thị Snackbar nếu tên rỗng
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập tên của bạn'),
+        ),
+      );
+      return;
+    }
 
-    print('Tên: $name');
-    print('Avatar index: $_avaterIndex');
+    final user = ref.watch(userProvider);
+    ref
+        .watch(userProvider.notifier)
+        .updateUser(name: name, avatarIndex: _avatarIndex);
 
-    // Tạo tham chiếu đến mục users trên firebase
-    final usersRef = database.child('/users/$name');
-    await usersRef.update({'avatarIndex': _avaterIndex});
+    print('Tên: ${user.name}');
+    print('Avatar index: ${user.avatarIndex}');
+
+    final usersRef = database.child('/users/${user.id}');
+    await usersRef.update({
+      'name': name, // dùng user.name thì bị lỗi trên firebase không thể update
+      'avatarIndex': _avatarIndex
+    });
 
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const FindRoom()));
@@ -51,14 +68,30 @@ class _HomePageState extends State<HomePage> {
 
   void _createRoomClick(context) async {
     String name = _textEditingController.text;
-    if (name == '') return;
+    if (name.isEmpty) {
+      // Hiển thị Snackbar nếu tên rỗng
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập tên của bạn'),
+        ),
+      );
+      return;
+    }
 
-    print('Tên: $name');
-    print('Avatar index: $_avaterIndex');
+    final user = ref.watch(userProvider);
+    ref
+        .watch(userProvider.notifier)
+        .updateUser(name: name, avatarIndex: _avatarIndex);
 
-    // Tạo tham chiếu đến mục users trên firebase
-    final usersRef = database.child('/users/$name');
-    await usersRef.update({'avatarIndex': _avaterIndex});
+    print('Tên: ${user.name}');
+    print('Avatar index: ${user.avatarIndex}');
+
+    final usersRef = database.child('/users/${user.id}');
+    await usersRef.update({
+      'name': name, // dùng user.name thì bị lỗi trên firebase không thể update
+      'avatarIndex': _avatarIndex
+    });
 
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => CreateRoom()));
@@ -81,20 +114,18 @@ class _HomePageState extends State<HomePage> {
             child: GridView.builder(
               shrinkWrap: true,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, // Số cột trong lưới
-                crossAxisSpacing: 8.0, // Khoảng cách giữa các cột
-                mainAxisSpacing: 8.0, // Khoảng cách giữa các hàng
+                crossAxisCount: 3,
+                crossAxisSpacing: 8.0,
+                mainAxisSpacing: 8.0,
               ),
-              itemCount: 13, // Số lượng avatar
-              itemBuilder: (BuildContext context, int index) {
-                // Tạo một avatar từ index
+              itemCount: 13,
+              itemBuilder: (BuildContext t, int index) {
                 return GestureDetector(
                   onTap: () {
-                    // Xử lý khi người dùng chọn một avatar
                     setState(() {
-                      _avaterIndex = index;
+                      _avatarIndex = index;
                     });
-                    Navigator.of(context).pop(); // Đóng hộp thoại sau khi chọn
+                    Navigator.of(context).pop();
                   },
                   child: CircleAvatar(
                     backgroundImage:
@@ -123,7 +154,6 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Stack(
         children: [
-          // Logo
           Positioned(
             top: 60,
             left: 0,
@@ -134,7 +164,6 @@ class _HomePageState extends State<HomePage> {
               child: Image.asset('assets/images/logo.png'),
             ),
           ),
-          // App bar
           Positioned(
             top: 35,
             left: 0,
@@ -169,7 +198,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          // Nơi nhập thông tin
           Positioned(
             top: 220,
             left: 20,
@@ -197,7 +225,7 @@ class _HomePageState extends State<HomePage> {
                     decoration: ShapeDecoration(
                       image: DecorationImage(
                         image: AssetImage(
-                            'assets/images/avatars/avatar$_avaterIndex.png'),
+                            'assets/images/avatars/avatar$_avatarIndex.png'),
                         fit: BoxFit.fill,
                       ),
                       shape: const CircleBorder(),
@@ -222,12 +250,10 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  // Trường nhập tên
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: TextField(
                       controller: _textEditingController,
-                      // Gán TextEditingController cho trường nhập văn bản
                       decoration: InputDecoration(
                         hintText: 'Tên của bạn',
                         hintStyle: const TextStyle(color: Colors.white),
@@ -247,7 +273,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-
           Positioned(
             top: 470 + (MediaQuery.of(context).size.height - 470) / 2 - 120 / 2,
             left: 0,
