@@ -1,17 +1,24 @@
 import 'dart:collection';
+import 'dart:convert';
 
+import 'package:draw_and_guess_promax/firebase.dart';
+import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/provider/user_provider.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Drawing extends StatefulWidget {
   const Drawing({
     Key? key,
     required this.height,
     required this.width,
+    required this.selectedRoom,
   }) : super(key: key);
   final double height;
   final double width;
-
+  final Room selectedRoom;
   @override
   State<Drawing> createState() => _Drawing();
 }
@@ -26,6 +33,7 @@ class _Drawing extends State<Drawing> {
   late bool _isErase;
   late double _paintSize;
   late IconData _selectIcon;
+  late DatabaseReference _drawRef;
   final GlobalKey _sizemenu = GlobalKey();
   final GlobalKey _selectmenu = GlobalKey();
   final GlobalKey<_PaintBoardState> _paintBoardKey = GlobalKey();
@@ -43,6 +51,8 @@ class _Drawing extends State<Drawing> {
     _isSizeMenuVisible = false;
     _containerPositionSize = Offset.zero;
     _isErase = false;
+    
+    _drawRef = database.child('/draw/${widget.selectedRoom}');
   }
 
   void _toggleSelectMenuVisibility(Offset position) {
@@ -112,6 +122,7 @@ class _Drawing extends State<Drawing> {
                   paintSize: _paintSize,
                   height: widget.height,
                   width: widget.width,
+                  selectedRoom: widget.selectedRoom,
                 ),
               ))
             ],
@@ -872,31 +883,67 @@ class _Drawing extends State<Drawing> {
   }
 }
 
-class PaintBoard extends StatefulWidget {
+class PaintBoard extends ConsumerStatefulWidget {
   final GlobalKey<_PaintBoardState> key;
   final String chose;
   final Color paintColor;
   final double paintSize;
   final double height;
   final double width;
+  final Room selectedRoom;
   PaintBoard(
       {required this.key,
       required this.chose,
       required this.height,
       required this.width,
       required this.paintColor,
-      required this.paintSize});
+      required this.paintSize,
+      required this.selectedRoom});
   @override
   _PaintBoardState createState() => _PaintBoardState();
 }
 
-class _PaintBoardState extends State<PaintBoard> {
+class _PaintBoardState extends ConsumerState<PaintBoard> {
   late List<List<Offset>> points = [];
   late List<Paint> paints = [];
   late List<Offset> tmp = [];
   late Queue<List<Offset>> Qpn = Queue<List<Offset>>();
   late Queue<Paint> Qpt = Queue<Paint>();
   late bool isDrawLine = false;
+  late DatabaseReference drawRef;
+
+  @override
+  void initState() {
+    super.initState();
+    drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
+    print("BCS");
+    drawRef.onValue.listen((event)async {
+      print("id1: " + widget.selectedRoom.roomOwner.toString());
+      print("id2: " + ref.read(userProvider).id.toString());
+      if(widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
+        //print("even: " + event.snapshot.value.toString());
+        if (event.snapshot.value is Map) {
+          final data = (event.snapshot.value as Map).map((key, value) {
+            return MapEntry(key.toString(), value.toString());
+          });
+          print('data: $data');
+          print(data.runtimeType.toString());
+          print("Offset: " + data["Offset"]!);
+          print("Color: " + data["Color"]!);
+
+          setState(() {
+            points = decodeOffsetList(data["Offset"]!);
+            paints = decodePaintList(data["Color"]!);
+          });
+        } else {
+          print("event.snapshot.value is not a Map");
+        }
+        // print("data: " + data.runtimeType.toString());
+
+      }
+    });
+  }
+
   bool isInBox(Offset point) {
     if (point != null) {
       return point.dx >= 0 &&
@@ -922,6 +969,7 @@ class _PaintBoardState extends State<PaintBoard> {
       points.clear();
       tmp.clear();
       paints.clear();
+      updatePoints();
     });
   }
 
@@ -933,6 +981,8 @@ class _PaintBoardState extends State<PaintBoard> {
       Qpt.add(paints[paints.length - 1]);
       points.removeLast();
       paints.removeLast();
+
+      updatePoints();
     });
   }
 
@@ -945,9 +995,88 @@ class _PaintBoardState extends State<PaintBoard> {
       Qpn.removeLast();
       Qpt.removeLast();
       print("Ctrl + Y");
+
+      updatePoints();
     });
   }
 
+  String encodeOffsetList(List<List<Offset>> offsetList) {
+    List<List<double>> encodedList = [];
+    offsetList.forEach((innerList) {
+      List<double> tempList = [];
+      innerList.forEach((offset) {
+        tempList.add(offset.dx);
+        tempList.add(offset.dy);
+      });
+      encodedList.add(tempList);
+    });
+    return json.encode(encodedList);
+  }
+// Hàm decode chuỗi JSON thành List<List<Offset>>
+  List<List<Offset>> decodeOffsetList(String jsonStr) {
+    List<List<Offset>> offsetList = [];
+
+    if (jsonStr != null && jsonStr.isNotEmpty) {
+      // Decode the JSON string
+      List<dynamic> decodedList = json.decode(jsonStr);
+
+      // Process each inner list
+      decodedList.forEach((dynamic innerList) {
+        if (innerList is List) {
+          List<Offset> tempList = [];
+          for (int i = 0; i < innerList.length; i += 2) {
+            tempList.add(
+                Offset(innerList[i] as double, innerList[i + 1] as double));
+          }
+          offsetList.add(tempList);
+        }
+      });
+    }
+
+    return offsetList;
+  }
+
+  String encodePaintList(List<Paint> paintList) {
+    List<Map<String, dynamic>> encodedList = paintList.map((paint) {
+      return {
+        'color': paint.color.value,
+        'strokeWidth': paint.strokeWidth,
+        'style': paint.style.index,
+        'isAntiAlias': paint.isAntiAlias,
+        // Add other properties if needed
+      };
+    }).toList();
+    return json.encode(encodedList);
+  }
+
+// Hàm decode chuỗi JSON thành List<Paint>
+  List<Paint> decodePaintList(String jsonStr) {
+    List<Map<String, dynamic>> decodedList = List<Map<String, dynamic>>.from(json.decode(jsonStr));
+    return decodedList.map((paintMap) {
+      Paint paint = Paint()
+        ..color = Color(paintMap['color'])
+        ..strokeWidth = paintMap['strokeWidth']
+        ..style = PaintingStyle.values[paintMap['style']]
+        ..isAntiAlias = paintMap['isAntiAlias'];
+      // Add other properties if needed
+      return paint;
+    }).toList();
+  }
+  
+  void updatePoints() async {
+    print("OK?");
+    List<List<Offset>> fbpush = points;
+    if(tmp != null && tmp.length > 0)fbpush.add(tmp);
+
+    await drawRef.update({
+      'Offset' : encodeOffsetList(fbpush),
+      'Color' : encodePaintList(paints)
+    });
+  }
+
+  void getData()  {
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -967,6 +1096,7 @@ class _PaintBoardState extends State<PaintBoard> {
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             // points[cnt].add(setValid(pos));
             tmp.add(setValid(pos));
+            // updatePoints();
             Qpn.clear();
             Qpt.clear();
           }
@@ -978,6 +1108,7 @@ class _PaintBoardState extends State<PaintBoard> {
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
+            // updatePoints();
             // points[cnt].add(setValid(pos));
           }
           else if(chose == "DrawLine") {
@@ -985,6 +1116,7 @@ class _PaintBoardState extends State<PaintBoard> {
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
+            // updatePoints();
           }
         });
       },
@@ -994,6 +1126,7 @@ class _PaintBoardState extends State<PaintBoard> {
           tmp.add(Offset(-1, -1));
           points.add(List.of(tmp));
           tmp.clear();
+          updatePoints();
         });
 
         // points[cnt].add(Offset(-1, -1));

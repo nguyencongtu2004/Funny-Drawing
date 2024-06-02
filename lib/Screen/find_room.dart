@@ -35,7 +35,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
 
       setState(() {
         // Xóa các phòng không tồn tại trong cơ sở dữ liệu Firebase khỏi danh sách rooms
-        rooms = []; // TODO: không cập nhật khi phòng bị xóa
+        rooms = [];
 
         // Cập nhật lại các phòng còn tồn tại trong cơ sở dữ liệu Firebase
         for (final room in data.entries) {
@@ -47,10 +47,11 @@ class _FindRoomState extends ConsumerState<FindRoom> {
             maxPlayer: room.value['maxPlayer'],
             isPrivate: room.value['isPrivate'],
             password: room.value['password'],
+            isPlayed: room.value['isPlayed'],
           );
           rooms.add(nextRoom);
         }
-        filteredRoom = List.from(rooms);
+        filteredRoom = rooms.where((room) => room.isPlayed == false).toList();
       });
     });
   }

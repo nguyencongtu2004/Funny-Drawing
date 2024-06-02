@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
-import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +47,15 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
           Navigator.of(context).pop();
+        }
+      } else {
+        final data = Map<String, dynamic>.from(
+            event.snapshot.value as Map<dynamic, dynamic>);
+
+        if (data['isPlayed'] == true) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (ctx) =>
+                  NormalModeRoom(selectedRoom: widget.selectedRoom)));
         }
       }
     });
@@ -142,8 +151,17 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
 
   void _startClick(context) {
     print('bắt đầu');
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (ctx) => NormalModeRoom(roomId: widget.selectedRoom.roomId)));
+    _roomRef.update({'isPlayed': true});
+
+    Widget? selectedMode;
+    if (widget.selectedRoom.mode == 'Thường') {
+      selectedMode = NormalModeRoom(selectedRoom: widget.selectedRoom);
+    } else {
+      // Các chế độ chơi khác
+    }
+
+    if (selectedMode == null) return;
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (ctx) => selectedMode!));
   }
 
   void _inviteClick() {
@@ -285,7 +303,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       // Tạo một avatar từ index
                       return Player(
                         player: currentPlayers[index],
-                        sizeimg: 100,
+                        sizeImg: 100,
                       );
                     },
                   ),

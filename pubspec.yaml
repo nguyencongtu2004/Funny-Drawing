@@ -111,6 +111,8 @@ flutter:
     - assets/images/invite.png
     - assets/images/edit.png
     - assets/images/filter.png
+    - assets/images/chat.png
+    - assets/images/send.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

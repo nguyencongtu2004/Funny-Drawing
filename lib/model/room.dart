@@ -7,6 +7,7 @@ class Room {
     this.maxPlayer = 5,
     this.isPrivate = false,
     this.password,
+    this.isPlayed = false,
   });
 
   final String? roomOwner;
@@ -16,6 +17,7 @@ class Room {
   final int maxPlayer;
   final bool isPrivate;
   final String? password;
+  final bool isPlayed;
 
   factory Room.fromRTDB(Object snapshot) {
     final data = Map<String, dynamic>.from(snapshot as Map<dynamic, dynamic>);
@@ -31,6 +33,7 @@ class Room {
         maxPlayer: room.value['maxPlayer'],
         isPrivate: room.value['isPrivate'],
         password: room.value['password'],
+        isPlayed: room.value['isPlayed'],
       );
     }
 
