@@ -91,7 +91,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
   @override
   Widget build(BuildContext context) {
     final width = widget.width;
-    return Container(
+    return SizedBox(
       width: width,
       child: Column(
         children: [

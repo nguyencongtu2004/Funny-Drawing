@@ -8,22 +8,22 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class Drawing extends StatefulWidget {
+class Drawing extends ConsumerStatefulWidget {
   const Drawing({
-    Key? key,
+    super.key,
     required this.height,
     required this.width,
     required this.selectedRoom,
-  }) : super(key: key);
+  });
   final double height;
   final double width;
   final Room selectedRoom;
 
   @override
-  State<Drawing> createState() => _Drawing();
+  ConsumerState<Drawing> createState() => _Drawing();
 }
 
-class _Drawing extends State<Drawing> {
+class _Drawing extends ConsumerState<Drawing> {
   late Offset _containerPosition;
   late bool _isSizeMenuVisible;
   late Offset _containerPositionSize;
@@ -33,7 +33,9 @@ class _Drawing extends State<Drawing> {
   late bool _isErase;
   late double _paintSize;
   late IconData _selectIcon;
+  late DatabaseReference _normalModeDataRef;
   late DatabaseReference _drawRef;
+  late bool _isMenuBarVisible;
   final GlobalKey _sizemenu = GlobalKey();
   final GlobalKey _selectmenu = GlobalKey();
   final GlobalKey<_PaintBoardState> _paintBoardKey = GlobalKey();
@@ -53,6 +55,18 @@ class _Drawing extends State<Drawing> {
     _isErase = false;
 
     _drawRef = database.child('/draw/${widget.selectedRoom}');
+
+    _normalModeDataRef =
+        database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+    _normalModeDataRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      print(data['turn']);
+      setState(() {
+        _isMenuBarVisible = data['turn'] == ref.read(userProvider).id;
+      });
+    });
   }
 
   void _toggleSelectMenuVisibility(Offset position) {
@@ -129,19 +143,104 @@ class _Drawing extends State<Drawing> {
           ),
         ),
         // ----------------------  MenuBar ----------------------
-        Positioned(
-          top: widget.height - 100,
-          left: 0,
-          child: Container(
-              padding: EdgeInsets.only(top: 10.0),
-              height: 100,
-              width: size.width,
-              color: mainColor,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_selectIcon != Icons.add && _selectIcon != Icons.minimize)
+        if (_isMenuBarVisible)
+          Positioned(
+            top: widget.height - 100,
+            left: 0,
+            child: Container(
+                padding: const EdgeInsets.only(top: 10.0),
+                height: 100,
+                width: size.width,
+                color: mainColor,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_selectIcon != Icons.add &&
+                        _selectIcon != Icons.minimize)
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(
+                              7.0), // Bán kính cong của đường viền
+                        ),
+                        child: IconButton(
+                          key: _selectmenu,
+                          onPressed: () {
+                            RenderBox buttonBox = _selectmenu.currentContext!
+                                .findRenderObject() as RenderBox;
+                            Offset buttonPosition =
+                                buttonBox.localToGlobal(Offset.zero);
+                            // Toggle the visibility of the container
+                            _toggleSelectMenuVisibility(buttonPosition);
+                          },
+                          icon: Icon(
+                            _selectIcon,
+                            color: Colors.black,
+                            size: 35, // Màu của biểu tượng
+                          ),
+                        ),
+                      ),
+                    if (_selectIcon == Icons.add)
+                      Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                                7.0), // Bán kính cong của đường viền
+                          ),
+                          child: GestureDetector(
+                            key: _selectmenu,
+                            onTap: () {
+                              _setColor(
+                                  Theme.of(context).scaffoldBackgroundColor);
+                              _setSelectIcon(Icons.add);
+                              RenderBox buttonBox = _selectmenu.currentContext!
+                                  .findRenderObject() as RenderBox;
+                              Offset buttonPosition =
+                                  buttonBox.localToGlobal(Offset.zero);
+                              _toggleSelectMenuVisibility(buttonPosition);
+                            },
+                            child: Image.asset(
+                              'assets/images/erase.png',
+                              // Đường dẫn đến hình ảnh cục tẩy
+                              width: 10,
+                              height: 10,
+                              color: Colors.black, // Màu của hình ảnh
+                            ),
+                          )),
+                    if (_selectIcon == Icons.minimize)
+                      Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(
+                                7.0), // Bán kính cong của đường viền
+                          ),
+                          child: GestureDetector(
+                            key: _selectmenu,
+                            onTap: () {
+                              _setColor(
+                                  Theme.of(context).scaffoldBackgroundColor);
+                              _setSelectIcon(Icons.minimize);
+                              RenderBox buttonBox = _selectmenu.currentContext!
+                                  .findRenderObject() as RenderBox;
+                              Offset buttonPosition =
+                                  buttonBox.localToGlobal(Offset.zero);
+                              _toggleSelectMenuVisibility(buttonPosition);
+                            },
+                            child: Image.asset(
+                              'assets/images/draw_line.png',
+                              // Đường dẫn đến hình ảnh cục tẩy
+                              width: 10,
+                              height: 10,
+                              color: Colors.black, // Màu của hình ảnh
+                            ),
+                          )),
                     Container(
                       height: 50,
                       width: 50,
@@ -151,454 +250,113 @@ class _Drawing extends State<Drawing> {
                             7.0), // Bán kính cong của đường viền
                       ),
                       child: IconButton(
-                        key: _selectmenu,
+                        key: _sizemenu,
                         onPressed: () {
-                          RenderBox buttonBox = _selectmenu.currentContext!
+                          RenderBox buttonBox = _sizemenu.currentContext!
                               .findRenderObject() as RenderBox;
                           Offset buttonPosition =
                               buttonBox.localToGlobal(Offset.zero);
                           // Toggle the visibility of the container
-                          _toggleSelectMenuVisibility(buttonPosition);
+                          _toggleSizeMenuVisibility(buttonPosition);
                         },
-                        icon: Icon(
-                          _selectIcon,
+                        icon: const Icon(
+                          Icons.height,
                           color: Colors.black,
-                          size: 35, // Màu của biểu tượng
+                          size: 35,
                         ),
                       ),
                     ),
-                  if (_selectIcon == Icons.add)
+                    // ----------------------  Color Picker ----------------------
                     Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                              7.0), // Bán kính cong của đường viền
-                        ),
-                        child: GestureDetector(
-                          key: _selectmenu,
-                          onTap: () {
-                            _setColor(
-                                Theme.of(context).scaffoldBackgroundColor);
-                            _setSelectIcon(Icons.add);
-                            RenderBox buttonBox = _selectmenu.currentContext!
-                                .findRenderObject() as RenderBox;
-                            Offset buttonPosition =
-                                buttonBox.localToGlobal(Offset.zero);
-                            _toggleSelectMenuVisibility(buttonPosition);
-                          },
-                          child: Image.asset(
-                            'assets/images/erase.png',
-                            // Đường dẫn đến hình ảnh cục tẩy
-                            width: 10,
-                            height: 10,
-                            color: Colors.black, // Màu của hình ảnh
-                          ),
-                        )),
-                  if (_selectIcon == Icons.minimize)
-                    Container(
-                        height: 50,
-                        width: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                              7.0), // Bán kính cong của đường viền
-                        ),
-                        child: GestureDetector(
-                          key: _selectmenu,
-                          onTap: () {
-                            _setColor(
-                                Theme.of(context).scaffoldBackgroundColor);
-                            _setSelectIcon(Icons.minimize);
-                            RenderBox buttonBox = _selectmenu.currentContext!
-                                .findRenderObject() as RenderBox;
-                            Offset buttonPosition =
-                                buttonBox.localToGlobal(Offset.zero);
-                            _toggleSelectMenuVisibility(buttonPosition);
-                          },
-                          child: Image.asset(
-                            'assets/images/draw_line.png',
-                            // Đường dẫn đến hình ảnh cục tẩy
-                            width: 10,
-                            height: 10,
-                            color: Colors.black, // Màu của hình ảnh
-                          ),
-                        )),
-                  Container(
-                    height: 50,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(
-                          7.0), // Bán kính cong của đường viền
-                    ),
-                    child: IconButton(
-                      key: _sizemenu,
-                      onPressed: () {
-                        RenderBox buttonBox = _sizemenu.currentContext!
-                            .findRenderObject() as RenderBox;
-                        Offset buttonPosition =
-                            buttonBox.localToGlobal(Offset.zero);
-                        // Toggle the visibility of the container
-                        _toggleSizeMenuVisibility(buttonPosition);
-                      },
-                      icon: Icon(
-                        Icons.height,
-                        color: Colors.black,
-                        size: 35,
+                      height: 50,
+                      width: 220,
+                      decoration: BoxDecoration(
+                        color: const Color.fromRGBO(255, 205, 234, 1),
+                        borderRadius: BorderRadius.circular(5.0),
                       ),
-                    ),
-                  ),
-                  // ----------------------  Color Picker ----------------------
-                  Container(
-                    height: 50,
-                    width: 220,
-                    decoration: BoxDecoration(
-                      color: Color.fromRGBO(255, 205, 234, 1),
-                      borderRadius: BorderRadius.circular(5.0),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.black);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.black),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              for (final color in [
+                                Colors.black,
+                                Colors.white,
+                                Colors.grey,
+                                Colors.red,
+                                Colors.yellow,
+                                Colors.green,
+                                Colors.blue
+                              ])
+                                Container(
                                   height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.white);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.white),
-                                child: SizedBox(
                                   width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.grey);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _setColor(color);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize:
+                                            Size(sizePickColor, sizePickColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              5), // Border radius là 5
+                                        ),
+                                        backgroundColor: color),
+                                    child: SizedBox(
+                                      width: sizePickColor,
+                                      // Kích thước của hình vuông
+                                      height: sizePickColor,
                                     ),
-                                    backgroundColor: Colors.grey),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
+                                  ),
                                 ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.red);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              for (final color in [
+                                Colors.pink,
+                                Colors.brown,
+                                Colors.cyanAccent,
+                                Colors.greenAccent,
+                                Colors.orange,
+                                Colors.purple,
+                                Colors.teal
+                              ])
+                                Container(
+                                  height: sizePickColor,
+                                  width: sizePickColor,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _setColor(color);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                        padding: EdgeInsets.zero,
+                                        minimumSize:
+                                            Size(sizePickColor, sizePickColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              5), // Border radius là 5
+                                        ),
+                                        backgroundColor: color),
+                                    child: SizedBox(
+                                      width: sizePickColor,
+                                      // Kích thước của hình vuông
+                                      height: sizePickColor,
                                     ),
-                                    backgroundColor: Colors.red),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
+                                  ),
                                 ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.yellow);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.yellow),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.green);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.green),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.blue);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.blue),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.pink);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.pink),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.brown);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.brown),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.cyanAccent);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.cyanAccent),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.greenAccent);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.greenAccent),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.orange);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.orange),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.purple);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.purple),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: sizePickColor,
-                              width: sizePickColor,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  _setColor(Colors.teal);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize:
-                                        Size(sizePickColor, sizePickColor),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          5), // Border radius là 5
-                                    ),
-                                    backgroundColor: Colors.teal),
-                                child: SizedBox(
-                                  width: sizePickColor,
-                                  // Kích thước của hình vuông
-                                  height: sizePickColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              )),
-        ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                )),
+          ),
         if (_isSizeMenuVisible)
           Positioned(
               left: _containerPositionSize.dx - 5,
@@ -799,7 +557,7 @@ class _Drawing extends State<Drawing> {
                               _setColor(_preColor);
                               _setChose("Draw");
                             },
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.draw, // Biểu tượng
                               color: Colors.black,
                               size: 35,
@@ -809,7 +567,7 @@ class _Drawing extends State<Drawing> {
                         Container(
                           height: 50,
                           width: 50,
-                          margin: EdgeInsets.all(5.0),
+                          margin: const EdgeInsets.all(5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(
