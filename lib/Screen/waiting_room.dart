@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:draw_and_guess_promax/Screen/knock_off_mode.dart';
+import 'package:draw_and_guess_promax/Screen/master_piece_mode.dart';
 import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
 import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
@@ -164,9 +166,12 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         'timeLeft': 60,
       });
     } else if (mode == 'Tam sao thất bản') {
-      // TODO
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) => KnockoffMode(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tuyệt tác') {
-      // TODO
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) =>
+              MasterPieceMode(selectedRoom: widget.selectedRoom)));
     } else {
       throw 'Unknown mode: $mode';
     }

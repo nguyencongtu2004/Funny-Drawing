@@ -918,42 +918,73 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late bool isDrawLine = false;
   late DatabaseReference drawRef;
   late DatabaseReference _normalModeDataRef;
+  late DatabaseReference _myDataRef;
+  late DatabaseReference _myAlbumRef;
   var userTurn = "";
 
   @override
   initState() {
     super.initState();
-    drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
-    _normalModeDataRef =
-        database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+    // setup cho chế độ thường
+    if (widget.selectedRoom.mode == 'Thường') {
+      drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
+      _normalModeDataRef =
+          database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
 
-    _normalModeDataRef.onValue.listen((event) {
-      final data = Map<String, dynamic>.from(
-        event.snapshot.value as Map<dynamic, dynamic>,
-      );
-      setState(() {
-        userTurn = data['turn'];
+      _normalModeDataRef.onValue.listen((event) {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        setState(() {
+          userTurn = data['turn'];
+        });
       });
-    });
 
-    drawRef.onValue.listen((event) async {
-      // Khi có sự thay đổi dữ liệu trên Firebase
-      if (event.snapshot.value == null) {
-        clearPoints();
-      }
-
-      if (userTurn != ref.read(userProvider).id) {
-        if (event.snapshot.value is Map) {
-          final data = (event.snapshot.value as Map).map((key, value) {
-            return MapEntry(key.toString(), value.toString());
-          });
-          setState(() {
-            points = decodeOffsetList(data["Offset"]!);
-            paints = decodePaintList(data["Color"]!);
-          });
+      drawRef.onValue.listen((event) async {
+        // Khi có sự thay đổi dữ liệu trên Firebase
+        if (event.snapshot.value == null) {
+          clearPoints();
         }
-      }
-    });
+
+        if (userTurn != ref.read(userProvider).id) {
+          if (event.snapshot.value is Map) {
+            final data = (event.snapshot.value as Map).map((key, value) {
+              return MapEntry(key.toString(), value.toString());
+            });
+            setState(() {
+              points = decodeOffsetList(data["Offset"]!);
+              paints = decodePaintList(data["Color"]!);
+            });
+          }
+        }
+      });
+    }
+
+    // setup cho chế độ tam sao thất bản
+    if (widget.selectedRoom.mode == 'Tam sao thất bản') {
+      _myDataRef = database.child(
+          '/kickoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
+      _myAlbumRef = _myDataRef.child('/album');
+
+      _myDataRef.onValue.listen((event) {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        var timeLeft = data['timeLeft'];
+        /*var album = Map<String, dynamic>.from(
+            data['album'] as Map<dynamic, dynamic>,
+          );*/
+        if (timeLeft == 0) {
+          // TODO send data to firebase one time
+          _myDataRef.update({'timeLeft': -1});
+          updatePointsKickoffMode();
+          clearPoints();
+        }
+      });
+    }
+
+    // setup cho chế độ tuyệt tác
+    if (widget.selectedRoom.mode == 'Tuyệt tác') {}
   }
 
   bool isInBox(Offset point) {
@@ -981,7 +1012,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       points.clear();
       tmp.clear();
       paints.clear();
-      updatePoints();
+      updatePointsNormalMode();
     });
   }
 
@@ -994,7 +1025,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       points.removeLast();
       paints.removeLast();
 
-      updatePoints();
+      updatePointsNormalMode();
     });
   }
 
@@ -1008,7 +1039,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       Qpt.removeLast();
       print("Ctrl + Y");
 
-      updatePoints();
+      updatePointsNormalMode();
     });
   }
 
@@ -1077,12 +1108,20 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     }).toList();
   }
 
-  void updatePoints() async {
-    print("OK?");
+  void updatePointsNormalMode() async {
     List<List<Offset>> fbpush = points;
     if (tmp != null && tmp.length > 0) fbpush.add(tmp);
 
     await drawRef.update(
+        {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
+  }
+
+  void updatePointsKickoffMode() async {
+    if (points.isEmpty && tmp.isEmpty) return;
+    List<List<Offset>> fbpush = points;
+    if (tmp.isNotEmpty) fbpush.add(tmp);
+
+    await _myAlbumRef.push().update(
         {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
   }
 
@@ -1135,7 +1174,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           tmp.add(Offset(-1, -1));
           points.add(List.of(tmp));
           tmp.clear();
-          updatePoints();
+          updatePointsNormalMode();
         });
 
         // points[cnt].add(Offset(-1, -1));

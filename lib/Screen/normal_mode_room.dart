@@ -235,6 +235,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
+      // App bar
       Container(
         width: double.infinity,
         height: 100,
@@ -298,6 +299,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           ],
         ),
       ),
+      // Drawing board
       Positioned(
         child: Padding(
           padding: const EdgeInsets.only(top: 100),
@@ -308,6 +310,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           ),
         ),
       ),
+      // Hint
       Positioned(
         top: 100,
         left: 0,
