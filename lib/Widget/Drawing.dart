@@ -15,6 +15,7 @@ class Drawing extends ConsumerStatefulWidget {
     required this.width,
     required this.selectedRoom,
   });
+
   final double height;
   final double width;
   final Room selectedRoom;
@@ -35,7 +36,7 @@ class _Drawing extends ConsumerState<Drawing> {
   late IconData _selectIcon;
   late DatabaseReference _normalModeDataRef;
   late DatabaseReference _drawRef;
-  late bool _isMenuBarVisible;
+  bool? _isMenuBarVisible;
   final GlobalKey _sizemenu = GlobalKey();
   final GlobalKey _selectmenu = GlobalKey();
   final GlobalKey<_PaintBoardState> _paintBoardKey = GlobalKey();
@@ -114,8 +115,9 @@ class _Drawing extends ConsumerState<Drawing> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final Color mainColor = Color(0xFF00C4A1);
-    final double sizePickColor = 22;
+    const Color mainColor = Color(0xFF00C4A1);
+    const double sizePickColor = 22;
+
     return Scaffold(
         body: Stack(
       children: [
@@ -143,7 +145,7 @@ class _Drawing extends ConsumerState<Drawing> {
           ),
         ),
         // ----------------------  MenuBar ----------------------
-        if (_isMenuBarVisible)
+        if (_isMenuBarVisible == true)
           Positioned(
             top: widget.height - 100,
             left: 0,
@@ -911,6 +913,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             // points[cnt].add(setValid(pos));
             tmp.add(setValid(pos));
+            //updatePointsNormalMode();
 
             Qpn.clear();
             Qpt.clear();
@@ -925,13 +928,14 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
-
+            //updatePointsNormalMode();
             // points[cnt].add(setValid(pos));
           } else if (chose == "DrawLine") {
             if (tmp.length > 1) tmp.removeLast();
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
+            //updatePointsNormalMode();
           }
         });
       },
