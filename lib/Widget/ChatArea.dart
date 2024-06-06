@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/provider/chat_provider.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -20,18 +21,43 @@ class ChatArea extends ConsumerStatefulWidget {
 }
 
 class _ChatAreaState extends ConsumerState<ChatArea> {
-  late List<Map<String, dynamic>> chat = [];
+  //late List<Map<String, dynamic>> chat = [];
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
   late DatabaseReference _chatRef;
   late DatabaseReference _normalModeDataRef;
+  late DatabaseReference _roomRef;
+
   final ScrollController _scrollController = ScrollController();
   var wordToGuess = '';
+  late String roomOwnerId;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    // Tự động focus vào TextField khi widget được xây dựng xong
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
+
     _chatRef = database.child('/chat/${widget.roomId}');
     _normalModeDataRef = database.child('/normal_mode_data/${widget.roomId}');
+    _roomRef = database.child('/rooms/${widget.roomId}');
+
+    _roomRef.get().then((value) {
+      final data = Map<String, dynamic>.from(
+        value.value as Map<dynamic, dynamic>,
+      );
+      roomOwnerId = data['roomOwner'];
+    });
 
     _normalModeDataRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
@@ -44,48 +70,42 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
-      setState(() {
-        chat.clear();
-        for (final message in data.entries) {
-          chat.add({
-            "userName": message.value['userName'],
-            "message": message.value['message'],
-            "timestamp": message.value['timestamp'],
-          });
-        }
-        // Sắp xếp danh sách tin nhắn theo timestamp
-        chat.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-        // Cuộn xuống dòng cuối cùng
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
+
+      final newChat = data.entries.map((e) {
+        return {
+          "userName": e.value['userName'],
+          "message": e.value['message'],
+          "timestamp": e.value['timestamp'],
+        };
+      }).toList();
+
+      ref.read(chatProvider.notifier).updateChat(newChat);
+
+      // Cuộn xuống dòng cuối cùng
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
 
       // Kiểm tra đoán đúng không
-      for (var item in chat) {
-        if ((item['message'] as String).toLowerCase() ==
-            wordToGuess.toLowerCase()) {
+      final isRight = ref
+          .read(chatProvider.notifier)
+          .checkGuess(wordToGuess, widget.roomId);
+      if (isRight) {
+        // Người chơi thông báo người chơi đã đoán đúng
+        if (true) {
           _normalModeDataRef.update({
-            'userGuessed': ref.watch(userProvider).id,
+            'userGuessed': ref.read(userProvider).id,
           });
+          final userName = ref.read(userProvider).name;
+          ref
+              .read(chatProvider.notifier)
+              .addMessage('$userName đã đoán đúng', 'Hệ thống', widget.roomId);
         }
+        Navigator.of(context).pop();
       }
     });
-  }
-
-  void _addNewChat() {
-    final String message = _controller.text;
-    final int timestamp = DateTime.now().millisecondsSinceEpoch;
-
-    _chatRef.push().set({
-      'userName': ref.read(userProvider).name,
-      'message': message,
-      'timestamp': timestamp,
-    });
-
-    _controller.clear();
   }
 
   @override
@@ -107,17 +127,30 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (var item in chat)
+                    for (var item in ref.watch(chatProvider))
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Text(
-                          "${item['userName']}: ${item['message']}",
-                          style:
-                              Theme.of(context).textTheme.bodySmall!.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ),
+                        child: item['userName'] != 'Hệ thống'
+                            ? Text('${item['userName']}: ${item['message']}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ))
+                            : Center(
+                                child: Text(
+                                  '--${item['message']}--',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall!
+                                      .copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF00705A),
+                                      ),
+                                ),
+                              ),
+                      )
                   ],
                 ),
               ),
@@ -130,6 +163,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    focusNode: _focusNode,
                     decoration: InputDecoration(
                       hintText: 'Nhập đáp án',
                       hintStyle: const TextStyle(
@@ -153,7 +187,15 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   height: 50,
                   width: 50,
                   child: IconButton(
-                    onPressed: _addNewChat,
+                    onPressed: () {
+                      if (_controller.text.isEmpty) return;
+                      ref.read(chatProvider.notifier).addMessage(
+                            _controller.text,
+                            ref.read(userProvider).name,
+                            widget.roomId,
+                          );
+                      _controller.clear();
+                    },
                     icon: Image.asset('assets/images/send.png'),
                     iconSize: 45,
                   ),

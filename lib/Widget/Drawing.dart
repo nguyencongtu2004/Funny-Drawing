@@ -696,6 +696,12 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         setState(() {
           userTurn = data['turn'];
         });
+
+        // Xóa bảng khi có người đoán đúng
+        final timeLeft = data['timeLeft'];
+        if (timeLeft == 60) {
+          clearPoints();
+        }
       });
 
       drawRef.onValue.listen((event) async {
@@ -761,7 +767,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     if (point.dy < 0) y = 0;
     if (point.dx > widget.width - 2) x = widget.width - 2;
     if (point.dy > widget.height - 2) y = widget.height - 2;
-    Offset res = new Offset(x, y);
+    Offset res = Offset(x, y);
     return res;
   }
 
@@ -890,6 +896,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     String chose = widget.chose;
     return GestureDetector(
       onPanDown: (DragDownDetails details) {
+        if (userTurn != ref.read(userProvider).id) return;
+
         setState(() {
           if (chose == "Fill") {
             RenderBox renderBox = context.findRenderObject() as RenderBox;
@@ -903,33 +911,36 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             // points[cnt].add(setValid(pos));
             tmp.add(setValid(pos));
-            // updatePoints();
+
             Qpn.clear();
             Qpt.clear();
           }
         });
       },
       onPanUpdate: (DragUpdateDetails details) {
+        if (userTurn != ref.read(userProvider).id) return;
+
         setState(() {
           if (chose == "Draw") {
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
-            // updatePoints();
+
             // points[cnt].add(setValid(pos));
           } else if (chose == "DrawLine") {
             if (tmp.length > 1) tmp.removeLast();
             RenderBox renderBox = context.findRenderObject() as RenderBox;
             Offset pos = renderBox.globalToLocal(details.globalPosition);
             tmp.add(setValid(pos));
-            // updatePoints();
           }
         });
       },
       onPanEnd: (DragEndDetails details) {
+        if (userTurn != ref.read(userProvider).id) return;
+
         // if(chose == "Draw")
         setState(() {
-          tmp.add(Offset(-1, -1));
+          tmp.add(const Offset(-1, -1));
           points.add(List.of(tmp));
           tmp.clear();
           updatePointsNormalMode();

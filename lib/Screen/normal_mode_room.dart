@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
 import '../model/user.dart';
+import '../provider/chat_provider.dart';
 import '../provider/user_provider.dart';
 
 class NormalModeRoom extends ConsumerStatefulWidget {
@@ -34,6 +35,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late List<String> _playersInRoomId = [];
   late bool _isMyTurn;
   int currentPlayerTurnIndex = 0;
+  var _currentTurn = '';
 
   var isMyTurn = false;
   var _timeLeft = -1;
@@ -92,11 +94,14 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       });
       final turn = data['turn'] as String;
       final userGuessed = data['userGuessed'] as String?;
-
       final timeLeft = data['timeLeft'] as int;
       setState(() {
         _timeLeft = timeLeft;
       });
+
+      // Lấy tên người chơi hiện tại đang vẽ
+      _currentTurn =
+          _playersInRoom.firstWhere((player) => player.id == turn).name;
 
       // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
       _startTimer();
@@ -112,7 +117,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       });
 
       // Chủ phòng cập nhật lượt chơi khi có người đoán đúng từ hoặc hết giờ
-      // TODO: xử lý chậm khiến bị lỗi
       if ((userGuessed != null || timeLeft == 0) &&
           ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
         currentPlayerTurnIndex =
@@ -141,6 +145,21 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         _isMyTurn = data['turn'] == ref.read(userProvider).id;
       });
     });
+
+    _chatRef.onValue.listen((event) {
+      // Kiểm tra đoán đúng không
+      final isRight = ref
+          .read(chatProvider.notifier)
+          .checkGuess(wordToGuess, widget.selectedRoom.roomId);
+      if (isRight) {
+        // Chủ phòng thông báo người chơi đã đoán đúng
+        if (ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
+          _normalModeDataRef.update({
+            'userGuessed': ref.read(userProvider).id,
+          });
+        }
+      }
+    });
   }
 
   void _startTimer() {
@@ -154,34 +173,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         }
       });
     }
-
-    _chatRef.onValue.listen((event) {
-      final data = Map<String, dynamic>.from(
-        event.snapshot.value as Map<dynamic, dynamic>,
-      );
-
-      // Lấy thông tin chat
-      chat.clear();
-      for (final message in data.entries) {
-        chat.add({
-          "userName": message.value['userName'],
-          "message": message.value['message'],
-          "timestamp": message.value['timestamp'],
-        });
-      }
-      // Sắp xếp danh sách tin nhắn theo timestamp
-      chat.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-
-      // Kiểm tra đoán đúng không
-      for (var item in chat) {
-        if ((item['message'] as String).toLowerCase() ==
-            wordToGuess.toLowerCase()) {
-          _normalModeDataRef.update({
-            'userGuessed': ref.watch(userProvider).id,
-          });
-        }
-      }
-    });
   }
 
   @override
@@ -196,7 +187,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       isScrollControlled: true,
       backgroundColor: const Color(0xFF00C4A1),
       builder: (ctx) {
-        return Container(
+        return SizedBox(
           height: MediaQuery.of(ctx).size.height * 0.8,
           child: Chat(
             roomId: widget.selectedRoom.roomId,
@@ -278,21 +269,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         });
       }
     }
-  }
-
-  final TextEditingController _controller = TextEditingController();
-
-  void _addNewChat() {
-    final String message = _controller.text;
-    final int timestamp = DateTime.now().millisecondsSinceEpoch;
-
-    _chatRef.push().set({
-      'userName': ref.read(userProvider).name,
-      'message': message,
-      'timestamp': timestamp,
-    });
-
-    _controller.clear();
   }
 
   @override
@@ -389,8 +365,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                   Expanded(
                     child: Text(
                       isMyTurn
-                          ? 'Hãy vẽ: $_wordToDraw'
-                          : 'Hãy đoán ?? đang vẽ gì',
+                          ? 'Hãy vẽ: $_wordToDraw' : 'Đoán xem đây là gì?',
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge!
@@ -410,7 +385,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           ),
         ),
         // Chat
-        if (!_isMyTurn)
+        if (!_isMyTurn) ...[
+          // Bình phong
           Positioned(
             bottom: 0,
             left: 0,
@@ -422,9 +398,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 children: <Widget>[
                   Expanded(
                     child: TextField(
-                      controller: _controller,
                       decoration: InputDecoration(
-                        hintText: 'Nhập đáp án',
+                        hintText: 'Cho $_currentTurn biết suy nghĩ của bạn',
                         hintStyle: const TextStyle(
                           color: Colors.black45,
                           fontWeight: FontWeight.normal,
@@ -447,19 +422,26 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 50,
-                    width: 50,
-                    child: IconButton(
-                      onPressed: _addNewChat,
-                      icon: Image.asset('assets/images/send.png'),
-                      iconSize: 45,
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
+          // Lớp đè lên, khi ấn thì mở chat và bàn phím
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () {
+                _showChat();
+              },
+              child: Container(
+                height: 95,
+                color: Colors.transparent,
+              ),
+            ),
+          )
+        ]
       ]),
     );
   }

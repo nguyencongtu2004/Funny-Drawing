@@ -8,6 +8,7 @@ import 'package:draw_and_guess_promax/Widget/player.dart';
 import 'package:draw_and_guess_promax/Widget/room_mode.dart';
 import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/provider/chat_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -156,6 +157,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       // Chuyển sang màn hình chơi
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
+      ref.read(chatProvider.notifier).clearChat();
 
       var normalModeDataRef =
           database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
