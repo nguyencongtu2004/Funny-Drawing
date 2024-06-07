@@ -139,7 +139,10 @@ class _Drawing extends ConsumerState<Drawing> {
                   height: widget.height,
                   width: widget.width,
                   selectedRoom: widget.selectedRoom,
-                ),
+                    hideMenu: () {
+                      _toggleSelectMenuVisibility(Offset.zero);
+                      _toggleSizeMenuVisibility(Offset.zero);
+                    }),
               ))
             ],
           ),
@@ -291,7 +294,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                 Colors.green,
                                 Colors.blue
                               ])
-                                Container(
+                                SizedBox(
                                   height: sizePickColor,
                                   width: sizePickColor,
                                   child: ElevatedButton(
@@ -300,14 +303,14 @@ class _Drawing extends ConsumerState<Drawing> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.zero,
-                                        minimumSize:
-                                            Size(sizePickColor, sizePickColor),
+                                        minimumSize: const Size(
+                                            sizePickColor, sizePickColor),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                               5), // Border radius là 5
                                         ),
                                         backgroundColor: color),
-                                    child: SizedBox(
+                                    child: const SizedBox(
                                       width: sizePickColor,
                                       // Kích thước của hình vuông
                                       height: sizePickColor,
@@ -328,7 +331,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                 Colors.purple,
                                 Colors.teal
                               ])
-                                Container(
+                                SizedBox(
                                   height: sizePickColor,
                                   width: sizePickColor,
                                   child: ElevatedButton(
@@ -337,14 +340,14 @@ class _Drawing extends ConsumerState<Drawing> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.zero,
-                                        minimumSize:
-                                            Size(sizePickColor, sizePickColor),
+                                        minimumSize: const Size(
+                                            sizePickColor, sizePickColor),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                               5), // Border radius là 5
                                         ),
                                         backgroundColor: color),
-                                    child: SizedBox(
+                                    child: const SizedBox(
                                       width: sizePickColor,
                                       // Kích thước của hình vuông
                                       height: sizePickColor,
@@ -373,7 +376,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -384,7 +387,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(5);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 10,
@@ -394,7 +397,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -405,7 +408,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(8);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 15,
@@ -415,7 +418,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -426,7 +429,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(12);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 20,
@@ -447,7 +450,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(16);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 25,
@@ -611,7 +614,7 @@ class _Drawing extends ConsumerState<Drawing> {
                             onPressed: () {
                               _paintBoardKey.currentState!.ctrlZ();
                             },
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.turn_left, // Biểu tượng
                               color: Colors.black,
                               size: 35,
@@ -621,7 +624,7 @@ class _Drawing extends ConsumerState<Drawing> {
                         Container(
                           height: 50,
                           width: 50,
-                          margin: EdgeInsets.all(5.0),
+                          margin: const EdgeInsets.all(5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(7.0),
@@ -630,7 +633,7 @@ class _Drawing extends ConsumerState<Drawing> {
                             onPressed: () {
                               _paintBoardKey.currentState!.ctrlY();
                             },
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.turn_right, // Biểu tượng
                               color: Colors.black,
                               size: 35, // Màu của biểu tượng
@@ -655,6 +658,7 @@ class PaintBoard extends ConsumerStatefulWidget {
   final double height;
   final double width;
   final Room selectedRoom;
+  final void Function() hideMenu;
 
   PaintBoard(
       {required this.key,
@@ -663,7 +667,8 @@ class PaintBoard extends ConsumerStatefulWidget {
       required this.width,
       required this.paintColor,
       required this.paintSize,
-      required this.selectedRoom});
+      required this.selectedRoom,
+      required this.hideMenu});
 
   @override
   _PaintBoardState createState() => _PaintBoardState();
@@ -704,6 +709,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         if (timeLeft == 60) {
           clearPoints();
         }
+        // Ẩn menu khi có người đoán đúng
+        widget.hideMenu();
       });
 
       drawRef.onValue.listen((event) async {
