@@ -51,7 +51,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
           );
           rooms.add(nextRoom);
         }
-        filteredRoom = rooms.where((room) => room.isPlayed == false).toList();
+        filteredRoom = rooms;
       });
     });
   }
