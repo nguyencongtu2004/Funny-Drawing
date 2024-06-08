@@ -15,7 +15,7 @@ import 'more_drawer.dart';
 Random random = Random();
 
 class HomePage extends ConsumerStatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();

@@ -25,11 +25,20 @@ class ChatNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   }
 
   String checkGuess(String guess, String roomId) {
+    final words =
+        allWords.firstWhere((element) => element[guess] != null).values.first;
     guess = guess.trim().toLowerCase();
     final message = state.last['message'].trim().toLowerCase();
     final name = state.last['userName'];
+    // Kiểm tra từ đúng
     if (guess == message) {
       return state.last['id'];
+    }
+    // Chấp nhận từ thay thế
+    for (final word in words) {
+      if (word.trim().toLowerCase() == guess) {
+        return state.last['id'];
+      }
     }
     return "";
   }

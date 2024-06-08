@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:draw_and_guess_promax/provider/chat_provider.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 import '../firebase.dart';
 
@@ -17,11 +20,10 @@ class ChatArea extends ConsumerStatefulWidget {
   final double width;
 
   @override
-  _ChatAreaState createState() => _ChatAreaState();
+  createState() => _ChatAreaState();
 }
 
 class _ChatAreaState extends ConsumerState<ChatArea> {
-  //late List<Map<String, dynamic>> chat = [];
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
@@ -37,20 +39,40 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
   var _pointLeft = 0;
   var curPoint = 0;
   late String roomOwnerId;
+  late StreamSubscription<bool> keyboardSubscription;
 
   @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _scrollController.dispose();
+    keyboardSubscription.cancel();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    // Tự động focus vào TextField khi widget được xây dựng xong
+    // Mở bàn phím
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_focusNode);
+    });
+
+    // Lắng nghe sự thay đổi trạng thái bàn phím
+    var keyboardVisibilityController = KeyboardVisibilityController();
+    keyboardSubscription =
+        keyboardVisibilityController.onChange.listen((bool visible) {
+      if (visible) {
+        // Cuộn xuống cuối danh sách khi bàn phím mở
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent +
+                MediaQuery.of(context).viewInsets.bottom,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
+      }
     });
 
     _chatRef = database.child('/chat/${widget.roomId}');
@@ -103,12 +125,14 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
 
       ref.read(chatProvider.notifier).updateChat(newChat);
 
-      // Cuộn xuống dòng cuối cùng
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      // đảm bảo rằng việc cuộn chỉ xảy ra sau khi giao diện đã được cập nhật hoàn tất.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
 
       // Kiểm tra đoán đúng không
       final isRight = ref
@@ -147,6 +171,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
   @override
   Widget build(BuildContext context) {
     final width = widget.width;
+    final chatMessages = ref.watch(chatProvider);
     return SizedBox(
       width: width,
       child: Column(
@@ -155,40 +180,35 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
             child: Container(
               padding: const EdgeInsets.all(15),
               width: width,
-              child: SingleChildScrollView(
+              child: ListView.builder(
                 controller: _scrollController,
-                reverse: true, // Kéo ngược để hiển thị dòng cuối cùng trên cùng
-                scrollDirection: Axis.vertical,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (var item in ref.watch(chatProvider))
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: item['userName'] != 'Hệ thống'
-                            ? Text('${item['userName']}: ${item['message']}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall!
-                                    .copyWith(
+                itemCount: chatMessages.length,
+                itemBuilder: (context, index) {
+                  final item = chatMessages[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: item['userName'] != 'Hệ thống'
+                        ? Text(
+                            '${item['userName']}: ${item['message']}',
+                            style:
+                                Theme.of(context).textTheme.bodySmall!.copyWith(
                                       fontWeight: FontWeight.bold,
-                                    ))
-                            : Center(
-                                child: Text(
-                                  '--${item['message']}--',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall!
-                                      .copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF00705A),
-                                      ),
-                                ),
-                              ),
-                      )
-                  ],
-                ),
+                                    ),
+                          )
+                        : Center(
+                            child: Text(
+                              '--${item['message']}--',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF00705A),
+                                  ),
+                            ),
+                          ),
+                  );
+                },
               ),
             ),
           ),
@@ -200,7 +220,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   child: TextField(
                     // enabled: _isEnable,
                     controller: _controller,
-                    // focusNode: _focusNode,
+                    focusNode: _focusNode,
                     decoration: InputDecoration(
                       hintText: 'Nhập đáp án',
                       hintStyle: const TextStyle(

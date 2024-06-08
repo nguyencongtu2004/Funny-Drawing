@@ -705,13 +705,12 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           userTurn = data['turn'];
         });
 
-        // Xóa bảng khi có người đoán đúng
+        // Xóa bảng và Ẩn menu khi có người đoán đúng
         final timeLeft = data['timeLeft'];
         if (timeLeft == 60) {
           clearPoints();
+          widget.hideMenu();
         }
-        // Ẩn menu khi có người đoán đúng
-        widget.hideMenu();
       });
 
       drawRef.onValue.listen((event) async {

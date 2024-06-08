@@ -58,12 +58,12 @@ final allWords = {
   },
   {
     'Dishwasher': [
-      'Hương',
-      'Hay',
       'Máy rửa chén',
       'Cái máy rửa chén',
       'Máy rửa bát',
       'Cái máy rửa bát'
+          'Hương',
+      'Hay',
     ]
   },
   {

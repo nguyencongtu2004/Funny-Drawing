@@ -75,12 +75,47 @@ void main() async {
   runApp(const ProviderScope(child: DrawAndGuestApp()));
 }
 
-class DrawAndGuestApp extends StatelessWidget {
+class DrawAndGuestApp extends StatefulWidget {
   const DrawAndGuestApp({super.key});
 
   @override
+  State<DrawAndGuestApp> createState() => _DrawAndGuestAppState();
+}
+
+class _DrawAndGuestAppState extends State<DrawAndGuestApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    print('=====================${state.toString()}================');
+
+    if (state == AppLifecycleState.detached ||
+        state == AppLifecycleState.inactive) {
+      _performCleanup();
+    }
+  }
+
+  void _performCleanup() {
+    // Thực hiện các hành động cần thiết khi ứng dụng đóng
+    print('[Fake] Ứng dụng đang đóng, thực hiện callback...');
+    // Ví dụ: Lưu trạng thái, gửi dữ liệu lên server, v.v.
+  }
+
+  @override
   Widget build(BuildContext context) {
-    Widget content = HomePage();
+    Widget content = const HomePage();
 
     return MaterialApp(
       theme: ThemeData().copyWith(
