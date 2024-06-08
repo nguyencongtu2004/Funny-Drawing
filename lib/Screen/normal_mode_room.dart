@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
 import 'package:draw_and_guess_promax/Widget/chat_list.dart';
+import 'package:draw_and_guess_promax/Widget/normal_mode_status.dart';
 import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:draw_and_guess_promax/model/player_normal_mode.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
@@ -127,11 +128,12 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       );
 
       wordToGuess = data['wordToDraw'];
-      hint = allWords
+      /*hint = allWords
           .firstWhere((element) => element.keys.first == wordToGuess)
           .values
           .first
-          .first;
+          .first;*/
+      hint = '';
       setState(() {
         _wordToDraw = data['wordToDraw'] as String;
       });
@@ -485,28 +487,11 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 color: Colors.transparent,
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          isMyTurn
-                              ? 'Hãy vẽ: $wordToGuess ($hint)'
-                              : 'Đoán xem đây là gì?',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge!
-                              .copyWith(color: Colors.black),
-                        ),
-                      ),
-                      Text(
-                        _timeLeft.toString(),
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge!
-                            .copyWith(color: Colors.black),
-                      )
-                    ],
-                  ),
+                  child: NormalModeStatus(
+                      status: isMyTurn
+                          ? 'Hãy vẽ: $wordToGuess '
+                          : 'Đoán xem đây là gì?',
+                      timeLeft: _timeLeft),
                 ),
               ),
             ),

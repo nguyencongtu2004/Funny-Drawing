@@ -398,7 +398,7 @@ final allWords = [
     'Train': ['Tàu hỏa', 'Tàu', 'Con tàu']
   },
   {
-    'Ferris wheel': ['Vòng quay', 'Vòng quay lớn', 'Đu quay']
+    'Ferris wheel': ['Đu quay', 'Vòng quay', 'Vòng quay lớn']
   },
   {
     'Owl': ['Con cú', 'Cú']
@@ -506,4 +506,4 @@ final allWords = [
   },
 ];
 
-final wordToGuess = allWords.map((e) => e.keys.first).toList();
+final wordToGuess = allWords.map((word) => word.values.first.first).toList();

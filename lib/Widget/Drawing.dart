@@ -365,7 +365,7 @@ class _Drawing extends ConsumerState<Drawing> {
         if (_isSizeMenuVisible)
           Positioned(
               left: _containerPositionSize.dx - 5,
-              top: _containerPositionSize.dy - 415,
+              top: _containerPositionSize.dy - 410 - 110,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.black12,
@@ -484,7 +484,7 @@ class _Drawing extends ConsumerState<Drawing> {
         if (_isSelectMenuVisible)
           Positioned(
             left: _containerPosition.dx,
-            top: _containerPosition.dy - 290,
+            top: _containerPosition.dy - 290 - 110,
             child: Container(
                 decoration: BoxDecoration(
                   color: Colors.black12,
