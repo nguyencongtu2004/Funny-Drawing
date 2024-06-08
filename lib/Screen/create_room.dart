@@ -86,10 +86,12 @@ class CreateRoom extends ConsumerStatefulWidget {
       player.id!: {
         'name': player.name,
         'avatarIndex': player.avatarIndex,
+        'point': 0,
+        'isCorrect': false,
       }
     });
 
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
+    Navigator.of(context).push(MaterialPageRoute(
         builder: (ctx) => WaitingRoom(
               selectedRoom: createdRoom,
               isGuest: false,

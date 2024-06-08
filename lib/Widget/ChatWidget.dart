@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/model/player_normal_mode.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ class Chat extends StatefulWidget {
 
 class _Chat extends State<Chat> {
   late DatabaseReference _playerInRoomRef;
-  final List<User> _playersInRoom = [];
+  final List<PlayerInNormalMode> _playersInRoom = [];
 
   @override
   void initState() {
@@ -39,11 +40,14 @@ class _Chat extends State<Chat> {
       setState(() {
         _playersInRoom.clear();
         for (final player in data.entries) {
-          _playersInRoom.add(User(
+          _playersInRoom.add(PlayerInNormalMode(
             id: player.key,
             name: player.value['name'],
             avatarIndex: player.value['avatarIndex'],
+            point: player.value['point'],
+            isCorrect: player.value['isCorrect'],
           ));
+          _playersInRoom.sort((a, b) => b.point.compareTo(a.point));
         }
       });
     });
@@ -76,9 +80,21 @@ class _Chat extends State<Chat> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    for (final player in _playersInRoom)
-                      Player(player: player, sizeImg: 80),
-                  ],
+                        for (final player in _playersInRoom)
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center, // Căn giữa theo chiều dọc
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Player(player: User(
+                                id: player.id,
+                                name: player.name,
+                                avatarIndex: player.avatarIndex,
+                              ), sizeImg: 80),
+                              Text(player.point.toString(),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFFFFFA1)),)
+                            ],
+                          )
+                      ],
                 ),
               ),
             ),

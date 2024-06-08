@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:draw_and_guess_promax/Screen/Ranking.dart';
 import 'package:draw_and_guess_promax/Screen/knock_off_mode.dart';
 import 'package:draw_and_guess_promax/Screen/master_piece_mode.dart';
 import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
@@ -36,6 +37,7 @@ class WaitingRoom extends ConsumerStatefulWidget {
 class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
+  late bool isPlayedd = false;
   var currentPlayers = <User>[];
 
   @override
@@ -56,7 +58,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       } else {
         final data = Map<String, dynamic>.from(
             event.snapshot.value as Map<dynamic, dynamic>);
-
+          isPlayedd = data['isPlayed'];
+        // print("Callnav 3  " + data['isPlayed'].toString());
         if (data['isPlayed'] == true) {
           startMode(widget.selectedRoom.mode);
         }
@@ -153,20 +156,27 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   void startMode(String mode) {
-    if (mode == 'Thường') {
-      // Chuyển sang màn hình chơi
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
-      ref.read(chatProvider.notifier).clearChat();
 
+    // if(!isPlayedd) return;
+    if (mode == 'Thường') {
       var normalModeDataRef =
-          database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+      database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
       // Khởi tạo trạng thái của phòng
       normalModeDataRef.update({
         'wordToDraw': pickRandomWordToGuess(),
         'turn': currentPlayers[Random().nextInt(currentPlayers.length)].id,
         'timeLeft': 60,
+        'point': 10,
+        // 'endGame': false,
       });
+
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
+      ref.read(chatProvider.notifier).clearChat();
+
+
+      // Navigator.of(context).push(MaterialPageRoute(
+      //     builder: (ctx) => Ranking(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tam sao thất bản') {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => KnockoffMode(selectedRoom: widget.selectedRoom)));
@@ -181,6 +191,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
 
   void _startClick(context) {
     print('bắt đầu');
+    print("Callnav 2");
     _roomRef.update({'isPlayed': true});
     startMode(widget.selectedRoom.mode);
   }

@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
+import 'package:draw_and_guess_promax/Screen/Ranking.dart';
 import 'package:draw_and_guess_promax/data/word_to_guess.dart';
+import 'package:draw_and_guess_promax/model/player_normal_mode.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +34,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
   late DatabaseReference _normalModeDataRef;
-  late final List<User> _playersInRoom = [];
+  late final List<PlayerInNormalMode> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   bool? _isMyTurn;
   int currentPlayerTurnIndex = 0;
@@ -39,6 +42,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
   var isMyTurn = false;
   var _timeLeft = -1;
+  var _pointLeft = 0;
+
 
   Timer? _timer;
 
@@ -72,12 +77,16 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       );
       _playersInRoom.clear();
       for (final player in data.entries) {
-        _playersInRoom.add(User(
+        _playersInRoom.add(PlayerInNormalMode(
           id: player.key,
           name: player.value['name'],
           avatarIndex: player.value['avatarIndex'],
+          point: player.value['point'],
+          isCorrect: player.value['isCorrect'],
         ));
       }
+
+      _playersInRoom.sort((a, b) => b.point.compareTo(a.point));
       _playersInRoomId.clear();
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
     });
@@ -95,8 +104,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final turn = data['turn'] as String;
       final userGuessed = data['userGuessed'] as String?;
       final timeLeft = data['timeLeft'] as int;
+      final pointLeft = data['point'] as int;
       setState(() {
         _timeLeft = timeLeft;
+        _pointLeft = pointLeft;
       });
 
       // Lấy tên người chơi hiện tại đang vẽ
@@ -117,7 +128,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       });
 
       // Chủ phòng cập nhật lượt chơi khi có người đoán đúng từ hoặc hết giờ
-      if ((userGuessed != null || timeLeft == 0) &&
+      if (((_pointLeft == (max(10, _playersInRoom.length) - _playersInRoom.length + 1)) || timeLeft == 0) &&
           ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
         currentPlayerTurnIndex =
             (currentPlayerTurnIndex + 1) % _playersInRoomId.length;
@@ -126,12 +137,32 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           'turn': _playersInRoomId[currentPlayerTurnIndex],
           'wordToDraw': pickRandomWordToGuess(),
           'timeLeft': 60,
+          'point': (max(10, _playersInRoom.length)),
         });
+        for(var player in _playersInRoom) {
+          _playersInRoomRef.update({
+            player.id!: {
+              'name': player.name,
+              'avatarIndex': player.avatarIndex,
+              'point': player.point,
+              'isCorrect': false,
+            }
+          });
+        }
+
         // Xóa bảng vẽ
         _drawingRef.update({
           'Color': '[]',
           'Offset': '[]',
         });
+
+        // Ket thuc game
+        // if(_endGame) {
+        //   _normalModeDataRef.remove();
+        //   Navigator.of(context).pop();
+        //   Navigator.of(context).push(MaterialPageRoute(
+        //       builder: (ctx) => Ranking(selectedRoom: widget.selectedRoom)));
+        // }
       }
     });
 
@@ -140,21 +171,65 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
-      print(data['turn']);
       setState(() {
         _isMyTurn = data['turn'] == ref.read(userProvider).id;
+        var player = ref.read(userProvider);
+        var point = 0;
+        for(var pl in _playersInRoom) {
+          if(pl.id == player.id) {
+            point = pl.point;
+            break;
+          }
+        }
+        if(_isMyTurn == true) {
+          _playersInRoomRef.update({
+            player.id!: {
+              'name': player.name,
+              'avatarIndex': player.avatarIndex,
+              'point': point,
+              'isCorrect': true,
+            }
+          });
+        }
+        else {
+          _playersInRoomRef.update({
+            player.id!: {
+              'name': player.name,
+              'avatarIndex': player.avatarIndex,
+              'point': point,
+              'isCorrect': false,
+            }
+          });
+        }
       });
     });
 
     _chatRef.onValue.listen((event) {
       // Kiểm tra đoán đúng không
-      final isRight = ref
+      final playerCorrect = ref
           .read(chatProvider.notifier)
           .checkGuess(wordToGuess, widget.selectedRoom.roomId);
-      if (isRight) {
+      if (playerCorrect != "" && ref.read(userProvider).id == playerCorrect) {
         // Chủ phòng thông báo người chơi đã đoán đúng
-        if (ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
+        if (true) {
+          print("Check id: " + ref.read(userProvider).id!);
+          var player = ref.read(userProvider);
+          var _curPoint = 0;
+          for(var pl in _playersInRoom) {
+            if(pl.id == player.id) {
+              _curPoint = pl.point;
+            }
+          }
+          _playersInRoomRef.update({
+            ref.read(userProvider).id!: {
+              'name': player.name,
+              'avatarIndex': player.avatarIndex,
+              'point': _curPoint + _pointLeft,
+              'isCorrect': true,
+            }
+          });
           _normalModeDataRef.update({
+            'point': _pointLeft-1,
             'userGuessed': ref.read(userProvider).id,
           });
         }
@@ -462,7 +537,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                   color: Colors.transparent,
                 ),
               ),
-            )
+            ),
+
           ]
         ]),
       );

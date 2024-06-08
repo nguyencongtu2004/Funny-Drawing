@@ -96,6 +96,9 @@ flutter:
     - assets/images/information.png
     - assets/images/more.png
 
+    - assets/images/gold-medal.png
+    - assets/images/silver-medal.png
+    - assets/images/bronze-medal.png
     - assets/images/ok.png
     - assets/images/close.png
     - assets/images/erase.png

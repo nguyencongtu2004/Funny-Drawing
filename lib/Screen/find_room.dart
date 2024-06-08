@@ -84,6 +84,8 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         player.id!: {
           'name': player.name,
           'avatarIndex': player.avatarIndex,
+          'point': 0,
+          'isCorrect': false,
         },
       });
 
@@ -93,7 +95,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         'curPlayer': selectedRoom.curPlayer + 1,
       });
 
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
+      Navigator.of(context).push(MaterialPageRoute(
           builder: (ctx) => WaitingRoom(
                 selectedRoom: selectedRoom,
                 isGuest: true,
