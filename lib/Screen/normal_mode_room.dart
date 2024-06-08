@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
-import 'package:draw_and_guess_promax/Screen/Ranking.dart';
+import 'package:draw_and_guess_promax/Widget/chat_list.dart';
 import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:draw_and_guess_promax/model/player_normal_mode.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
-import '../model/user.dart';
 import '../provider/chat_provider.dart';
 import '../provider/user_provider.dart';
 
@@ -45,6 +44,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   var _timeLeft = -1;
   var _pointLeft = 0;
 
+  final _scrollController = ScrollController();
 
   Timer? _timer;
 
@@ -92,6 +92,34 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
     });
 
+    // Lấy thông tin từ chat
+    _chatRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+
+      final newChat = data.entries.map((e) {
+        return {
+          "id": e.value['id'],
+          "userName": e.value['userName'],
+          "message": e.value['message'],
+          "timestamp": e.value['timestamp'],
+        };
+      }).toList();
+
+      ref.read(chatProvider.notifier).updateChat(newChat);
+
+      // đảm bảo rằng việc cuộn chỉ xảy ra sau khi giao diện đã được cập nhật hoàn tất.
+      // Trùng với hàm _scrollToBottom()
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
+    });
+
     // Lấy thông tin từ cần vẽ và lượt chơi
     _normalModeDataRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
@@ -134,7 +162,11 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       });
 
       // Chủ phòng cập nhật lượt chơi khi có người đoán đúng từ hoặc hết giờ
-      if (((_pointLeft == (max(10, _playersInRoom.length) - _playersInRoom.length + 1)) || timeLeft == 0) &&
+      if (((_pointLeft ==
+                  (max(10, _playersInRoom.length) -
+                      _playersInRoom.length +
+                      1)) ||
+              timeLeft == 0) &&
           ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
         currentPlayerTurnIndex =
             (currentPlayerTurnIndex + 1) % _playersInRoomId.length;
@@ -145,7 +177,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           'timeLeft': 60,
           'point': (max(10, _playersInRoom.length)),
         });
-        for(var player in _playersInRoom) {
+        for (var player in _playersInRoom) {
           _playersInRoomRef.update({
             player.id!: {
               'name': player.name,
@@ -155,13 +187,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             }
           });
         }
-        ref
-            .read(chatProvider.notifier)
-            .addMessage(
-             ref
-            .read(userProvider)
-            .id!, 'Đáp án là: $wordToGuess', 'Đáp án',
-            widget.selectedRoom.roomId);
+        ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
+            'Đáp án là: $wordToGuess', 'Đáp án', widget.selectedRoom.roomId);
 
         // Xóa bảng vẽ
         _drawingRef.update({
@@ -188,13 +215,13 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         _isMyTurn = data['turn'] == ref.read(userProvider).id;
         var player = ref.read(userProvider);
         var point = 0;
-        for(var pl in _playersInRoom) {
-          if(pl.id == player.id) {
+        for (var pl in _playersInRoom) {
+          if (pl.id == player.id) {
             point = pl.point;
             break;
           }
         }
-        if(_isMyTurn == true) {
+        if (_isMyTurn == true) {
           _playersInRoomRef.update({
             player.id!: {
               'name': player.name,
@@ -203,8 +230,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
               'isCorrect': true,
             }
           });
-        }
-        else {
+        } else {
           _playersInRoomRef.update({
             player.id!: {
               'name': player.name,
@@ -216,7 +242,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         }
       });
     });
-
   }
 
   void _startTimer() {
@@ -330,6 +355,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
   @override
   Widget build(BuildContext context) {
+    final chatMessages = ref.watch(chatProvider);
+
     // Chờ dữ liệu từ Firebase
     if (_isMyTurn == null) {
       return Scaffold(
@@ -540,7 +567,23 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                   ),
                 ),
               )
-            ]
+            ],
+            Positioned(
+                bottom: 95,
+                left: 0,
+                right: 0,
+                child: Container(
+                    padding: const EdgeInsets.only(left: 15, right: 15, top: 5),
+                    height: 100,
+                    decoration: const BoxDecoration(
+                        color: Color(0xFF00C4A1),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
+                        )),
+                    child: ChatList(
+                        scrollController: _scrollController,
+                        chatMessages: chatMessages))),
           ]),
         ),
       );

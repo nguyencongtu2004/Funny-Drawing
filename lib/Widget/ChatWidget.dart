@@ -60,18 +60,21 @@ class _Chat extends State<Chat> {
     print("height: " + height.toString());
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.transparent,
       // Đảm bảo nội dung không bị che bởi bàn phím
       body: Container(
         decoration: const BoxDecoration(
           color: Color(0xFF00C4A1),
           borderRadius: BorderRadius.only(
-              //topLeft: Radius.circular(25),
-              //topRight: Radius.circular(25),
-              ),
+            topLeft: Radius.circular(15),
+            topRight: Radius.circular(15),
+          ),
         ),
         child: Column(
           children: [
-            Container(
+            // ranking
+            const SizedBox(height: 10),
+            SizedBox(
               height: 100,
               width: width,
               child: SingleChildScrollView(
@@ -91,8 +94,12 @@ class _Chat extends State<Chat> {
                                 avatarIndex: player.avatarIndex,
                               ), sizeImg: 80),
                               Text(player.point.toString(),
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFFFFFFA1)),)
-                            ],
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: Color(0xFFFFFFA1)),
+                          )
+                        ],
                           )
                       ],
                 ),

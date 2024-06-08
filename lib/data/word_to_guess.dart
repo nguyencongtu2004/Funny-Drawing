@@ -4,7 +4,7 @@ String pickRandomWordToGuess() {
   return wordToGuess[Random().nextInt(wordToGuess.length)];
 }
 
-final allWords = {
+final allWords = [
   {
     'Table': ['Bàn', 'Cái bàn']
   },
@@ -504,6 +504,6 @@ final allWords = {
   {
     'Kite': ['Con diều', 'Diều']
   },
-};
+];
 
 final wordToGuess = allWords.map((e) => e.keys.first).toList();

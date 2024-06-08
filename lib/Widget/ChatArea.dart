@@ -1,12 +1,14 @@
 import 'dart:async';
 
+import 'package:draw_and_guess_promax/Widget/chat_list.dart';
 import 'package:draw_and_guess_promax/provider/chat_provider.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/word_to_guess.dart';
 import '../firebase.dart';
 
 class ChatArea extends ConsumerStatefulWidget {
@@ -78,9 +80,9 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
     _chatRef = database.child('/chat/${widget.roomId}');
     _normalModeDataRef = database.child('/normal_mode_data/${widget.roomId}');
     _roomRef = database.child('/rooms/${widget.roomId}');
-    _playerInRoomIDRef = database.child('/players_in_room/${widget.roomId}/${ref.read(userProvider).id}');
-    _playersInRoomRef =
-        database.child('/players_in_room/${widget.roomId}');
+    _playerInRoomIDRef = database.child(
+        '/players_in_room/${widget.roomId}/${ref.read(userProvider).id}');
+    _playersInRoomRef = database.child('/players_in_room/${widget.roomId}');
 
     _roomRef.get().then((value) {
       final data = Map<String, dynamic>.from(
@@ -126,6 +128,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
       ref.read(chatProvider.notifier).updateChat(newChat);
 
       // đảm bảo rằng việc cuộn chỉ xảy ra sau khi giao diện đã được cập nhật hoàn tất.
+      // Trùng với hàm _scrollToBottom()
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -145,27 +148,44 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
             'userGuessed': ref.read(userProvider).id,
           });
           final userName = ref.read(userProvider).name;
-          ref
-              .read(chatProvider.notifier)
-              .addMessage(ref.read(userProvider).id!,'$userName đã đoán đúng', 'Hệ thống', widget.roomId);
+          ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
+              '$userName đã đoán đúng', 'Hệ thống', widget.roomId);
         }
         Navigator.of(context).pop();
       }
     });
     _isEnable = true;
-
-
-
   }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
+  }
+
+  bool _checkGuess(String guess, String wordToGuess) {
+    print('===========================================');
+    final words = allWords
+        .firstWhere((element) => element.keys.first == wordToGuess)
+        .values
+        .first
+        .toList();
+    if (guess.trim().toLowerCase() == wordToGuess.trim().toLowerCase()) {
+      print('true');
+      return true;
+    }
+    for (final word in words) {
+      if (word.trim().toLowerCase() == guess.trim().toLowerCase()) {
+        print('true');
+        return true;
+      }
+    }
+    print('false');
+    return false;
   }
 
   @override
@@ -178,53 +198,12 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(15),
-              width: width,
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: chatMessages.length,
-                itemBuilder: (context, index) {
-                  final item = chatMessages[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10.0),
-                    child: item['userName'] == 'Hệ thống' ?
-                    Center(
-                      child: Text(
-                        '--${item['message']}--',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF00705A),
-                        ),
-                      ),
-                    )
-
-                        : item['userName'] != 'Đáp án' ?  Text(
-                      '${item['userName']}: ${item['message']}',
-                      style:
-                      Theme.of(context).textTheme.bodySmall!.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ):
-                    Center(
-                      child: Text(
-                        '--${item['message']}--',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall!
-                            .copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFFf8fc00),
-                        ),
-                      ),
-                    )
-
-                  );
-                },
-              ),
-            ),
+                padding: const EdgeInsets.all(15),
+                width: width,
+                child: ChatList(
+                  scrollController: _scrollController,
+                  chatMessages: chatMessages,
+                )),
           ),
           Container(
             padding: const EdgeInsets.only(left: 15, right: 15, bottom: 15),
@@ -259,27 +238,23 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   width: 50,
                   child: IconButton(
                     onPressed: () {
-                      if (_controller.text.isEmpty || wordToGuess.isEmpty) return;
+                      if (_controller.text.isEmpty || wordToGuess.isEmpty)
+                        return;
                       print("OK KO?" + _controller.text);
-                      if((wordToGuess.trim().toLowerCase() != _controller.text.trim().toLowerCase())) {
-                        print("AddMess?" + wordToGuess + " " + _controller.text);
+                      if (_controller.text.trim().toLowerCase() !=
+                          wordToGuess.trim().toLowerCase()) {
+                        print(
+                            "AddMess?" + wordToGuess + " " + _controller.text);
                         ref.read(chatProvider.notifier).addMessage(
-                          ref
-                              .read(userProvider)
-                              .id!,
-                          _controller.text,
-                          ref
-                              .read(userProvider)
-                              .name,
-                          widget.roomId,
-                        );
+                              ref.read(userProvider).id!,
+                              _controller.text,
+                              ref.read(userProvider).name,
+                              widget.roomId,
+                            );
                         _controller.clear();
-                      }
-                      else {
+                      } else {
                         if (_isEnable) {
-                          final userName = ref
-                              .read(userProvider)
-                              .name;
+                          final userName = ref.read(userProvider).name;
                           _playerInRoomIDRef.update({
                             "point": curPoint + _pointLeft,
                             "isCorrect": true
@@ -287,16 +262,16 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                           _normalModeDataRef.update({
                             "point": _pointLeft - 1,
                           });
-                          ref
-                              .read(chatProvider.notifier)
-                              .addMessage(ref
-                              .read(userProvider)
-                              .id!, '$userName đã đoán đúng', 'Hệ thống',
+                          ref.read(chatProvider.notifier).addMessage(
+                              ref.read(userProvider).id!,
+                              '$userName đã đoán đúng',
+                              'Hệ thống',
                               widget.roomId);
                           _controller.clear();
                         }
                       }
-                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _scrollToBottom());
                     },
                     icon: Image.asset('assets/images/send.png'),
                     iconSize: 45,
