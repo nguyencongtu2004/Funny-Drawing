@@ -132,14 +132,17 @@ class _Drawing extends ConsumerState<Drawing> {
                 height: widget.height,
                 width: widget.width,
                 child: PaintBoard(
-                  key: _paintBoardKey,
-                  chose: chose,
-                  paintColor: _paintColor,
-                  paintSize: _paintSize,
-                  height: widget.height,
-                  width: widget.width,
-                  selectedRoom: widget.selectedRoom,
-                ),
+                    key: _paintBoardKey,
+                    chose: chose,
+                    paintColor: _paintColor,
+                    paintSize: _paintSize,
+                    height: widget.height,
+                    width: widget.width,
+                    selectedRoom: widget.selectedRoom,
+                    hideMenu: () {
+                      _toggleSelectMenuVisibility(Offset.zero);
+                      _toggleSizeMenuVisibility(Offset.zero);
+                    }),
               ))
             ],
           ),
@@ -291,7 +294,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                 Colors.green,
                                 Colors.blue
                               ])
-                                Container(
+                                SizedBox(
                                   height: sizePickColor,
                                   width: sizePickColor,
                                   child: ElevatedButton(
@@ -300,14 +303,14 @@ class _Drawing extends ConsumerState<Drawing> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.zero,
-                                        minimumSize:
-                                            Size(sizePickColor, sizePickColor),
+                                        minimumSize: const Size(
+                                            sizePickColor, sizePickColor),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                               5), // Border radius là 5
                                         ),
                                         backgroundColor: color),
-                                    child: SizedBox(
+                                    child: const SizedBox(
                                       width: sizePickColor,
                                       // Kích thước của hình vuông
                                       height: sizePickColor,
@@ -328,7 +331,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                 Colors.purple,
                                 Colors.teal
                               ])
-                                Container(
+                                SizedBox(
                                   height: sizePickColor,
                                   width: sizePickColor,
                                   child: ElevatedButton(
@@ -337,14 +340,14 @@ class _Drawing extends ConsumerState<Drawing> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.zero,
-                                        minimumSize:
-                                            Size(sizePickColor, sizePickColor),
+                                        minimumSize: const Size(
+                                            sizePickColor, sizePickColor),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                               5), // Border radius là 5
                                         ),
                                         backgroundColor: color),
-                                    child: SizedBox(
+                                    child: const SizedBox(
                                       width: sizePickColor,
                                       // Kích thước của hình vuông
                                       height: sizePickColor,
@@ -373,7 +376,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -384,7 +387,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(5);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 10,
@@ -394,7 +397,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -405,7 +408,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(8);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 15,
@@ -415,7 +418,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -426,7 +429,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(12);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 20,
@@ -436,7 +439,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -447,7 +450,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(16);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 25,
@@ -457,7 +460,7 @@ class _Drawing extends ConsumerState<Drawing> {
                     Container(
                       height: 50,
                       width: 50,
-                      margin: EdgeInsets.all(5.0),
+                      margin: const EdgeInsets.all(5.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(
@@ -468,7 +471,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           _setPainSize(22);
                           _toggleSizeMenuVisibility(Offset.zero);
                         },
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.circle_outlined, // Biểu tượng
                           color: Colors.black, // Màu của biểu tượng
                           size: 30,
@@ -494,7 +497,7 @@ class _Drawing extends ConsumerState<Drawing> {
                         Container(
                           height: 50,
                           width: 50,
-                          margin: EdgeInsets.all(5.0),
+                          margin: const EdgeInsets.all(5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(
@@ -505,7 +508,7 @@ class _Drawing extends ConsumerState<Drawing> {
                               _paintBoardKey.currentState!.clearPoints();
                               _isErase = false;
                             },
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.delete, // Biểu tượng
                               color: Colors.black, // Màu của biểu tượng
                               size: 35,
@@ -515,7 +518,7 @@ class _Drawing extends ConsumerState<Drawing> {
                         Container(
                             height: 50,
                             width: 50,
-                            margin: EdgeInsets.all(5.0),
+                            margin: const EdgeInsets.all(5.0),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(
@@ -527,7 +530,8 @@ class _Drawing extends ConsumerState<Drawing> {
                                   _setColor(Theme.of(context)
                                       .scaffoldBackgroundColor);
                                   _setSelectIcon(Icons.add);
-                                  _toggleSelectMenuVisibility(Offset(0, 0));
+                                  _toggleSelectMenuVisibility(
+                                      const Offset(0, 0));
                                   _isErase = true;
                                 },
                                 child: Image.asset('assets/images/erase.png')
@@ -545,7 +549,7 @@ class _Drawing extends ConsumerState<Drawing> {
                         Container(
                           height: 50,
                           width: 50,
-                          margin: EdgeInsets.all(5.0),
+                          margin: const EdgeInsets.all(5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(
@@ -555,7 +559,7 @@ class _Drawing extends ConsumerState<Drawing> {
                             onPressed: () {
                               _isErase = false;
                               _setSelectIcon(Icons.draw);
-                              _toggleSelectMenuVisibility(Offset(0, 0));
+                              _toggleSelectMenuVisibility(const Offset(0, 0));
                               _setColor(_preColor);
                               _setChose("Draw");
                             },
@@ -578,7 +582,7 @@ class _Drawing extends ConsumerState<Drawing> {
                           child: GestureDetector(
                               onTap: () {
                                 _setSelectIcon(Icons.minimize);
-                                _toggleSelectMenuVisibility(Offset(0, 0));
+                                _toggleSelectMenuVisibility(const Offset(0, 0));
                                 _setChose("DrawLine");
                               },
                               child: Image.asset(
@@ -601,7 +605,7 @@ class _Drawing extends ConsumerState<Drawing> {
                         Container(
                           height: 50,
                           width: 50,
-                          margin: EdgeInsets.all(5.0),
+                          margin: const EdgeInsets.all(5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(
@@ -611,7 +615,7 @@ class _Drawing extends ConsumerState<Drawing> {
                             onPressed: () {
                               _paintBoardKey.currentState!.ctrlZ();
                             },
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.turn_left, // Biểu tượng
                               color: Colors.black,
                               size: 35,
@@ -621,7 +625,7 @@ class _Drawing extends ConsumerState<Drawing> {
                         Container(
                           height: 50,
                           width: 50,
-                          margin: EdgeInsets.all(5.0),
+                          margin: const EdgeInsets.all(5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(7.0),
@@ -630,7 +634,7 @@ class _Drawing extends ConsumerState<Drawing> {
                             onPressed: () {
                               _paintBoardKey.currentState!.ctrlY();
                             },
-                            icon: Icon(
+                            icon: const Icon(
                               Icons.turn_right, // Biểu tượng
                               color: Colors.black,
                               size: 35, // Màu của biểu tượng
@@ -655,6 +659,7 @@ class PaintBoard extends ConsumerStatefulWidget {
   final double height;
   final double width;
   final Room selectedRoom;
+  final void Function() hideMenu;
 
   PaintBoard(
       {required this.key,
@@ -663,7 +668,8 @@ class PaintBoard extends ConsumerStatefulWidget {
       required this.width,
       required this.paintColor,
       required this.paintSize,
-      required this.selectedRoom});
+      required this.selectedRoom,
+      required this.hideMenu});
 
   @override
   _PaintBoardState createState() => _PaintBoardState();
@@ -704,6 +710,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         if (timeLeft == 60) {
           clearPoints();
         }
+        // Ẩn menu khi có người đoán đúng
+        widget.hideMenu();
       });
 
       drawRef.onValue.listen((event) async {
@@ -754,13 +762,10 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   }
 
   bool isInBox(Offset point) {
-    if (point != null) {
-      return point.dx >= 0 &&
-          point.dy >= 0 &&
-          point.dx <= widget.width &&
-          point.dy <= widget.height;
-    }
-    return false;
+    return point.dx >= 0 &&
+        point.dy >= 0 &&
+        point.dx <= widget.width &&
+        point.dy <= widget.height;
   }
 
   Offset setValid(Offset point) {
@@ -784,8 +789,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
   void ctrlZ() {
     setState(() {
-      if (points.length <= 0) return;
-      if (paints.length <= 0) return;
+      if (points.isEmpty) return;
+      if (paints.isEmpty) return;
       Qpn.add(points[points.length - 1]);
       Qpt.add(paints[paints.length - 1]);
       points.removeLast();
@@ -797,8 +802,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
   void ctrlY() {
     setState(() {
-      if (Qpt.isEmpty || Qpt.length <= 0) return;
-      if (Qpn.isEmpty || Qpn.length <= 0) return;
+      if (Qpt.isEmpty || Qpt.isEmpty) return;
+      if (Qpn.isEmpty || Qpn.isEmpty) return;
       points.add(Qpn.last);
       paints.add(Qpt.last);
       Qpn.removeLast();
@@ -811,14 +816,14 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
   String encodeOffsetList(List<List<Offset>> offsetList) {
     List<List<double>> encodedList = [];
-    offsetList.forEach((innerList) {
+    for (var innerList in offsetList) {
       List<double> tempList = [];
-      innerList.forEach((offset) {
+      for (var offset in innerList) {
         tempList.add(offset.dx);
         tempList.add(offset.dy);
-      });
+      }
       encodedList.add(tempList);
-    });
+    }
     return json.encode(encodedList);
   }
 
@@ -826,12 +831,12 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   List<List<Offset>> decodeOffsetList(String jsonStr) {
     List<List<Offset>> offsetList = [];
 
-    if (jsonStr != null && jsonStr.isNotEmpty) {
+    if (jsonStr.isNotEmpty) {
       // Decode the JSON string
       List<dynamic> decodedList = json.decode(jsonStr);
 
       // Process each inner list
-      decodedList.forEach((dynamic innerList) {
+      for (var innerList in decodedList) {
         if (innerList is List) {
           List<Offset> tempList = [];
           for (int i = 0; i < innerList.length; i += 2) {
@@ -840,7 +845,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           }
           offsetList.add(tempList);
         }
-      });
+      }
     }
 
     return offsetList;
@@ -877,7 +882,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
   void updatePointsNormalMode() async {
     List<List<Offset>> fbpush = points;
-    if (tmp != null && tmp.length > 0) fbpush.add(tmp);
+    if (tmp.isNotEmpty) fbpush.add(tmp);
 
     await drawRef.update(
         {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
@@ -976,10 +981,7 @@ class PaintCanvas extends CustomPainter {
       ..strokeWidth = 5.0;
     for (int i = 0; i < points.length; i++) {
       for (int j = 0; j < points[i].length - 1; j++) {
-        if (points[i][j] != null &&
-            points[i][j + 1] != null &&
-            points[i][j].dx != -1 &&
-            points[i][j + 1].dx != -1) {
+        if (points[i][j].dx != -1 && points[i][j + 1].dx != -1) {
           canvas.drawLine(points[i][j], points[i][j + 1], paints[i]);
         }
       }
@@ -989,10 +991,7 @@ class PaintCanvas extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 8.0;
     for (int j = 0; j < tmp.length - 1; j++) {
-      if (tmp[j] != null &&
-          tmp[j + 1] != null &&
-          tmp[j].dx != -1 &&
-          tmp[j + 1].dx != -1) {
+      if (tmp[j].dx != -1 && tmp[j + 1].dx != -1) {
         canvas.drawLine(tmp[j], tmp[j + 1], paints[paints.length - 1]);
       }
     }

@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
