@@ -210,37 +210,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       });
     });
 
-    _chatRef.onValue.listen((event) {
-      // Kiểm tra đoán đúng không
-      final playerCorrect = ref
-          .read(chatProvider.notifier)
-          .checkGuess(wordToGuess, widget.selectedRoom.roomId);
-      if (playerCorrect != "" && ref.read(userProvider).id == playerCorrect) {
-        // Chủ phòng thông báo người chơi đã đoán đúng
-        if (true) {
-          print("Check id: " + ref.read(userProvider).id!);
-          var player = ref.read(userProvider);
-          var _curPoint = 0;
-          for(var pl in _playersInRoom) {
-            if(pl.id == player.id) {
-              _curPoint = pl.point;
-            }
-          }
-          _playersInRoomRef.update({
-            ref.read(userProvider).id!: {
-              'name': player.name,
-              'avatarIndex': player.avatarIndex,
-              'point': _curPoint + _pointLeft,
-              'isCorrect': true,
-            }
-          });
-          _normalModeDataRef.update({
-            'point': _pointLeft-1,
-            'userGuessed': ref.read(userProvider).id,
-          });
-        }
-      }
-    });
   }
 
   void _startTimer() {
