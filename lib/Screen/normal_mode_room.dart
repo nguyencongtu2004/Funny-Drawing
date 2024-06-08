@@ -25,6 +25,7 @@ class NormalModeRoom extends ConsumerStatefulWidget {
 class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   String _wordToDraw = '';
   late String wordToGuess;
+  late String hint;
   late List<Map<String, dynamic>> chat = [];
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
@@ -89,6 +90,11 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       );
 
       wordToGuess = data['wordToDraw'];
+      hint = allWords
+          .firstWhere((element) => element.keys.first == wordToGuess)
+          .values
+          .first
+          .first;
       setState(() {
         _wordToDraw = data['wordToDraw'] as String;
       });
@@ -386,7 +392,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                     Expanded(
                       child: Text(
                         isMyTurn
-                            ? 'Hãy vẽ: $_wordToDraw'
+                            ? 'Hãy vẽ: $wordToGuess ($hint)'
                             : 'Đoán xem đây là gì?',
                         style: Theme.of(context)
                             .textTheme

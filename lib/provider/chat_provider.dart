@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
@@ -23,11 +24,16 @@ class ChatNotifier extends StateNotifier<List<Map<String, dynamic>>> {
   }
 
   bool checkGuess(String guess, String roomId) {
-    guess = guess.trim().toLowerCase();
+    final words = allWords.firstWhere((element) => element.keys.first == guess);
     final message = state.last['message'].trim().toLowerCase();
-    final name = state.last['userName'];
-    if (guess == message) {
+
+    if (guess.trim().toLowerCase() == message) {
       return true;
+    }
+    for (final word in words.values.first) {
+      if (word.trim().toLowerCase() == message) {
+        return true;
+      }
     }
     return false;
   }
