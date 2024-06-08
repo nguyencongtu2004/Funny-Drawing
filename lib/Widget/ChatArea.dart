@@ -187,26 +187,40 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   final item = chatMessages[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10.0),
-                    child: item['userName'] != 'Hệ thống'
-                        ? Text(
-                            '${item['userName']}: ${item['message']}',
-                            style:
-                                Theme.of(context).textTheme.bodySmall!.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                          )
-                        : Center(
-                            child: Text(
-                              '--${item['message']}--',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall!
-                                  .copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF00705A),
-                                  ),
-                            ),
-                          ),
+                    child: item['userName'] == 'Hệ thống' ?
+                    Center(
+                      child: Text(
+                        '--${item['message']}--',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF00705A),
+                        ),
+                      ),
+                    )
+
+                        : item['userName'] != 'Đáp án' ?  Text(
+                      '${item['userName']}: ${item['message']}',
+                      style:
+                      Theme.of(context).textTheme.bodySmall!.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ):
+                    Center(
+                      child: Text(
+                        '--${item['message']}--',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFf8fc00),
+                        ),
+                      ),
+                    )
+
                   );
                 },
               ),
