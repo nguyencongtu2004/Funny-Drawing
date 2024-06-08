@@ -37,7 +37,7 @@ class WaitingRoom extends ConsumerStatefulWidget {
 class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
-  late bool isPlayedd = false;
+  late bool isPlayed = false;
   var currentPlayers = <User>[];
 
   @override
@@ -58,7 +58,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       } else {
         final data = Map<String, dynamic>.from(
             event.snapshot.value as Map<dynamic, dynamic>);
-          isPlayedd = data['isPlayed'];
+        isPlayed = data['isPlayed'];
         // print("Callnav 3  " + data['isPlayed'].toString());
         if (data['isPlayed'] == true) {
           startMode(widget.selectedRoom.mode);
@@ -156,19 +156,27 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   void startMode(String mode) {
-
-    // if(!isPlayedd) return;
+    /*if (currentPlayers.length < 2) {
+      final sackBar = SnackBar(
+        content: Text('Phòng cần ít nhất 2 người chơi'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(sackBar);
+      return;
+    }*/
+    // if(!isPlayed) return;
     if (mode == 'Thường') {
-      var normalModeDataRef =
-      database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
-      // Khởi tạo trạng thái của phòng
-      normalModeDataRef.update({
-        'wordToDraw': pickRandomWordToGuess(),
-        'turn': currentPlayers[Random().nextInt(currentPlayers.length)].id,
-        'timeLeft': 60,
-        'point': 10,
-        // 'endGame': false,
-      });
+      if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+        var normalModeDataRef =
+            database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+        // Khởi tạo trạng thái của phòng
+        normalModeDataRef.update({
+          'wordToDraw': pickRandomWordToGuess(),
+          'turn': currentPlayers[Random().nextInt(currentPlayers.length)].id,
+          'timeLeft': 60,
+          'point': 10,
+          // 'endGame': false,
+        });
+      }
 
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
