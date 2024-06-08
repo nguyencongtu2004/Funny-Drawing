@@ -725,6 +725,18 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
               return MapEntry(key.toString(), value.toString());
             });
             setState(() {
+              // List<List<Offset>> tmpp = decodeOffsetList(data["Offset"]!);
+              // points.clear();
+              // for(List<Offset> iList in tmpp) {
+              //   List<Offset> tmpp1 = [];
+              //   for(Offset os in iList) {
+              //     if(os.dx != -1 && os.dy != -1) {
+              //       tmpp1.add(Offset(os.dx/2, os.dy/2));
+              //     }
+              //     else tmpp1.add(os);
+              //   }
+              //   points.add(tmpp1);
+              // }
               points = decodeOffsetList(data["Offset"]!);
               paints = decodePaintList(data["Color"]!);
             });

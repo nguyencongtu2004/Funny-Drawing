@@ -155,6 +155,13 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             }
           });
         }
+        ref
+            .read(chatProvider.notifier)
+            .addMessage(
+             ref
+            .read(userProvider)
+            .id!, 'Đáp án là: $wordToGuess', 'Đáp án',
+            widget.selectedRoom.roomId);
 
         // Xóa bảng vẽ
         _drawingRef.update({
