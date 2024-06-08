@@ -856,8 +856,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       return {
         'color': paint.color.value,
         'strokeWidth': paint.strokeWidth,
-        'style': paint.style.index,
-        'isAntiAlias': paint.isAntiAlias,
+        'strokeCap': paint.strokeCap.toString().split('.').last, // Convert StrokeCap to string
         // Add other properties if needed
       };
     }).toList();
@@ -867,13 +866,15 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 // Hàm decode chuỗi JSON thành List<Paint>
   List<Paint> decodePaintList(String jsonStr) {
     List<Map<String, dynamic>> decodedList =
-        List<Map<String, dynamic>>.from(json.decode(jsonStr));
+    List<Map<String, dynamic>>.from(json.decode(jsonStr));
     return decodedList.map((paintMap) {
       Paint paint = Paint()
         ..color = Color(paintMap['color'])
         ..strokeWidth = paintMap['strokeWidth']
-        ..style = PaintingStyle.values[paintMap['style']]
-        ..isAntiAlias = paintMap['isAntiAlias'];
+        ..strokeCap = StrokeCap.values.firstWhere(
+              (e) => e.toString() == 'StrokeCap.' + paintMap['strokeCap'],
+          orElse: () => StrokeCap.butt, // Default value if not found
+        );
       // Add other properties if needed
       return paint;
     }).toList();

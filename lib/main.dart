@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:draw_and_guess_promax/Screen/Ranking.dart';
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
+import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
+import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,6 +116,10 @@ class DrawAndGuestApp extends StatelessWidget {
         ),
       ),
       home: Scaffold(body: content),
+      routes: {
+        '/ranking': (context) => Ranking(selectedRoom: ModalRoute.of(context)?.settings.arguments as Room),
+        '/waiting': (context) => WaitingRoom(selectedRoom: ModalRoute.of(context)?.settings.arguments as Room)
+      },
     );
   }
 }

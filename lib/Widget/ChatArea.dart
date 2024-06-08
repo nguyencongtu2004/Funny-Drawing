@@ -28,9 +28,14 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
   late DatabaseReference _chatRef;
   late DatabaseReference _normalModeDataRef;
   late DatabaseReference _roomRef;
+  late DatabaseReference _playerInRoomIDRef;
+  late DatabaseReference _playersInRoomRef;
+  late bool _isEnable;
 
   final ScrollController _scrollController = ScrollController();
   var wordToGuess = '';
+  var _pointLeft = 0;
+  var curPoint = 0;
   late String roomOwnerId;
 
   @override
@@ -51,6 +56,9 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
     _chatRef = database.child('/chat/${widget.roomId}');
     _normalModeDataRef = database.child('/normal_mode_data/${widget.roomId}');
     _roomRef = database.child('/rooms/${widget.roomId}');
+    _playerInRoomIDRef = database.child('/players_in_room/${widget.roomId}/${ref.read(userProvider).id}');
+    _playersInRoomRef =
+        database.child('/players_in_room/${widget.roomId}');
 
     _roomRef.get().then((value) {
       final data = Map<String, dynamic>.from(
@@ -64,6 +72,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
         event.snapshot.value as Map<dynamic, dynamic>,
       );
       wordToGuess = data['wordToDraw'];
+      _pointLeft = data['point'];
     });
 
     _chatRef.onValue.listen((event) {
@@ -73,11 +82,24 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
 
       final newChat = data.entries.map((e) {
         return {
+          "id": e.value['id'],
           "userName": e.value['userName'],
           "message": e.value['message'],
           "timestamp": e.value['timestamp'],
         };
       }).toList();
+
+      _playerInRoomIDRef.onValue.listen((event) {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        bool isCorrect = data['isCorrect'];
+        curPoint = data['point'];
+        setState(() {
+          _isEnable = !isCorrect;
+          print("EnableChat: " + _isEnable.toString());
+        });
+      });
 
       ref.read(chatProvider.notifier).updateChat(newChat);
 
@@ -92,7 +114,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
       final isRight = ref
           .read(chatProvider.notifier)
           .checkGuess(wordToGuess, widget.roomId);
-      if (isRight) {
+      if (isRight != "") {
         // Người chơi thông báo người chơi đã đoán đúng
         if (true) {
           _normalModeDataRef.update({
@@ -101,11 +123,25 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
           final userName = ref.read(userProvider).name;
           ref
               .read(chatProvider.notifier)
-              .addMessage('$userName đã đoán đúng', 'Hệ thống', widget.roomId);
+              .addMessage(ref.read(userProvider).id!,'$userName đã đoán đúng', 'Hệ thống', widget.roomId);
         }
         Navigator.of(context).pop();
       }
     });
+    _isEnable = true;
+
+
+
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -162,8 +198,9 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
               children: <Widget>[
                 Expanded(
                   child: TextField(
+                    enabled: _isEnable,
                     controller: _controller,
-                    focusNode: _focusNode,
+                    // focusNode: _focusNode,
                     decoration: InputDecoration(
                       hintText: 'Nhập đáp án',
                       hintStyle: const TextStyle(
@@ -188,13 +225,37 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   width: 50,
                   child: IconButton(
                     onPressed: () {
-                      if (_controller.text.isEmpty) return;
-                      ref.read(chatProvider.notifier).addMessage(
-                            _controller.text,
-                            ref.read(userProvider).name,
-                            widget.roomId,
-                          );
-                      _controller.clear();
+                      if (_controller.text.isEmpty || wordToGuess.isEmpty) return;
+                      print("OK KO?" + _controller.text);
+                      if(wordToGuess.trim().toLowerCase() != _controller.text.trim().toLowerCase()) {
+                        print("AddMess?" + wordToGuess + " " + _controller.text);
+                        ref.read(chatProvider.notifier).addMessage(
+                          ref
+                              .read(userProvider)
+                              .id!,
+                          _controller.text,
+                          ref
+                              .read(userProvider)
+                              .name,
+                          widget.roomId,
+                        );
+                        _controller.clear();
+                      }
+                      else {
+                        final userName = ref.read(userProvider).name;
+                        _playerInRoomIDRef.update({
+                          "point": curPoint + _pointLeft,
+                          "isCorrect": true
+                        });
+                        _normalModeDataRef.update({
+                          "point": _pointLeft -1,
+                        });
+                        ref
+                            .read(chatProvider.notifier)
+                            .addMessage(ref.read(userProvider).id!,'$userName đã đoán đúng', 'Hệ thống', widget.roomId);
+                        _controller.clear();
+                      }
+                      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                     },
                     icon: Image.asset('assets/images/send.png'),
                     iconSize: 45,
