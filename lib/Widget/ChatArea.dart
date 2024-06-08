@@ -198,7 +198,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
               children: <Widget>[
                 Expanded(
                   child: TextField(
-                    enabled: _isEnable,
+                    // enabled: _isEnable,
                     controller: _controller,
                     // focusNode: _focusNode,
                     decoration: InputDecoration(
@@ -227,7 +227,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                     onPressed: () {
                       if (_controller.text.isEmpty || wordToGuess.isEmpty) return;
                       print("OK KO?" + _controller.text);
-                      if(wordToGuess.trim().toLowerCase() != _controller.text.trim().toLowerCase()) {
+                      if((wordToGuess.trim().toLowerCase() != _controller.text.trim().toLowerCase())) {
                         print("AddMess?" + wordToGuess + " " + _controller.text);
                         ref.read(chatProvider.notifier).addMessage(
                           ref
@@ -242,18 +242,25 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                         _controller.clear();
                       }
                       else {
-                        final userName = ref.read(userProvider).name;
-                        _playerInRoomIDRef.update({
-                          "point": curPoint + _pointLeft,
-                          "isCorrect": true
-                        });
-                        _normalModeDataRef.update({
-                          "point": _pointLeft -1,
-                        });
-                        ref
-                            .read(chatProvider.notifier)
-                            .addMessage(ref.read(userProvider).id!,'$userName đã đoán đúng', 'Hệ thống', widget.roomId);
-                        _controller.clear();
+                        if (_isEnable) {
+                          final userName = ref
+                              .read(userProvider)
+                              .name;
+                          _playerInRoomIDRef.update({
+                            "point": curPoint + _pointLeft,
+                            "isCorrect": true
+                          });
+                          _normalModeDataRef.update({
+                            "point": _pointLeft - 1,
+                          });
+                          ref
+                              .read(chatProvider.notifier)
+                              .addMessage(ref
+                              .read(userProvider)
+                              .id!, '$userName đã đoán đúng', 'Hệ thống',
+                              widget.roomId);
+                          _controller.clear();
+                        }
                       }
                       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
                     },
