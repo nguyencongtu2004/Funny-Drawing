@@ -112,6 +112,8 @@ class _Drawing extends ConsumerState<Drawing> {
     });
   }
 
+  double _currentSliderValue = 10;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -364,123 +366,35 @@ class _Drawing extends ConsumerState<Drawing> {
           ),
         if (_isSizeMenuVisible)
           Positioned(
-              left: _containerPositionSize.dx - 5,
-              top: _containerPositionSize.dy - 410 - 110,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black12,
-                  borderRadius: BorderRadius.circular(5.0),
+            left: 10,
+            top: _containerPositionSize.dy - 150 - 110,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(7.0),
+              ),
+              child: SizedBox(
+                width: 280,
+                child: Slider(
+                  activeColor: _paintColor,
+                  value: _currentSliderValue,
+                  min: 5,
+                  max: 30,
+                  divisions: 30 - 5 + 1,
+                  //label: _currentSliderValue.round().toString(),
+                  onChanged: (double value) {
+                    setState(() {
+                      _currentSliderValue = value;
+                      _setPainSize(value);
+                    });
+                  },
+                  onChangeEnd: (double value) {
+                    _toggleSizeMenuVisibility(Offset.zero);
+                  },
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      height: 50,
-                      width: 50,
-                      margin: const EdgeInsets.all(5.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            7.0), // Bán kính cong của đường viền
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          _setPainSize(5);
-                          _toggleSizeMenuVisibility(Offset.zero);
-                        },
-                        icon: const Icon(
-                          Icons.circle_outlined, // Biểu tượng
-                          color: Colors.black, // Màu của biểu tượng
-                          size: 10,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 50,
-                      width: 50,
-                      margin: const EdgeInsets.all(5.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            7.0), // Bán kính cong của đường viền
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          _setPainSize(8);
-                          _toggleSizeMenuVisibility(Offset.zero);
-                        },
-                        icon: const Icon(
-                          Icons.circle_outlined, // Biểu tượng
-                          color: Colors.black, // Màu của biểu tượng
-                          size: 15,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 50,
-                      width: 50,
-                      margin: const EdgeInsets.all(5.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            7.0), // Bán kính cong của đường viền
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          _setPainSize(12);
-                          _toggleSizeMenuVisibility(Offset.zero);
-                        },
-                        icon: const Icon(
-                          Icons.circle_outlined, // Biểu tượng
-                          color: Colors.black, // Màu của biểu tượng
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 50,
-                      width: 50,
-                      margin: const EdgeInsets.all(5.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            7.0), // Bán kính cong của đường viền
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          _setPainSize(16);
-                          _toggleSizeMenuVisibility(Offset.zero);
-                        },
-                        icon: const Icon(
-                          Icons.circle_outlined, // Biểu tượng
-                          color: Colors.black, // Màu của biểu tượng
-                          size: 25,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 50,
-                      width: 50,
-                      margin: const EdgeInsets.all(5.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            7.0), // Bán kính cong của đường viền
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          _setPainSize(22);
-                          _toggleSizeMenuVisibility(Offset.zero);
-                        },
-                        icon: const Icon(
-                          Icons.circle_outlined, // Biểu tượng
-                          color: Colors.black, // Màu của biểu tượng
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
+              ),
+            ),
+          ),
         if (_isSelectMenuVisible)
           Positioned(
             left: _containerPosition.dx,
@@ -646,13 +560,25 @@ class _Drawing extends ConsumerState<Drawing> {
                   ],
                 )),
           ),
+        if (_isMenuBarVisible == true)
+          Positioned(
+              bottom: 205,
+              right: 10,
+              child: Container(
+                width: _paintSize * 3,
+                height: _paintSize * 3,
+                decoration: BoxDecoration(
+                  color: _paintColor,
+                  shape: BoxShape.circle,
+                ),
+              ))
       ],
     ));
   }
 }
 
 class PaintBoard extends ConsumerStatefulWidget {
-  final GlobalKey<_PaintBoardState> key;
+  //final GlobalKey<_PaintBoardState> key;
   final String chose;
   final Color paintColor;
   final double paintSize;
@@ -661,8 +587,8 @@ class PaintBoard extends ConsumerStatefulWidget {
   final Room selectedRoom;
   final void Function() hideMenu;
 
-  PaintBoard(
-      {required this.key,
+  const PaintBoard(
+      {super.key,
       required this.chose,
       required this.height,
       required this.width,
@@ -672,7 +598,7 @@ class PaintBoard extends ConsumerStatefulWidget {
       required this.hideMenu});
 
   @override
-  _PaintBoardState createState() => _PaintBoardState();
+  createState() => _PaintBoardState();
 }
 
 class _PaintBoardState extends ConsumerState<PaintBoard> {
@@ -867,7 +793,10 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       return {
         'color': paint.color.value,
         'strokeWidth': paint.strokeWidth,
-        'strokeCap': paint.strokeCap.toString().split('.').last, // Convert StrokeCap to string
+        'strokeCap': paint.strokeCap
+            .toString()
+            .split('.')
+            .last, // Convert StrokeCap to string
         // Add other properties if needed
       };
     }).toList();
@@ -877,13 +806,13 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 // Hàm decode chuỗi JSON thành List<Paint>
   List<Paint> decodePaintList(String jsonStr) {
     List<Map<String, dynamic>> decodedList =
-    List<Map<String, dynamic>>.from(json.decode(jsonStr));
+        List<Map<String, dynamic>>.from(json.decode(jsonStr));
     return decodedList.map((paintMap) {
       Paint paint = Paint()
         ..color = Color(paintMap['color'])
         ..strokeWidth = paintMap['strokeWidth']
         ..strokeCap = StrokeCap.values.firstWhere(
-              (e) => e.toString() == 'StrokeCap.' + paintMap['strokeCap'],
+          (e) => e.toString() == 'StrokeCap.' + paintMap['strokeCap'],
           orElse: () => StrokeCap.butt, // Default value if not found
         );
       // Add other properties if needed
