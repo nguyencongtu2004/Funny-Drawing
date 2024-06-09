@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
+import '../model/user.dart';
 import '../provider/chat_provider.dart';
 import '../provider/user_provider.dart';
 
@@ -45,6 +46,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   bool? _isMyTurn;
   int currentPlayerTurnIndex = 0;
   var _currentTurn = '';
+  late PlayerInNormalMode _currentTurnUser;
 
   var isMyTurn = false;
   var _timeLeft = -1;
@@ -134,11 +136,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       );
 
       wordToGuess = data['wordToDraw'];
-      /*hint = allWords
-          .firstWhere((element) => element.keys.first == wordToGuess)
-          .values
-          .first
-          .first;*/
       hint = '';
       setState(() {
         _wordToDraw = data['wordToDraw'] as String;
@@ -155,6 +152,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       // Lấy tên người chơi hiện tại đang vẽ
       _currentTurn =
           _playersInRoom.firstWhere((player) => player.id == turn).name;
+      _currentTurnUser =
+          _playersInRoom.firstWhere((player) => player.id == turn);
 
       // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
       _startTimer();
@@ -507,10 +506,12 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 15, top: 5),
                   child: NormalModeStatus(
-                      status: isMyTurn
-                          ? 'Hãy vẽ: $wordToGuess '
-                          : 'Đoán xem đây là gì?',
-                      timeLeft: _timeLeft),
+                    isMyTurn: isMyTurn,
+                    word: _wordToDraw,
+                    timeLeft: _timeLeft,
+                    userDrawing: _currentTurn,
+                    player: _currentTurnUser,
+                  ),
                 ),
               ),
             ),
@@ -531,7 +532,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                           // enabled: _isEnable,
                           controller: _controller,
                           decoration: InputDecoration(
-                            hintText: 'Nhập đáp án',
+                            hintText:
+                                'Hãy cho $_currentTurn biết câu trả lời của bạn',
                             hintStyle: const TextStyle(
                               color: Colors.black45,
                               fontWeight: FontWeight.normal,

@@ -114,6 +114,21 @@ class _Drawing extends ConsumerState<Drawing> {
 
   double _currentSliderValue = 10;
 
+  Widget iconMenu({required Widget icon, required void Function() onPressed}) {
+    return Container(
+      height: 50,
+      width: 50,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7.0),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: icon,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -229,22 +244,24 @@ class _Drawing extends ConsumerState<Drawing> {
                                 7.0), // Bán kính cong của đường viền
                           ),
                           child: GestureDetector(
-                            key: _selectmenu,
-                            onTap: () {
-                              RenderBox buttonBox = _selectmenu.currentContext!
-                                  .findRenderObject() as RenderBox;
-                              Offset buttonPosition =
-                                  buttonBox.localToGlobal(Offset.zero);
-                              _toggleSelectMenuVisibility(buttonPosition);
-                            },
+                          key: _selectmenu,
+                          onTap: () {
+                            RenderBox buttonBox = _selectmenu.currentContext!
+                                .findRenderObject() as RenderBox;
+                            Offset buttonPosition =
+                                buttonBox.localToGlobal(Offset.zero);
+                            _toggleSelectMenuVisibility(buttonPosition);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.0),
                             child: Image.asset(
                               'assets/images/draw_line.png',
-                              // Đường dẫn đến hình ảnh cục tẩy
-                              width: 10,
-                              height: 10,
-                              color: Colors.black, // Màu của hình ảnh
+                              width: 20,
+                              height: 20,
                             ),
-                          )),
+                          ),
+                        ),
+                      ),
                     Container(
                       height: 50,
                       width: 50,
@@ -433,169 +450,73 @@ class _Drawing extends ConsumerState<Drawing> {
           ),
         if (_isSelectMenuVisible)
           Positioned(
-            left: _containerPosition.dx,
-            top: _containerPosition.dy - 290 - 110,
+            left: 10,
+            right: 10,
+            bottom: 200,
             child: Container(
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: Colors.black12,
                   borderRadius: BorderRadius.circular(5.0),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 50,
-                          margin: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                7.0), // Bán kính cong của đường viền
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              _paintBoardKey.currentState!.clearPoints();
-                              _isErase = false;
-                            },
-                            icon: const Icon(
-                              Icons.delete, // Biểu tượng
-                              color: Colors.black, // Màu của biểu tượng
-                              size: 35,
-                            ),
-                          ),
-                        ),
-                        Container(
-                            height: 50,
-                            width: 50,
-                            margin: const EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(
-                                  7.0), // Bán kính cong của đường viền
-                            ),
-                            child: GestureDetector(
-                                onTap: () {
-                                  _preColor = _paintColor;
-                                  _setColor(Theme.of(context)
-                                      .scaffoldBackgroundColor);
-                                  _setSelectIcon(Icons.add);
-                                  _toggleSelectMenuVisibility(
-                                      const Offset(0, 0));
-                                  _isErase = true;
-                                  _setChose("Draw");
-                                },
-                                child: Image.asset('assets/images/erase.png')
-                                // Image.asset(
-                                //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
-                                //   width: 10,
-                                //   height: 10,
-                                //   color: Colors.black, // Màu của hình ảnh
-                                // ),
-                                )),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 50,
-                          margin: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                7.0), // Bán kính cong của đường viền
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              _isErase = false;
-                              _setSelectIcon(Icons.draw);
-                              _toggleSelectMenuVisibility(const Offset(0, 0));
-                              _setColor(_preColor);
-                              _setChose("Draw");
-                            },
-                            icon: const Icon(
-                              Icons.draw, // Biểu tượng
-                              color: Colors.black,
-                              size: 35,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          height: 50,
-                          width: 50,
-                          margin: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                7.0), // Bán kính cong của đường viền
-                          ),
-                          child: GestureDetector(
-                              onTap: () {
-                                _isErase = false;
-                                _setSelectIcon(Icons.minimize);
-                                _toggleSelectMenuVisibility(const Offset(0, 0));
-                                _setChose("DrawLine");
-                                _setColor(_preColor);
-                              },
-                              child: Image.asset(
-                                'assets/images/draw_line.png',
-                                width: 20,
-                                height: 20,
-                              )
-                              // Image.asset(
-                              //   'assets/images/erase.png', // Đường dẫn đến hình ảnh cục tẩy
-                              //   width: 10,
-                              //   height: 10,
-                              //   color: Colors.black, // Màu của hình ảnh
-                              // ),
-                              ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Container(
-                          height: 50,
-                          width: 50,
-                          margin: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                7.0), // Bán kính cong của đường viền
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              _paintBoardKey.currentState!.ctrlZ();
-                            },
-                            icon: const Icon(
-                              Icons.turn_left, // Biểu tượng
-                              color: Colors.black,
-                              size: 35,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          height: 50,
-                          width: 50,
-                          margin: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(7.0),
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              _paintBoardKey.currentState!.ctrlY();
-                            },
-                            icon: const Icon(
-                              Icons.turn_right, // Biểu tượng
-                              color: Colors.black,
-                              size: 35, // Màu của biểu tượng
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    // undo
+                    iconMenu(
+                        icon: Image.asset('assets/images/undo.png',
+                            width: 30, height: 30),
+                        onPressed: () {
+                          _paintBoardKey.currentState!.ctrlZ();
+                        }),
+                    // redo
+                    iconMenu(
+                        icon: Image.asset('assets/images/redo.png',
+                            width: 30, height: 30),
+                        onPressed: () {
+                          _paintBoardKey.currentState!.ctrlY();
+                        }),
+                    // draw
+                    iconMenu(
+                        icon: const Icon(Icons.draw,
+                            size: 35, color: Colors.black),
+                        onPressed: () {
+                          _isErase = false;
+                          _setSelectIcon(Icons.draw);
+                          _toggleSelectMenuVisibility(const Offset(0, 0));
+                          _setColor(_preColor);
+                          _setChose("Draw");
+                        }),
+                    // draw line
+                    iconMenu(
+                        icon: Image.asset('assets/images/draw_line.png',
+                            width: 35, height: 35),
+                        onPressed: () {
+                          _isErase = false;
+                          _setSelectIcon(Icons.minimize);
+                          _toggleSelectMenuVisibility(const Offset(0, 0));
+                          _setChose("DrawLine");
+                          _setColor(_preColor);
+                        }),
+                    // erase
+                    iconMenu(
+                        icon: Image.asset('assets/images/erase.png'),
+                        onPressed: () {
+                          _preColor = _paintColor;
+                          _setColor(Theme.of(context).scaffoldBackgroundColor);
+                          _setSelectIcon(Icons.add);
+                          _toggleSelectMenuVisibility(const Offset(0, 0));
+                          _isErase = true;
+                          _setChose("Draw");
+                        }),
+                    // clear
+                    iconMenu(
+                        icon: const Icon(Icons.delete,
+                            size: 35, color: Colors.black),
+                        onPressed: () {
+                          _paintBoardKey.currentState!.clearPoints();
+                          _isErase = false;
+                        }),
                   ],
                 )),
           ),
