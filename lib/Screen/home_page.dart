@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:draw_and_guess_promax/Widget/pick_avatar_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -101,40 +102,14 @@ class _HomePageState extends ConsumerState<HomePage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Center(
-              child: Text(
-            'Chọn Avatar',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge!
-                .copyWith(color: Colors.black),
-          )),
-          content: SingleChildScrollView(
-            child: GridView.builder(
-              shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8.0,
-                mainAxisSpacing: 8.0,
-              ),
-              itemCount: 13,
-              itemBuilder: (BuildContext t, int index) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _avatarIndex = index;
-                    });
-                    Navigator.of(context).pop();
-                  },
-                  child: CircleAvatar(
-                    backgroundImage:
-                        AssetImage('assets/images/avatars/avatar$index.png'),
-                  ),
-                );
-              },
-            ),
-          ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 140),
+          child: PickAvatarDialog(onPick: (index) {
+            setState(() {
+              _avatarIndex = index;
+            });
+            Navigator.of(context).pop();
+          }),
         );
       },
     );

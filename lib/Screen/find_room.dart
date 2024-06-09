@@ -155,17 +155,27 @@ class _FindRoomState extends ConsumerState<FindRoom> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          content: SizedBox(
-            width: 200,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDropdownMenuItem('Tất cả'),
-                _buildDropdownMenuItem('Thường'),
-                _buildDropdownMenuItem('Tam sao thất bản'),
-                _buildDropdownMenuItem('Tuyệt tác'),
-              ],
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 330),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 200,
+              decoration: BoxDecoration(
+                color: const Color(0xFF00C4A0),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: Center(
+                child: ListView(
+                  padding: const EdgeInsets.all(8),
+                  children: [
+                    Center(child: _buildDropdownMenuItem('Tất cả')),
+                    Center(child: _buildDropdownMenuItem('Thường')),
+                    Center(child: _buildDropdownMenuItem('Tam sao thất bản')),
+                    Center(child: _buildDropdownMenuItem('Tuyệt tác')),
+                  ],
+                ),
+              ),
             ),
           ),
         );

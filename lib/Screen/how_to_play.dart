@@ -35,17 +35,28 @@ class _HowToPlayState extends State<HowToPlay> {
             left: 0,
             right: 0,
             child: Center(
-              child: Text(
-                'CÁCH CHƠI',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge!
-                    .copyWith(color: Colors.white),
+              child: Column(
+                children: [
+                  Text(
+                    'CÁCH CHƠI',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                        .copyWith(color: Colors.white),
+                  ),
+                  Text(
+                    'Nhấn vào để xem chi tiết',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall!
+                        .copyWith(color: Colors.white),
+                  ),
+                ],
               ),
             ),
           ),
           Positioned(
-            top: 100,
+            top: 110,
             left: 0,
             right: 0,
             bottom: 80,
