@@ -45,7 +45,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late List<String> _playersInRoomId = [];
   bool? _isMyTurn;
   int currentPlayerTurnIndex = 0;
-  var _currentTurn = '';
   late PlayerInNormalMode _currentTurnUser;
 
   var isMyTurn = false;
@@ -94,6 +93,13 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           point: player.value['point'],
           isCorrect: player.value['isCorrect'],
         ));
+      }
+
+      if (_playersInRoom.length <= 1) {
+        _normalModeDataRef.remove();
+        Navigator.of(context).pop();
+        _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+            isKicked: true);
       }
 
       _playersInRoom.sort((a, b) => b.point.compareTo(a.point));
@@ -150,8 +156,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       });
 
       // Lấy tên người chơi hiện tại đang vẽ
-      _currentTurn =
-          _playersInRoom.firstWhere((player) => player.id == turn).name;
       _currentTurnUser =
           _playersInRoom.firstWhere((player) => player.id == turn);
 
@@ -509,7 +513,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                     isMyTurn: isMyTurn,
                     word: _wordToDraw,
                     timeLeft: _timeLeft,
-                    userDrawing: _currentTurn,
                     player: _currentTurnUser,
                   ),
                 ),
@@ -533,7 +536,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                           controller: _controller,
                           decoration: InputDecoration(
                             hintText:
-                                'Hãy cho $_currentTurn biết câu trả lời của bạn',
+                                'Hãy cho ${_currentTurnUser.name} biết câu trả lời của bạn',
                             hintStyle: const TextStyle(
                               color: Colors.black45,
                               fontWeight: FontWeight.normal,

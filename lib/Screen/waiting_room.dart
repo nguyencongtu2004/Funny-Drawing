@@ -156,13 +156,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   void startMode(String mode) {
-    /*if (currentPlayers.length < 2) {
-      final sackBar = SnackBar(
-        content: Text('Phòng cần ít nhất 2 người chơi'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(sackBar);
-      return;
-    }*/
     // if(!isPlayed) return;
     if (mode == 'Thường') {
       if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
@@ -200,6 +193,15 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   void _startClick(context) {
     print('bắt đầu');
     print("Callnav 2");
+    if (currentPlayers.length < 2) {
+      const sackBar = SnackBar(
+        content: Text('Phòng cần ít nhất 2 người chơi'),
+      );
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(sackBar);
+      return;
+    }
+
     _roomRef.update({'isPlayed': true});
     startMode(widget.selectedRoom.mode);
   }

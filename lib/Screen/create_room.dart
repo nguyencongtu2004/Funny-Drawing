@@ -91,7 +91,7 @@ class CreateRoom extends ConsumerStatefulWidget {
       }
     });
 
-    Navigator.of(context).push(MaterialPageRoute(
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
         builder: (ctx) => WaitingRoom(
               selectedRoom: createdRoom,
               isGuest: false,

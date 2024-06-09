@@ -8,14 +8,12 @@ class NormalModeStatus extends StatelessWidget {
     required this.word,
     required this.timeLeft,
     required this.isMyTurn,
-    required this.userDrawing,
     required this.player,
   });
 
   final bool isMyTurn;
   final String word;
   final int timeLeft;
-  final String userDrawing;
   final PlayerInNormalMode player;
 
   @override
@@ -41,7 +39,7 @@ class NormalModeStatus extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  isMyTurn ? 'Hãy vẽ: $word' : '$userDrawing đang vẽ',
+                  isMyTurn ? 'Hãy vẽ: $word' : '${player.name} đang vẽ',
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge!
