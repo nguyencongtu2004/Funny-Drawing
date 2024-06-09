@@ -35,6 +35,11 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
   late DatabaseReference _normalModeDataRef;
+  final TextEditingController _controller = TextEditingController();
+  late DatabaseReference _playerInRoomIDRef;
+  late bool _isEnable;
+
+  var curPoint = 0;
   late final List<PlayerInNormalMode> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   bool? _isMyTurn;
@@ -59,7 +64,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
-
+    _playerInRoomIDRef = database.child(
+        '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
       if (event.snapshot.value == null) {
@@ -207,6 +213,18 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         // }
       }
     });
+    _playerInRoomIDRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      bool isCorrect = data['isCorrect'];
+      curPoint = data['point'];
+      setState(() {
+        _isEnable = !isCorrect;
+        print("EnableChat: " + _isEnable.toString());
+      });
+    });
+
 
     // Kiểm tra lượt để hiển thị chat
     _normalModeDataRef.onValue.listen((event) {
@@ -261,7 +279,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Hủy Timer khi widget bị dispose
+    _timer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -509,8 +528,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                     children: <Widget>[
                       Expanded(
                         child: TextField(
+                          // enabled: _isEnable,
+                          controller: _controller,
                           decoration: InputDecoration(
-                            hintText: 'Cho $_currentTurn biết suy nghĩ của bạn',
+                            hintText: 'Nhập đáp án',
                             hintStyle: const TextStyle(
                               color: Colors.black45,
                               fontWeight: FontWeight.normal,
@@ -526,11 +547,49 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                               borderRadius: BorderRadius.circular(50),
                             ),
                           ),
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: IconButton(
+                          onPressed: () {
+                            if (_controller.text.isEmpty || wordToGuess.isEmpty)
+                              return;
+                            print("OK KO?" + _controller.text);
+                            if (_controller.text.trim().toLowerCase() !=
+                                wordToGuess.trim().toLowerCase()) {
+                              print(
+                                  "AddMess?" + wordToGuess + " " + _controller.text);
+                              ref.read(chatProvider.notifier).addMessage(
+                                ref.read(userProvider).id!,
+                                _controller.text,
+                                ref.read(userProvider).name,
+                                widget.selectedRoom.roomId,
+                              );
+                              _controller.clear();
+                            } else {
+                              if (_isEnable) {
+                                final userName = ref.read(userProvider).name;
+                                _playerInRoomIDRef.update({
+                                  "point": curPoint + _pointLeft,
+                                  "isCorrect": true
+                                });
+                                _normalModeDataRef.update({
+                                  "point": _pointLeft - 1,
+                                });
+                                ref.read(chatProvider.notifier).addMessage(
+                                    ref.read(userProvider).id!,
+                                    '$userName đã đoán đúng',
+                                    'Hệ thống',
+                                    widget.selectedRoom.roomId);
+                                _controller.clear();
+                              }
+                            }
+
+                          },
+                          icon: Image.asset('assets/images/send.png'),
+                          iconSize: 45,
                         ),
                       ),
                     ],
@@ -538,23 +597,23 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 ),
               ),
               // Lớp đè lên, khi ấn thì mở chat và bàn phím
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: () {
-                    _showChat();
-                  },
-                  child: Container(
-                    height: 95,
-                    color: Colors.transparent,
-                  ),
-                ),
-              )
+              // Positioned(
+              //   bottom: 0,
+              //   left: 0,
+              //   right: 0,
+              //   child: GestureDetector(
+              //     onTap: () {
+              //       _showChat();
+              //     },
+              //     child: Container(
+              //       height: 95,
+              //       color: Colors.transparent,
+              //     ),
+              //   ),
+              // )
             ],
             Positioned(
-                bottom: 95,
+                bottom: 90,
                 left: 0,
                 right: 0,
                 child: Container(
