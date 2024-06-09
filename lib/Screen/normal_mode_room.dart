@@ -486,7 +486,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
               child: Container(
                 color: Colors.transparent,
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.only(left: 15, top: 5),
                   child: NormalModeStatus(
                       status: isMyTurn
                           ? 'Hãy vẽ: $wordToGuess '

@@ -150,7 +150,7 @@ class _Drawing extends ConsumerState<Drawing> {
           ),
         ),
         // ----------------------  MenuBar ----------------------
-        if (_isMenuBarVisible == true)
+        if (_isMenuBarVisible == true) ...[
           Positioned(
             top: widget.height - 100,
             left: 0,
@@ -364,7 +364,20 @@ class _Drawing extends ConsumerState<Drawing> {
                   ],
                 )),
           ),
-        if (_isSizeMenuVisible)
+          if (!_isSizeMenuVisible)
+            Positioned(
+                bottom: 205,
+                right: 10,
+                child: Container(
+                  width: _paintSize * 2,
+                  height: _paintSize * 2,
+                  decoration: BoxDecoration(
+                    color: _paintColor,
+                    shape: BoxShape.circle,
+                  ),
+                )),
+        ],
+        if (_isSizeMenuVisible) ...[
           Positioned(
             left: 10,
             top: _containerPositionSize.dy - 150 - 110,
@@ -374,7 +387,7 @@ class _Drawing extends ConsumerState<Drawing> {
                 borderRadius: BorderRadius.circular(7.0),
               ),
               child: SizedBox(
-                width: 280,
+                width: MediaQuery.of(context).size.width - 20,
                 child: Slider(
                   activeColor: _paintColor,
                   value: _currentSliderValue,
@@ -395,6 +408,20 @@ class _Drawing extends ConsumerState<Drawing> {
               ),
             ),
           ),
+          Positioned(
+            left: (_calculateCirclePosition(
+                MediaQuery.of(context).size.width - 20)),
+            bottom: 255,
+            child: Container(
+              width: _currentSliderValue * 2,
+              height: _currentSliderValue * 2,
+              decoration: BoxDecoration(
+                color: _paintColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
         if (_isSelectMenuVisible)
           Positioned(
             left: _containerPosition.dx,
@@ -560,20 +587,19 @@ class _Drawing extends ConsumerState<Drawing> {
                   ],
                 )),
           ),
-        if (_isMenuBarVisible == true)
-          Positioned(
-              bottom: 205,
-              right: 10,
-              child: Container(
-                width: _paintSize * 3,
-                height: _paintSize * 3,
-                decoration: BoxDecoration(
-                  color: _paintColor,
-                  shape: BoxShape.circle,
-                ),
-              ))
       ],
     ));
+  }
+
+  double _calculateCirclePosition(double sliderWidth) {
+    double circleRadius = _currentSliderValue; // Bán kính của hình tròn
+    double circleDiameter = circleRadius * 2;
+    double availableWidth = sliderWidth - circleDiameter;
+    double position = (_currentSliderValue - 5) / (30 - 5) * availableWidth;
+
+    print('availableWidth: $availableWidth');
+    print('position: $position');
+    return position + 25;
   }
 }
 

@@ -23,23 +23,32 @@ class NormalModeStatus extends StatelessWidget {
                 .copyWith(color: Colors.black),
           ),
         ),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: timeLeft < 10 ? Colors.red : Colors.transparent,
-            border: Border.all(
-              color: Colors.black,
-              width: 2,
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 70,
+              height: 50,
+              child: Container(
+                //padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: timeLeft < 10 ? Colors.red : Colors.transparent,
+                  border: Border.all(
+                    color: Colors.black,
+                    width: 2,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            timeLeft < 10 ? "0$timeLeft" : timeLeft.toString(),
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge!
-                .copyWith(color: Colors.black),
-          ),
+            Text(
+              timeLeft < 10 ? "0$timeLeft" : timeLeft.toString(),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge!
+                  .copyWith(color: Colors.black),
+            ),
+          ],
         ),
       ],
     );
