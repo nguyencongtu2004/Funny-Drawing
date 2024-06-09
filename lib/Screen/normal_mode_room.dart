@@ -96,7 +96,12 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       }
 
       if (_playersInRoom.length <= 1) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _chatRef.remove();
+        _drawingRef.remove();
         _normalModeDataRef.remove();
+
         Navigator.of(context).pop();
         _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
             isKicked: true);
