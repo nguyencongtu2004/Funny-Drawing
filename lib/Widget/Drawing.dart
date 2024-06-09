@@ -231,9 +231,6 @@ class _Drawing extends ConsumerState<Drawing> {
                           child: GestureDetector(
                             key: _selectmenu,
                             onTap: () {
-                              _setColor(
-                                  Theme.of(context).scaffoldBackgroundColor);
-                              _setSelectIcon(Icons.minimize);
                               RenderBox buttonBox = _selectmenu.currentContext!
                                   .findRenderObject() as RenderBox;
                               Offset buttonPosition =
@@ -273,6 +270,15 @@ class _Drawing extends ConsumerState<Drawing> {
                         ),
                       ),
                     ),
+                        Container(
+                        height: 50,
+                        width: 20,
+                        decoration: BoxDecoration(
+                        color: _paintColor,
+                        borderRadius: BorderRadius.circular(
+                        7.0), // Bán kính cong của đường viền
+                        ),
+                        ),
                     // ----------------------  Color Picker ----------------------
                     Container(
                       height: 50,
@@ -302,6 +308,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                   child: ElevatedButton(
                                     onPressed: () {
                                       _setColor(color);
+                                      _preColor = _paintColor;
                                     },
                                     style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.zero,
@@ -339,6 +346,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                   child: ElevatedButton(
                                     onPressed: () {
                                       _setColor(color);
+                                      _preColor = _paintColor;
                                     },
                                     style: ElevatedButton.styleFrom(
                                         padding: EdgeInsets.zero,
@@ -474,6 +482,7 @@ class _Drawing extends ConsumerState<Drawing> {
                                   _toggleSelectMenuVisibility(
                                       const Offset(0, 0));
                                   _isErase = true;
+                                  _setChose("Draw");
                                 },
                                 child: Image.asset('assets/images/erase.png')
                                 // Image.asset(
@@ -522,9 +531,11 @@ class _Drawing extends ConsumerState<Drawing> {
                           ),
                           child: GestureDetector(
                               onTap: () {
+                                _isErase = false;
                                 _setSelectIcon(Icons.minimize);
                                 _toggleSelectMenuVisibility(const Offset(0, 0));
                                 _setChose("DrawLine");
+                                _setColor(_preColor);
                               },
                               child: Image.asset(
                                 'assets/images/draw_line.png',
