@@ -584,6 +584,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                                     'Hệ thống',
                                     widget.selectedRoom.roomId);
                                 _controller.clear();
+                                FocusScope.of(context).unfocus();
                               }
                             }
 

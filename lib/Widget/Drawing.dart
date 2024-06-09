@@ -142,15 +142,15 @@ class _Drawing extends ConsumerState<Drawing> {
                     width: widget.width,
                     selectedRoom: widget.selectedRoom,
                     hideMenu: () {
-                      _toggleSelectMenuVisibility(Offset.zero);
-                      _toggleSizeMenuVisibility(Offset.zero);
+                      _isSizeMenuVisible = false;
+                      _isSelectMenuVisible = false;
                     }),
               ))
             ],
           ),
         ),
         // ----------------------  MenuBar ----------------------
-        if (_isMenuBarVisible == true) ...[
+        if (_isMenuBarVisible == true)
           Positioned(
             top: widget.height - 100,
             left: 0,
@@ -254,6 +254,7 @@ class _Drawing extends ConsumerState<Drawing> {
                             7.0), // Bán kính cong của đường viền
                       ),
                       child: IconButton(
+                        padding: const EdgeInsets.all(2),
                         key: _sizemenu,
                         onPressed: () {
                           RenderBox buttonBox = _sizemenu.currentContext!
@@ -263,22 +264,17 @@ class _Drawing extends ConsumerState<Drawing> {
                           // Toggle the visibility of the container
                           _toggleSizeMenuVisibility(buttonPosition);
                         },
-                        icon: const Icon(
-                          Icons.height,
-                          color: Colors.black,
-                          size: 35,
+                        icon: Container(
+                          width: _paintSize * 2,
+                          height: _paintSize * 2,
+                          decoration: BoxDecoration(
+                            color: _paintColor,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
                     ),
-                        Container(
-                        height: 50,
-                        width: 20,
-                        decoration: BoxDecoration(
-                        color: _paintColor,
-                        borderRadius: BorderRadius.circular(
-                        7.0), // Bán kính cong của đường viền
-                        ),
-                        ),
+
                     // ----------------------  Color Picker ----------------------
                     Container(
                       height: 50,
@@ -372,64 +368,69 @@ class _Drawing extends ConsumerState<Drawing> {
                   ],
                 )),
           ),
-          if (!_isSizeMenuVisible)
-            Positioned(
-                bottom: 205,
-                right: 10,
-                child: Container(
-                  width: _paintSize * 2,
-                  height: _paintSize * 2,
-                  decoration: BoxDecoration(
-                    color: _paintColor,
-                    shape: BoxShape.circle,
-                  ),
-                )),
-        ],
-        if (_isSizeMenuVisible) ...[
+        if (_isSizeMenuVisible)
           Positioned(
             left: 10,
-            top: _containerPositionSize.dy - 150 - 110,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(7.0),
-              ),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width - 20,
-                child: Slider(
-                  activeColor: _paintColor,
-                  value: _currentSliderValue,
-                  min: 5,
-                  max: 30,
-                  divisions: 30 - 5 + 1,
-                  //label: _currentSliderValue.round().toString(),
-                  onChanged: (double value) {
-                    setState(() {
-                      _currentSliderValue = value;
-                      _setPainSize(value);
-                    });
-                  },
-                  onChangeEnd: (double value) {
-                    _toggleSizeMenuVisibility(Offset.zero);
-                  },
+            bottom: 195,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: _calculateCirclePosition(
+                              MediaQuery.of(context).size.width) +
+                          20 -
+                          0,
+                    ),
+                    Container(
+                      alignment: Alignment.center,
+                      width: _currentSliderValue * 2,
+                      height: _currentSliderValue * 2,
+                      decoration: BoxDecoration(
+                        color: _paintColor,
+                        shape: BoxShape.circle,
+                      ),
+                      /*child:Text(
+                        _currentSliderValue.round().toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                      ),*/
+                    ),
+                  ],
                 ),
-              ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(7.0),
+                  ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width - 20,
+                    child: Slider(
+                      activeColor: _paintColor,
+                      inactiveColor: _paintColor.withOpacity(0.3),
+                      value: _currentSliderValue,
+                      min: 5,
+                      max: 30,
+                      divisions: 30 - 5 + 1,
+                      //label: _currentSliderValue.round().toString(),
+                      onChanged: (double value) {
+                        setState(() {
+                          _currentSliderValue = value.roundToDouble();
+                          _setPainSize(value);
+                        });
+                      },
+                      onChangeEnd: (double value) {
+                        _toggleSizeMenuVisibility(Offset.zero);
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Positioned(
-            left: (_calculateCirclePosition(
-                MediaQuery.of(context).size.width - 20)),
-            bottom: 255,
-            child: Container(
-              width: _currentSliderValue * 2,
-              height: _currentSliderValue * 2,
-              decoration: BoxDecoration(
-                color: _paintColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ],
         if (_isSelectMenuVisible)
           Positioned(
             left: _containerPosition.dx,
@@ -605,12 +606,13 @@ class _Drawing extends ConsumerState<Drawing> {
   double _calculateCirclePosition(double sliderWidth) {
     double circleRadius = _currentSliderValue; // Bán kính của hình tròn
     double circleDiameter = circleRadius * 2;
-    double availableWidth = sliderWidth - circleDiameter;
+    double availableWidth = sliderWidth - circleDiameter - 28;
     double position = (_currentSliderValue - 5) / (30 - 5) * availableWidth;
 
+    print('_currentSliderValue: $_currentSliderValue');
     print('availableWidth: $availableWidth');
     print('position: $position');
-    return position + 25;
+    return position;
   }
 }
 
@@ -882,6 +884,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     return GestureDetector(
       onPanDown: (DragDownDetails details) {
         if (userTurn != ref.read(userProvider).id) return;
+        // Ẩn menu khi bắt đầu vẽ
+        widget.hideMenu();
 
         setState(() {
           if (chose == "Fill") {

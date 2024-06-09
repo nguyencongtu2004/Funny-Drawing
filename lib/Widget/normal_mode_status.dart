@@ -42,7 +42,7 @@ class NormalModeStatus extends StatelessWidget {
               ),
             ),
             Text(
-              timeLeft < 10 ? "0$timeLeft" : timeLeft.toString(),
+              timeLeft.toString(),
               style: Theme.of(context)
                   .textTheme
                   .titleLarge!
