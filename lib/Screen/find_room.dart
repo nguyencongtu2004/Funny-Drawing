@@ -57,6 +57,18 @@ class _FindRoomState extends ConsumerState<FindRoom> {
   }
 
   Future<void> _onStartClick(BuildContext context, WidgetRef ref) async {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    if (selecting.value == 'none') {
+      // Hiển thị thông báo khi chưa chọn phòng
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn phòng!'),
+        ),
+      );
+      return;
+    }
+
     print(selecting.value);
     print(password.value);
     final selectedRoom =
@@ -95,7 +107,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         'curPlayer': selectedRoom.curPlayer + 1,
       });
 
-      Navigator.of(context).push(MaterialPageRoute(
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => WaitingRoom(
                 selectedRoom: selectedRoom,
                 isGuest: true,

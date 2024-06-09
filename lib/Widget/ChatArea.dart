@@ -136,23 +136,6 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
           curve: Curves.easeOut,
         );
       });
-
-      // Kiểm tra đoán đúng không
-      final isRight = ref
-          .read(chatProvider.notifier)
-          .checkGuess(wordToGuess, widget.roomId);
-      if (isRight != "") {
-        // Người chơi thông báo người chơi đã đoán đúng
-        if (true) {
-          _normalModeDataRef.update({
-            'userGuessed': ref.read(userProvider).id,
-          });
-          final userName = ref.read(userProvider).name;
-          ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
-              '$userName đã đoán đúng', 'Hệ thống', widget.roomId);
-        }
-        Navigator.of(context).pop();
-      }
     });
     _isEnable = true;
   }
@@ -167,7 +150,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
     }
   }
 
-  bool _checkGuess(String guess, String wordToGuess) {
+  /*bool _checkGuess(String guess, String wordToGuess) {
     print('===========================================');
     final words = allWords
         .firstWhere((element) => element.keys.first == wordToGuess)
@@ -186,7 +169,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
     }
     print('false');
     return false;
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -241,8 +224,11 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                       if (_controller.text.isEmpty || wordToGuess.isEmpty)
                         return;
                       print("OK KO?" + _controller.text);
-                      if (_controller.text.trim().toLowerCase() !=
-                          wordToGuess.trim().toLowerCase()) {
+                      if (ref.read(chatProvider.notifier).checkGuess(
+                              wordToGuess,
+                              _controller.text,
+                              ref.read(userProvider).id!) ==
+                          "") {
                         print(
                             "AddMess?" + wordToGuess + " " + _controller.text);
                         ref.read(chatProvider.notifier).addMessage(

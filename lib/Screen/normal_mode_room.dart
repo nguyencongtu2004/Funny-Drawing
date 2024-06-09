@@ -67,7 +67,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-    // Lắng nghe sự kiện thoát phòng
+    // Lắng nghe sự kiện thoát phòng TODO
     _roomRef.onValue.listen((event) async {
       if (event.snapshot.value == null) {
         // Room has been deleted
@@ -93,18 +93,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           point: player.value['point'],
           isCorrect: player.value['isCorrect'],
         ));
-      }
-
-      if (_playersInRoom.length <= 1) {
-        _roomRef.remove();
-        _playersInRoomRef.remove();
-        _chatRef.remove();
-        _drawingRef.remove();
-        _normalModeDataRef.remove();
-
-        Navigator.of(context).pop();
-        _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
-            isKicked: true);
       }
 
       _playersInRoom.sort((a, b) => b.point.compareTo(a.point));
@@ -145,6 +133,18 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+      if (ref.read(userProvider).id == widget.selectedRoom.roomOwner &&
+          data['noOneInRoom'] == true) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _chatRef.remove();
+        _drawingRef.remove();
+        _normalModeDataRef.remove();
+
+        Navigator.of(context).pop();
+        _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+            isKicked: true);
+      }
 
       wordToGuess = data['wordToDraw'];
       hint = '';
@@ -207,10 +207,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             'Đáp án là: $wordToGuess', 'Đáp án', widget.selectedRoom.roomId);
 
         // Xóa bảng vẽ
-        _drawingRef.update({
-          'Color': '[]',
-          'Offset': '[]',
-        });
+        _drawingRef.remove();
 
         // Ket thuc game
         // if(_endGame) {
@@ -375,9 +372,17 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final currentPlayerCount =
           (await _roomRef.child('curPlayer').get()).value as int;
       if (currentPlayerCount > 0) {
-        await _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
+        // Nếu còn 2 người chơi thì xóa phòng
+        if (currentPlayerCount == 2) {
+          _normalModeDataRef.update({
+            'noOneInRoom': true,
+          });
+        } else {
+          // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
+          await _roomRef.update({
+            'curPlayer': currentPlayerCount - 1,
         });
+        }
       }
     }
   }
@@ -564,13 +569,15 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                         width: 50,
                         child: IconButton(
                           onPressed: () {
-                            if (_controller.text.isEmpty || wordToGuess.isEmpty)
+                            if (_controller.text.isEmpty ||
+                                wordToGuess.isEmpty) {
                               return;
-                            print("OK KO?" + _controller.text);
-                            if (_controller.text.trim().toLowerCase() !=
-                                wordToGuess.trim().toLowerCase()) {
-                              print(
-                                  "AddMess?" + wordToGuess + " " + _controller.text);
+                            }
+                            if (ref.read(chatProvider.notifier).checkGuess(
+                                    wordToGuess,
+                                    _controller.text,
+                                    ref.read(userProvider).id!) ==
+                                "") {
                               ref.read(chatProvider.notifier).addMessage(
                                 ref.read(userProvider).id!,
                                 _controller.text,

@@ -189,8 +189,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   void _startClick(context) {
-    print('bắt đầu');
-    print("Callnav 2");
+    ScaffoldMessenger.of(context).clearSnackBars();
     if (currentPlayers.length < 2) {
       const sackBar = SnackBar(
         content: Text('Phòng cần ít nhất 2 người chơi'),
