@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
-import '../model/user.dart';
 import '../provider/chat_provider.dart';
 import '../provider/user_provider.dart';
 
@@ -110,6 +109,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         return {
           "id": e.value['id'],
           "userName": e.value['userName'],
+          'avatarIndex': e.value['avatarIndex'],
           "message": e.value['message'],
           "timestamp": e.value['timestamp'],
         };
@@ -204,7 +204,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           });
         }
         ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
-            'Đáp án là: $wordToGuess', 'Đáp án', widget.selectedRoom.roomId);
+            'Đáp án là: $wordToGuess',
+            'Đáp án',
+            widget.selectedRoom.roomId,
+            -1);
 
         // Xóa bảng vẽ
         _drawingRef.remove();
@@ -229,7 +232,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         print("EnableChat: " + _isEnable.toString());
       });
     });
-
 
     // Kiểm tra lượt để hiển thị chat
     _normalModeDataRef.onValue.listen((event) {
@@ -381,7 +383,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
           await _roomRef.update({
             'curPlayer': currentPlayerCount - 1,
-        });
+          });
         }
       }
     }
@@ -390,6 +392,41 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   @override
   Widget build(BuildContext context) {
     final chatMessages = ref.watch(chatProvider);
+
+    void onSubmitted() {
+      if (_controller.text.isEmpty || wordToGuess.isEmpty) {
+        return;
+      }
+      if (ref.read(chatProvider.notifier).checkGuess(
+              wordToGuess, _controller.text, ref.read(userProvider).id!) ==
+          "") {
+        ref.read(chatProvider.notifier).addMessage(
+              ref.read(userProvider).id!,
+              _controller.text,
+              ref.read(userProvider).name,
+              widget.selectedRoom.roomId,
+              ref.read(userProvider).avatarIndex,
+            );
+        _controller.clear();
+      } else {
+        if (_isEnable) {
+          final userName = ref.read(userProvider).name;
+          _playerInRoomIDRef
+              .update({"point": curPoint + _pointLeft, "isCorrect": true});
+          _normalModeDataRef.update({
+            "point": _pointLeft - 1,
+          });
+          ref.read(chatProvider.notifier).addMessage(
+              ref.read(userProvider).id!,
+              '$userName đã đoán đúng',
+              'Hệ thống',
+              widget.selectedRoom.roomId,
+              -1);
+          _controller.clear();
+          FocusScope.of(context).unfocus();
+        }
+      }
+    }
 
     // Chờ dữ liệu từ Firebase
     if (_isMyTurn == null) {
@@ -542,7 +579,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                     children: <Widget>[
                       Expanded(
                         child: TextField(
-                          // enabled: _isEnable,
                           controller: _controller,
                           decoration: InputDecoration(
                             hintText:
@@ -562,50 +598,16 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                               borderRadius: BorderRadius.circular(50),
                             ),
                           ),
+                          onSubmitted: (_) {
+                            onSubmitted();
+                          },
                         ),
                       ),
                       SizedBox(
                         height: 50,
                         width: 50,
                         child: IconButton(
-                          onPressed: () {
-                            if (_controller.text.isEmpty ||
-                                wordToGuess.isEmpty) {
-                              return;
-                            }
-                            if (ref.read(chatProvider.notifier).checkGuess(
-                                    wordToGuess,
-                                    _controller.text,
-                                    ref.read(userProvider).id!) ==
-                                "") {
-                              ref.read(chatProvider.notifier).addMessage(
-                                ref.read(userProvider).id!,
-                                _controller.text,
-                                ref.read(userProvider).name,
-                                widget.selectedRoom.roomId,
-                              );
-                              _controller.clear();
-                            } else {
-                              if (_isEnable) {
-                                final userName = ref.read(userProvider).name;
-                                _playerInRoomIDRef.update({
-                                  "point": curPoint + _pointLeft,
-                                  "isCorrect": true
-                                });
-                                _normalModeDataRef.update({
-                                  "point": _pointLeft - 1,
-                                });
-                                ref.read(chatProvider.notifier).addMessage(
-                                    ref.read(userProvider).id!,
-                                    '$userName đã đoán đúng',
-                                    'Hệ thống',
-                                    widget.selectedRoom.roomId);
-                                _controller.clear();
-                                FocusScope.of(context).unfocus();
-                              }
-                            }
-
-                          },
+                          onPressed: onSubmitted,
                           icon: Image.asset('assets/images/send.png'),
                           iconSize: 45,
                         ),

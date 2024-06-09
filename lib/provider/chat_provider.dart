@@ -12,10 +12,13 @@ class ChatNotifier extends StateNotifier<List<Map<String, dynamic>>> {
     state = chat;
   }
 
-  void addMessage(String id, String message, String name, String roomId) {
+  void addMessage(
+      String id, String message, String name, String roomId, int avatarIndex) {
     final newChat = {
       "id": id,
       "userName": name,
+      'avatarIndex': avatarIndex,
+      // Thêm avatarIndex vào chat để tránh lỗi 'avatarIndex not found
       "message": message,
       "timestamp": DateTime.now().millisecondsSinceEpoch,
     };

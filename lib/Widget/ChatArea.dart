@@ -106,8 +106,9 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
 
       final newChat = data.entries.map((e) {
         return {
-          "id": e.value['id'],
+          'id': e.value['id'],
           "userName": e.value['userName'],
+          'avatarIndex': e.value['avatarIndex'],
           "message": e.value['message'],
           "timestamp": e.value['timestamp'],
         };
@@ -175,6 +176,39 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
   Widget build(BuildContext context) {
     final width = widget.width;
     final chatMessages = ref.watch(chatProvider);
+
+    void onSubmitted() {
+      if (_controller.text.isEmpty || wordToGuess.isEmpty) {
+        return;
+      }
+      if (ref.read(chatProvider.notifier).checkGuess(
+              wordToGuess, _controller.text, ref.read(userProvider).id!) ==
+          "") {
+        ref.read(chatProvider.notifier).addMessage(
+              ref.read(userProvider).id!,
+              _controller.text,
+              ref.read(userProvider).name,
+              widget.roomId,
+              ref.read(userProvider).avatarIndex,
+            );
+        _controller.clear();
+      } else {
+        if (_isEnable) {
+          final userName = ref.read(userProvider).name;
+          _playerInRoomIDRef
+              .update({"point": curPoint + _pointLeft, "isCorrect": true});
+          _normalModeDataRef.update({
+            "point": _pointLeft - 1,
+          });
+          ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
+              '$userName đã đoán đúng', 'Hệ thống', widget.roomId, -1);
+          _controller.clear();
+          FocusScope.of(context).unfocus();
+          Navigator.of(context).pop();
+        }
+      }
+    }
+
     return SizedBox(
       width: width,
       child: Column(
@@ -214,6 +248,9 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                         borderRadius: BorderRadius.circular(50),
                       ),
                     ),
+                    onSubmitted: (_) {
+                      onSubmitted();
+                    },
                   ),
                 ),
                 SizedBox(
@@ -221,43 +258,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
                   width: 50,
                   child: IconButton(
                     onPressed: () {
-                      if (_controller.text.isEmpty || wordToGuess.isEmpty)
-                        return;
-                      print("OK KO?" + _controller.text);
-                      if (ref.read(chatProvider.notifier).checkGuess(
-                              wordToGuess,
-                              _controller.text,
-                              ref.read(userProvider).id!) ==
-                          "") {
-                        print(
-                            "AddMess?" + wordToGuess + " " + _controller.text);
-                        ref.read(chatProvider.notifier).addMessage(
-                              ref.read(userProvider).id!,
-                              _controller.text,
-                              ref.read(userProvider).name,
-                              widget.roomId,
-                            );
-                        _controller.clear();
-                      } else {
-                        if (_isEnable) {
-                          final userName = ref.read(userProvider).name;
-                          _playerInRoomIDRef.update({
-                            "point": curPoint + _pointLeft,
-                            "isCorrect": true
-                          });
-                          _normalModeDataRef.update({
-                            "point": _pointLeft - 1,
-                          });
-                          ref.read(chatProvider.notifier).addMessage(
-                              ref.read(userProvider).id!,
-                              '$userName đã đoán đúng',
-                              'Hệ thống',
-                              widget.roomId);
-                          _controller.clear();
-                        }
-                      }
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => _scrollToBottom());
+                      onSubmitted();
                     },
                     icon: Image.asset('assets/images/send.png'),
                     iconSize: 45,

@@ -36,11 +36,22 @@ class _ChatList extends ConsumerState<ChatList> {
                   ),
                 )
               : item['userName'] != 'Đáp án'
-                  ? Text(
-                      '${item['userName']}: ${item['message']}',
-                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                  ? Row(
+                      children: [
+                        Image.asset(
+                          'assets/images/avatars/avatar${item['avatarIndex']}.png',
+                          width: 35,
+                          height: 35,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${item['message']}',
+                          style:
+                              Theme.of(context).textTheme.bodySmall!.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                      ],
                     )
                   : Center(
                       child: Text(
