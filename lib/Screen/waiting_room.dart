@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:draw_and_guess_promax/Screen/Ranking.dart';
 import 'package:draw_and_guess_promax/Screen/knock_off_mode.dart';
 import 'package:draw_and_guess_promax/Screen/master_piece_mode.dart';
 import 'package:draw_and_guess_promax/Screen/normal_mode_room.dart';
@@ -174,7 +173,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
       ref.read(chatProvider.notifier).clearChat();
-
 
       // Navigator.of(context).push(MaterialPageRoute(
       //     builder: (ctx) => Ranking(selectedRoom: widget.selectedRoom)));
@@ -429,8 +427,17 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
               child: Text(
                 widget.isGuest
                     ? 'Chờ chủ phòng bắt đầu...'
-                    : 'Bắt đầu thôi nào!!',
-                style: Theme.of(context).textTheme.bodySmall,
+                    : currentPlayers.length < 2
+                        ? 'Cần thêm 1 người để bắt đầu'
+                        : 'Bắt đầu thôi nào!!',
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: currentPlayers.length < 2
+                          ? const Color(0xFFCA322D)
+                          : Colors.white,
+                      fontWeight: currentPlayers.length < 2
+                          ? FontWeight.bold
+                          : FontWeight.w300,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ),
