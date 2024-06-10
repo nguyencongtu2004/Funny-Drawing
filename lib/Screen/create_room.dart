@@ -15,9 +15,16 @@ import '../provider/user_provider.dart';
 final random = Random();
 
 class CreateRoom extends ConsumerStatefulWidget {
-  CreateRoom({super.key});
+  const CreateRoom({super.key});
 
-  final TextEditingController _passwordController = TextEditingController();
+  @override
+  ConsumerState<CreateRoom> createState() => _CreateRoomState();
+}
+
+class _CreateRoomState extends ConsumerState<CreateRoom> {
+  final selecting = ValueNotifier<String>('none');
+  final _passwordController = TextEditingController();
+  var _isWaiting = false;
 
   int _maxPlayer = 5;
 
@@ -31,15 +38,13 @@ class CreateRoom extends ConsumerStatefulWidget {
     }
   }
 
-  final selecting = ValueNotifier<String>('none');
-
   String _pickRandomRoomId() {
     final number = random.nextInt(1000000);
     final roomId = number.toString().padLeft(6, '0');
     return roomId;
   }
 
-  void _startClick(BuildContext context, WidgetRef ref) async {
+  void _startClick(BuildContext context) async {
     if (selecting.value == 'none') {
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -50,6 +55,9 @@ class CreateRoom extends ConsumerStatefulWidget {
       return;
     }
 
+    setState(() {
+      _isWaiting = true;
+    });
     print(_passwordController.text);
     print(_maxPlayer);
     print(selecting.value);
@@ -96,13 +104,11 @@ class CreateRoom extends ConsumerStatefulWidget {
               selectedRoom: createdRoom,
               isGuest: false,
             )));
+    setState(() {
+      _isWaiting = false;
+    });
   }
 
-  @override
-  ConsumerState<CreateRoom> createState() => _CreateRoomState();
-}
-
-class _CreateRoomState extends ConsumerState<CreateRoom> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -180,13 +186,14 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                           children: [
                             InkWell(
                               onTap: () {
+                                if (_isWaiting) return;
                                 print(mode.mode);
-                                widget.selecting.value = mode.mode;
+                                selecting.value = mode.mode;
                               },
                               child: RoomMode(
                                 mode: mode.mode,
                                 description: mode.description,
-                                selecting: widget.selecting,
+                                selecting: selecting,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -215,7 +222,8 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                             child: SizedBox(
                               height: 40,
                               child: TextField(
-                                controller: widget._passwordController,
+                                enabled: !_isWaiting,
+                                controller: _passwordController,
                                 decoration: InputDecoration(
                                   hintText: 'Đặt mật khẩu',
                                   hintStyle:
@@ -270,8 +278,9 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                         children: [
                           IconButton(
                             onPressed: () {
+                              if (_isWaiting) return;
                               setState(() {
-                                widget.maxPlayer--;
+                                maxPlayer--;
                               });
                             },
                             icon: const Icon(
@@ -282,13 +291,14 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                           SizedBox(
                               width: 25,
                               child: Text(
-                                '${widget.maxPlayer}',
+                                '$maxPlayer',
                                 textAlign: TextAlign.center,
                               )),
                           IconButton(
                             onPressed: () {
+                              if (_isWaiting) return;
                               setState(() {
-                                widget.maxPlayer++;
+                                maxPlayer++;
                               });
                             },
                             icon: const Icon(
@@ -313,11 +323,13 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
               children: [
                 Button(
                   onClick: (ctx) {
-                    widget._startClick(ctx, ref);
+                    _startClick(ctx);
                   },
                   title: 'Tạo phòng',
                   imageAsset: 'assets/images/play.png',
                   width: 180,
+                  isWaiting: _isWaiting,
+                  isEnable: !_isWaiting,
                 )
               ],
             ),

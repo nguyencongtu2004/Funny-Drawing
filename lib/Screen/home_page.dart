@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:draw_and_guess_promax/Widget/pick_avatar_dialog.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,6 +26,8 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _textEditingController = TextEditingController();
   var _avatarIndex = random.nextInt(13);
+  var _isWaitingFindRoom = false;
+  var _isWaitingCreateRoom = false;
 
   void _onMoreClick(context) {
     Navigator.of(context)
@@ -48,6 +51,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       );
       return;
     }
+    setState(() {
+      _isWaitingFindRoom = true;
+    });
 
     final user = ref.watch(userProvider);
     ref
@@ -65,6 +71,9 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const FindRoom()));
+    setState(() {
+      _isWaitingFindRoom = false;
+    });
   }
 
   void _createRoomClick(context) async {
@@ -79,6 +88,9 @@ class _HomePageState extends ConsumerState<HomePage> {
       );
       return;
     }
+    setState(() {
+      _isWaitingCreateRoom = true;
+    });
 
     final user = ref.watch(userProvider);
     ref
@@ -96,14 +108,19 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => CreateRoom()));
+    setState(() {
+      _isWaitingCreateRoom = false;
+    });
   }
 
   void _pickAvatar(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final width = MediaQuery.of(context).size.width * 0.1;
+        final height = MediaQuery.of(context).size.height * 0.15;
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 140),
+          padding: EdgeInsets.symmetric(horizontal: width, vertical: height),
           child: PickAvatarDialog(onPick: (index) {
             setState(() {
               _avatarIndex = index;
@@ -148,7 +165,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    _onMoreClick(context);
+                    if (!_isWaitingFindRoom && !_isWaitingCreateRoom) {
+                      _onMoreClick(context);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     fixedSize: const Size(90, 90),
@@ -160,7 +179,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    _onInformationClick(context);
+                    if (!_isWaitingFindRoom && !_isWaitingCreateRoom) {
+                      _onInformationClick(context);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     fixedSize: const Size(90, 90),
@@ -194,40 +215,51 @@ class _HomePageState extends ConsumerState<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 5),
-                  Container(
-                    width: 123.20,
-                    height: 123.20,
-                    decoration: ShapeDecoration(
-                      image: DecorationImage(
-                        image: AssetImage(
-                            'assets/images/avatars/avatar$_avatarIndex.png'),
-                        fit: BoxFit.fill,
+                  GestureDetector(
+                    onTap: () {
+                      if (!_isWaitingFindRoom && !_isWaitingCreateRoom) {
+                        _pickAvatar(context);
+                      }
+                    },
+                    child: Container(
+                      width: 123.20,
+                      height: 123.20,
+                      decoration: ShapeDecoration(
+                        image: DecorationImage(
+                          image: AssetImage(
+                              'assets/images/avatars/avatar$_avatarIndex.png'),
+                          fit: BoxFit.fill,
+                        ),
+                        shape: const CircleBorder(),
                       ),
-                      shape: const CircleBorder(),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: SizedBox(
-                            width: 40,
-                            height: 40,
-                            child: IconButton(
-                              icon: Image.asset('assets/images/edit.png'),
-                              onPressed: () {
-                                _pickAvatar(context);
-                              },
-                              padding: const EdgeInsets.all(0),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: IconButton(
+                                icon: Image.asset('assets/images/edit.png'),
+                                onPressed: () {
+                                  if (!_isWaitingFindRoom &&
+                                      !_isWaitingCreateRoom) {
+                                    _pickAvatar(context);
+                                  }
+                                },
+                                padding: const EdgeInsets.all(0),
+                              ),
                             ),
-                          ),
-                        )
-                      ],
+                          )
+                        ],
+                      ),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: TextField(
+                      enabled: !_isWaitingFindRoom && !_isWaitingCreateRoom,
                       controller: _textEditingController,
                       decoration: InputDecoration(
                         hintText: 'Tên của bạn',
@@ -260,12 +292,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                   onClick: _findRoomClick,
                   imageAsset: 'assets/images/search.png',
                   title: 'Tìm phòng',
+                  isWaiting: _isWaitingFindRoom,
+                  isEnable: !_isWaitingFindRoom && !_isWaitingCreateRoom,
                 ),
                 const SizedBox(height: 20),
                 Button(
                   onClick: _createRoomClick,
                   imageAsset: 'assets/images/plus.png',
                   title: 'Tạo phòng',
+                  isWaiting: _isWaitingCreateRoom,
+                  isEnable: !_isWaitingFindRoom && !_isWaitingCreateRoom,
                 ),
               ],
             ),

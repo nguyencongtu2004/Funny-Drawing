@@ -24,6 +24,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
 
   var rooms = <Room>[];
   late List<Room> filteredRoom = [];
+  var _isWaiting = false;
 
   @override
   void initState() {
@@ -68,6 +69,9 @@ class _FindRoomState extends ConsumerState<FindRoom> {
       );
       return;
     }
+    setState(() {
+      _isWaiting = true;
+    });
 
     print(selecting.value);
     print(password.value);
@@ -113,6 +117,9 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                 isGuest: true,
               )));
     }
+    setState(() {
+      _isWaiting = false;
+    });
   }
 
   void _onFilterRoom() {
@@ -167,12 +174,14 @@ class _FindRoomState extends ConsumerState<FindRoom> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final width = MediaQuery.of(context).size.width * 0.15;
+        final height = (MediaQuery.of(context).size.height - 250) / 2;
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 330),
+          padding: EdgeInsets.symmetric(horizontal: width, vertical: height),
           child: Material(
             color: Colors.transparent,
             child: Container(
-              width: 200,
+              width: 250,
               decoration: BoxDecoration(
                 color: const Color(0xFF00C4A0),
                 borderRadius: BorderRadius.circular(25),
@@ -256,6 +265,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                   Expanded(
                     flex: 4,
                     child: TextField(
+                      enabled: !_isWaiting,
                       controller: _idController,
                       // Gán TextEditingController cho trường nhập văn bản
                       decoration: InputDecoration(
@@ -284,7 +294,6 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                       style: const TextStyle(color: Colors.black),
                       keyboardType: TextInputType.number,
                       onChanged: (roomId) {
-                        //_onChangeRoomId(roomId);
                         _onFilterRoom();
                       },
                       maxLines: 1,
@@ -296,6 +305,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                     flex: 6,
                     child: InkWell(
                       onTap: () {
+                        if (_isWaiting) return;
                         _showDropdownMenu(context);
                       },
                       child: TextField(
@@ -362,6 +372,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                       left: 8, right: 8, bottom: isLastItem ? 120 : 8),
                   child: InkWell(
                     onTap: () {
+                      if (_isWaiting) return;
                       selecting.value = filteredRoom[index].roomId;
                     },
                     child: RoomToPlay(
@@ -393,6 +404,8 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                   title: 'Vào phòng',
                   imageAsset: 'assets/images/play.png',
                   color: const Color(0xFFC45F00),
+                  isWaiting: _isWaiting,
+                  isEnable: !(_isWaiting),
                 )
               ],
             ),

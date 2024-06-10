@@ -7,7 +7,7 @@ class PickAvatarDialog extends StatelessWidget {
   final int totalAvatar = 13;
 
   @override
-  build(BuildContext context) {
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
@@ -15,45 +15,38 @@ class PickAvatarDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(25.0),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Center(
-              child: Text(
-            'Chọn Avatar',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge!
-                .copyWith(color: Colors.black),
-          )),
+            child: Text(
+              'Chọn Avatar',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge!
+                  .copyWith(color: Colors.black),
+            ),
+          ),
           const SizedBox(height: 16.0),
-          SizedBox(
-            height: 470,
-            width: double.infinity,
-            child: SingleChildScrollView(
-              child: SizedBox(
-                height: (totalAvatar / 3).ceil() * 100.0,
-                // Adjust this height as needed
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10.0,
-                    mainAxisSpacing: 10.0,
-                  ),
-                  itemCount: totalAvatar,
-                  itemBuilder: (BuildContext _, int index) {
-                    return GestureDetector(
-                      onTap: () {
-                        onPick(index);
-                      },
-                      child: CircleAvatar(
-                        backgroundImage: AssetImage(
-                            'assets/images/avatars/avatar$index.png'),
-                      ),
-                    );
-                  },
-                ),
+          Flexible(
+            child: GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10.0,
+                mainAxisSpacing: 10.0,
               ),
+              itemCount: totalAvatar,
+              itemBuilder: (BuildContext _, int index) {
+                return GestureDetector(
+                  onTap: () {
+                    onPick(index);
+                  },
+                  child: CircleAvatar(
+                    backgroundImage:
+                        AssetImage('assets/images/avatars/avatar$index.png'),
+                  ),
+                );
+              },
             ),
           ),
         ],

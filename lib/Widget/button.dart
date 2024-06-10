@@ -9,6 +9,8 @@ class Button extends StatelessWidget {
     this.title = 'Button',
     this.color = Colors.white,
     this.width = 190,
+    this.isWaiting = false,
+    this.isEnable = true,
   });
 
   final void Function(BuildContext context) onClick;
@@ -17,12 +19,16 @@ class Button extends StatelessWidget {
   final String title;
   final Color color;
   final double width;
+  final bool isWaiting;
+  final bool isEnable;
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        onClick(context);
+        if (isEnable) {
+          onClick(context);
+        }
       },
       style: ElevatedButton.styleFrom(
         fixedSize: Size(width, 50),
@@ -36,13 +42,24 @@ class Button extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (imageAsset != null)
+          if (imageAsset != null && !isWaiting) ...[
             Image.asset(
               imageAsset!,
               height: 22,
               width: 22,
             ),
-          const SizedBox(width: 6),
+            const SizedBox(width: 6)
+          ],
+          if (isWaiting) ...[
+            const SizedBox(
+              height: 22,
+              width: 22,
+              child: CircularProgressIndicator(
+                color: Color(0xFF3D3D3D),
+              ),
+            ),
+            const SizedBox(width: 6)
+          ],
           Text(
             title,
             style: Theme.of(context)

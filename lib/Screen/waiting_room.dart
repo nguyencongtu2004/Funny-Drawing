@@ -38,6 +38,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   late DatabaseReference _playersInRoomRef;
   late bool isPlayed = false;
   var currentPlayers = <User>[];
+  var isWaitingStart = false;
+  var isWaitingInvite = false;
 
   @override
   void initState() {
@@ -198,13 +200,25 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       ScaffoldMessenger.of(context).showSnackBar(sackBar);
       return;
     }
+    setState(() {
+      isWaitingStart = true;
+    });
 
     _roomRef.update({'isPlayed': true});
     startMode(widget.selectedRoom.mode);
+    setState(() {
+      isWaitingStart = false;
+    });
   }
 
   void _inviteClick() {
+    setState(() {
+      isWaitingInvite = true;
+    });
     print('đã mời');
+    setState(() {
+      isWaitingInvite = false;
+    });
   }
 
   @override
@@ -405,6 +419,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       title: 'Mời',
                       imageAsset: 'assets/images/invite.png',
                       width: 150,
+                      isWaiting: isWaitingInvite,
+                      isEnable: !isWaitingStart && !isWaitingInvite,
                     ),
                     const SizedBox(width: 10),
                     Button(
@@ -414,6 +430,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       title: 'Bắt đầu',
                       imageAsset: 'assets/images/play.png',
                       width: 150,
+                      isWaiting: isWaitingStart,
+                      isEnable: !isWaitingStart && !isWaitingInvite,
                     )
                   ],
                 ),
