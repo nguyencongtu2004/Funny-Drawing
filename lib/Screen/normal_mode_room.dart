@@ -35,6 +35,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
   late DatabaseReference _normalModeDataRef;
+  late String roomOwner = widget.selectedRoom.roomOwner!;
   final TextEditingController _controller = TextEditingController();
   late DatabaseReference _playerInRoomIDRef;
   late bool _isEnable;
@@ -49,6 +50,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   var isMyTurn = false;
   var _timeLeft = -1;
   var _pointLeft = 0;
+  var _curPlayer = 2;
 
   final _scrollController = ScrollController();
 
@@ -69,14 +71,20 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     // Lắng nghe sự kiện thoát phòng TODO
     _roomRef.onValue.listen((event) async {
       if (event.snapshot.value == null) {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        _curPlayer = data['curPlayer'] as int;
+        roomOwner = data['roomOwner']!;
         // Room has been deleted
-        if (widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
+        if (roomOwner != ref.read(userProvider).id) {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
           Navigator.of(context).pop();
         }
       }
     });
+
 
     // Lấy thông tin người chơi trong phòng
     _playersInRoomRef.onValue.listen((event) {
@@ -94,7 +102,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         ));
       }
 
-      _playersInRoom.sort((a, b) => b.point.compareTo(a.point));
       _playersInRoomId.clear();
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
     });
@@ -133,7 +140,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
-      if (ref.read(userProvider).id == widget.selectedRoom.roomOwner &&
+      if (
           data['noOneInRoom'] == true) {
         _roomRef.remove();
         _playersInRoomRef.remove();
@@ -183,7 +190,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                       _playersInRoom.length +
                       1)) ||
               timeLeft == 0) &&
-          ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
+          ref.read(userProvider).id == roomOwner) {
         currentPlayerTurnIndex =
             (currentPlayerTurnIndex + 1) % _playersInRoomId.length;
         _normalModeDataRef.update({
@@ -272,7 +279,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   }
 
   void _startTimer() {
-    if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+    if (roomOwner == ref.read(userProvider).id) {
       _timer?.cancel(); // Hủy Timer nếu đã tồn tại
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_timeLeft > 0) {
@@ -360,32 +367,33 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
-    if (widget.selectedRoom.roomOwner == userId) {
-      await _roomRef.remove();
-      await _playersInRoomRef.remove();
-      await _chatRef.remove();
-      await _drawingRef.remove();
-      await _normalModeDataRef.remove();
-    } else {
-      final playerRef = database
-          .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
-      await playerRef.remove();
-
-      final currentPlayerCount =
-          (await _roomRef.child('curPlayer').get()).value as int;
-      if (currentPlayerCount > 0) {
-        // Nếu còn 2 người chơi thì xóa phòng
-        if (currentPlayerCount == 2) {
-          _normalModeDataRef.update({
-            'noOneInRoom': true,
+    final currentPlayerCount = _curPlayer;
+    print("So luong: " + currentPlayerCount.toString());
+    if (currentPlayerCount > 0) {
+      // Nếu còn 2 người chơi thì xóa phòng
+      if (currentPlayerCount <= 2) {
+        _normalModeDataRef.update({
+          'noOneInRoom': true,
+        });
+      } else {
+        // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
+        _roomRef.update({
+          'curPlayer': currentPlayerCount - 1,
+        });
+      }
+    }
+    await _playerInRoomIDRef.remove();
+    if (roomOwner == userId) {
+      print("Chu phong");
+      for(var cp in _playersInRoom) {
+        if(cp.id != roomOwner) {
+          _roomRef.update({
+            'roomOwner': cp.id,
           });
-        } else {
-          // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
-          await _roomRef.update({
-            'curPlayer': currentPlayerCount - 1,
-          });
+          break;
         }
       }
+
     }
   }
 
@@ -456,7 +464,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             return;
           }
           final isQuit = (ref.read(userProvider).id ==
-                  widget.selectedRoom.roomOwner)
+              roomOwner)
               ? await _showDialog('Cảnh báo',
                   'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
               : await _showDialog(
