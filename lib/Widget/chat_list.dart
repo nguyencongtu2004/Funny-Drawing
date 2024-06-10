@@ -16,6 +16,8 @@ class ChatList extends ConsumerStatefulWidget {
 }
 
 class _ChatList extends ConsumerState<ChatList> {
+  final showAvatar = false;
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -36,7 +38,7 @@ class _ChatList extends ConsumerState<ChatList> {
                   ),
                 )
               : item['userName'] != 'Đáp án'
-                  ? Row(
+                  ? /*Row(
                       children: [
                         Image.asset(
                           'assets/images/avatars/avatar${item['avatarIndex']}.png',
@@ -52,6 +54,13 @@ class _ChatList extends ConsumerState<ChatList> {
                                   ),
                         ),
                       ],
+                    )*/
+                  // không hiển thị avatar
+                  Text(
+                      '${item['userName']}: ${item['message']}',
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     )
                   : Center(
                       child: Text(

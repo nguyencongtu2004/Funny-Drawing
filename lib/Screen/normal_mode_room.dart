@@ -464,7 +464,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
           if (context.mounted && isQuit) {
             _playOutRoom(ref);
-            Navigator.pop(context);
+            Navigator.of(context).pop();
           }
         },
         child: Scaffold(
