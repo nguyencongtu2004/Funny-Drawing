@@ -59,15 +59,21 @@ class _Drawing extends ConsumerState<Drawing> {
 
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
-    _normalModeDataRef.onValue.listen((event) {
-      final data = Map<String, dynamic>.from(
-        event.snapshot.value as Map<dynamic, dynamic>,
-      );
-      print(data['turn']);
-      setState(() {
-        _isMenuBarVisible = data['turn'] == ref.read(userProvider).id;
+    if (widget.selectedRoom.mode == 'Thường') {
+      _normalModeDataRef.onValue.listen((event) {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        print(data['turn']);
+        setState(() {
+          _isMenuBarVisible = data['turn'] == ref.read(userProvider).id;
+        });
       });
-    });
+    } else if (widget.selectedRoom.mode == 'Tam sao thất bản') {
+      _isMenuBarVisible = true;
+    } else if (widget.selectedRoom.mode == 'Tuyệt tác') {
+      _isMenuBarVisible = true;
+    }
   }
 
   void _toggleSelectMenuVisibility(Offset position) {
@@ -236,14 +242,14 @@ class _Drawing extends ConsumerState<Drawing> {
                           )),
                     if (_selectIcon == Icons.minimize)
                       Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                                7.0), // Bán kính cong của đường viền
-                          ),
-                          child: GestureDetector(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(
+                              7.0), // Bán kính cong của đường viền
+                        ),
+                        child: GestureDetector(
                           key: _selectmenu,
                           onTap: () {
                             RenderBox buttonBox = _selectmenu.currentContext!
@@ -388,7 +394,7 @@ class _Drawing extends ConsumerState<Drawing> {
         if (_isSizeMenuVisible)
           Positioned(
             left: 10,
-            bottom: 195,
+            bottom: widget.selectedRoom.mode == 'Thường' ? 195 : 100,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -452,7 +458,7 @@ class _Drawing extends ConsumerState<Drawing> {
           Positioned(
             left: 10,
             right: 10,
-            bottom: 200,
+            bottom: widget.selectedRoom.mode == 'Thường' ? 200 : 105,
             child: Container(
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
@@ -804,7 +810,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     String chose = widget.chose;
     return GestureDetector(
       onPanDown: (DragDownDetails details) {
-        if (userTurn != ref.read(userProvider).id) return;
+        if (widget.selectedRoom.mode == 'Thường' &&
+            userTurn != ref.read(userProvider).id) return;
         // Ẩn menu khi bắt đầu vẽ
         widget.hideMenu();
 
@@ -829,7 +836,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         });
       },
       onPanUpdate: (DragUpdateDetails details) {
-        if (userTurn != ref.read(userProvider).id) return;
+        if (widget.selectedRoom.mode == 'Thường' &&
+            userTurn != ref.read(userProvider).id) return;
 
         setState(() {
           if (chose == "Draw") {
@@ -848,7 +856,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         });
       },
       onPanEnd: (DragEndDetails details) {
-        if (userTurn != ref.read(userProvider).id) return;
+        if (widget.selectedRoom.mode == 'Thường' &&
+            userTurn != ref.read(userProvider).id) return;
 
         // if(chose == "Draw")
         setState(() {
