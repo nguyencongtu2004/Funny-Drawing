@@ -179,6 +179,17 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       // Navigator.of(context).push(MaterialPageRoute(
       //     builder: (ctx) => Ranking(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tam sao thất bản') {
+      if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+        var kickoffModeDataRef =
+        database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
+        // Khởi tạo trạng thái của phòng
+        kickoffModeDataRef.update({
+          'turn': 1,
+          'playerDone': 0,
+          'timeLeftMode': 90,
+          // 'endGame': false,
+        });
+      }
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => KnockoffMode(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tuyệt tác') {
