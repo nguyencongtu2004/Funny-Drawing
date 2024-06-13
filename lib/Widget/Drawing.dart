@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/model/user.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -66,7 +67,7 @@ class _Drawing extends ConsumerState<Drawing> {
         );
         print(data['turn']);
         setState(() {
-          _isMenuBarVisible = data['turn'] == ref.read(userProvider).id;
+          _isMenuBarVisible = (widget.selectedRoom.mode != 'Thường' || data['turn'] == ref.read(userProvider).id);
         });
       });
     } else if (widget.selectedRoom.mode == 'Tam sao thất bản') {
@@ -575,9 +576,18 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late Queue<Paint> Qpt = Queue<Paint>();
   late bool isDrawLine = false;
   late DatabaseReference drawRef;
+  late DatabaseReference _playersInRoomRef;
   late DatabaseReference _normalModeDataRef;
+  late DatabaseReference _kickoffModeDataRef;
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
+  late final List<User> _playersInRoom = [];
+  late List<String> _playersInRoomId = [];
+  late int _countTurn = 1;
+  late int _indexCurrent = 0;
+  late int _currentTurn = 1;
+  late int _playerDone = 0;
+  late bool _canEdit = true;
   var userTurn = "";
 
   @override
@@ -588,6 +598,9 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
       _normalModeDataRef =
           database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
+
+      _kickoffModeDataRef =
+          database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
 
       _normalModeDataRef.onValue.listen((event) {
         final data = Map<String, dynamic>.from(
@@ -639,22 +652,111 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
     // setup cho chế độ tam sao thất bản
     if (widget.selectedRoom.mode == 'Tam sao thất bản') {
+      _playersInRoomRef =
+          database.child('/players_in_room/${widget.selectedRoom.roomId}');
       _myDataRef = database.child(
           '/kickoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
       _myAlbumRef = _myDataRef.child('/album');
+      _kickoffModeDataRef =
+          database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
+      _playersInRoomRef.onValue.listen((event) {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        _playersInRoom.clear();
+        var index = 0;
+        for (final player in data.entries) {
+          if(player.key == ref.read(userProvider).id) {
+            _indexCurrent = index;
+          }
+          _playersInRoom.add(User(
+            id: player.key,
+            name: player.value['name'],
+            avatarIndex: player.value['avatarIndex'],
+          ));
+          index++;
+        }
+        _playersInRoomId.clear();
+        _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
+      });
 
-      _myDataRef.onValue.listen((event) {
+
+      _kickoffModeDataRef.onValue.listen((event) async {
+        print("Thay doi tam sao?");
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        setState(() {
+          _countTurn = data['turn'] as int;
+          _playerDone = data['playerDone'] as int;
+        });
+        bool _isNextTurn = false;
+        if(_currentTurn == _countTurn) _isNextTurn = true;
+        for(var player in _playersInRoomId) {
+          if(data[player]["timeLeft"] > 0) {
+            _isNextTurn = false;
+            break;
+          }
+        }
+        print("KIEMTRA - Chuyen turn 2: $_currentTurn  = $_countTurn  ?  $_isNextTurn");
+        if(_currentTurn % 2 == 0 &&  _countTurn != _currentTurn) {
+
+         await _myDataRef.update({
+            "timeLeft": 90,
+          });
+          _currentTurn = _countTurn;
+          if(_currentTurn % 2 == 0) {
+            SeePic();
+            _canEdit = false;
+          }
+          else {
+            clearPoints();
+            _canEdit = true;
+          }
+        }
+        if(_currentTurn % 2 == 1 && _countTurn != _currentTurn) {
+          print("KIEMTRA - Chuyen turn $_currentTurn = $_countTurn?");
+          await _myDataRef.update({
+            "timeLeft": 8,
+          });
+          _currentTurn = _countTurn;
+          if(_currentTurn % 2 == 0) {
+            SeePic();
+            _canEdit = false;
+          }
+          else {
+            clearPoints();
+            _canEdit = true;
+          }
+        }
+
+        if(_currentTurn == _countTurn && _isNextTurn ) {
+          if(ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
+            await _kickoffModeDataRef.update({
+              'turn': _currentTurn + 1,
+              "playerDone": 0,
+            });
+          }
+        }
+      });
+
+      _myDataRef.onValue.listen((event) async {
         final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>,
         );
         var timeLeft = data['timeLeft'];
-        /*var album = Map<String, dynamic>.from(
-            data['album'] as Map<dynamic, dynamic>,
-          );*/
         if (timeLeft == 0) {
           // TODO send data to firebase one time
-          _myDataRef.update({'timeLeft': -1});
-          updatePointsKickoffMode();
+          print("Thoi gian == 0?");
+          if(_currentTurn % 2 == 1)
+            updatePointsKickoffMode();
+          _myDataRef.update({
+            'timeLeft': -1,
+          });
+           _kickoffModeDataRef.update({
+            'playerDone': _playerDone + 1,
+          });
+
           clearPoints();
         }
       });
@@ -662,6 +764,24 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
     // setup cho chế độ tuyệt tác
     if (widget.selectedRoom.mode == 'Tuyệt tác') {}
+  }
+  Future<void> SeePic() async {
+    try {
+      DatabaseReference _drawTurn = database.child(
+          '/kickoff_mode_data/${widget.selectedRoom.roomId}/${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2))%_playersInRoom.length].id}');
+      DataSnapshot snapshot = await _drawTurn.get();
+      print("KIEMTRA - Xem anh cua nguoi choi: " + _playersInRoom[(_indexCurrent + (_currentTurn ~/ 2))%_playersInRoom.length].name!);
+      if (snapshot.exists) {
+        var data = snapshot.value as Map<dynamic, dynamic>;
+        print("KIEMTRA - Anh day: ${data["${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2))%_playersInRoom.length].id}"]["album"]}");
+        points = decodeOffsetList(data["${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2))%_playersInRoom.length].id}"]["album"]["Turn ${_currentTurn-1}"]["Offset"]!);
+        paints = decodePaintList(data["${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2))%_playersInRoom.length].id}"]["album"]["Turn ${_currentTurn-1}"]["Color"]!);
+      } else {
+        print('No data available.');
+      }
+    } catch (error) {
+      print('Error getting data: $error');
+    }
   }
 
   bool isInBox(Offset point) {
@@ -799,18 +919,21 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     List<List<Offset>> fbpush = points;
     if (tmp.isNotEmpty) fbpush.add(tmp);
 
-    await _myAlbumRef.push().update(
-        {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
+    await _myAlbumRef.update({
+      "Turn $_currentTurn": {
+        'Offset': encodeOffsetList(fbpush),
+        'Color': encodePaintList(paints)
+      }
+    });
   }
 
-  void getData() {}
 
   @override
   Widget build(BuildContext context) {
     String chose = widget.chose;
     return GestureDetector(
       onPanDown: (DragDownDetails details) {
-        if (widget.selectedRoom.mode == 'Thường' &&
+        if (_canEdit && widget.selectedRoom.mode == 'Thường' &&
             userTurn != ref.read(userProvider).id) return;
         // Ẩn menu khi bắt đầu vẽ
         widget.hideMenu();
@@ -836,7 +959,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         });
       },
       onPanUpdate: (DragUpdateDetails details) {
-        if (widget.selectedRoom.mode == 'Thường' &&
+        if (_canEdit && widget.selectedRoom.mode == 'Thường' &&
             userTurn != ref.read(userProvider).id) return;
 
         setState(() {
@@ -856,7 +979,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         });
       },
       onPanEnd: (DragEndDetails details) {
-        if (widget.selectedRoom.mode == 'Thường' &&
+        if (_canEdit && widget.selectedRoom.mode == 'Thường' &&
             userTurn != ref.read(userProvider).id) return;
 
         // if(chose == "Draw")

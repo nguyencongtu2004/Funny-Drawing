@@ -31,10 +31,12 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
-
-  var _timeLeft = 999;
+  var _indexTurn = 0;
+  var _timeLeft = 90;
+  var _timeLeftMode = 90;
 
   Timer? _timer;
+  Timer? _timerMode;
 
   @override
   void initState() {
@@ -49,19 +51,27 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _kickoffModeDataRef.child('/$_userId');
     _myAlbumRef = _kickoffModeDataRef.child('/$_userId/album');
-
+    CheckLogKickoff();
     // Lấy thông tin người chơi trong phòng
     _playersInRoomRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
       _playersInRoom.clear();
+      var index = 0;
       for (final player in data.entries) {
+        if(player.key == ref.read(userProvider).id) {
+          _myDataRef.update({
+            "indexTurn": index
+          });
+          _indexTurn = index;
+        }
         _playersInRoom.add(User(
           id: player.key,
           name: player.value['name'],
           avatarIndex: player.value['avatarIndex'],
         ));
+        index++;
       }
       _playersInRoomId.clear();
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
@@ -72,18 +82,31 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+      _indexTurn = data['indexTurn'];
+      final timeLeft = data['timeLeft'] as int;
       setState(() {
-        _timeLeft = data['timeLeft'];
+        _timeLeft = timeLeft;
+        print("KIEMTRA - TimeLeft? : " + _timeLeft.toString());
       });
+      _startTimer();
     });
+
+    _kickoffModeDataRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+    });
+    print("KIEMTRA - StartTimer?  1");
     _startTimer();
   }
 
   void _startTimer() {
+    print("KIEMTRA - StartTimer?  2: " + _timeLeft.toString());
     _timer?.cancel(); // Hủy Timer nếu đã tồn tại
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeft > 0) {
         _myDataRef.update({'timeLeft': _timeLeft - 1});
+
       } else {
         timer.cancel(); // Hủy Timer khi thời gian kết thúc
       }
@@ -111,6 +134,20 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
           'curPlayer': currentPlayerCount - 1,
         });
       }
+    }
+  }
+  Future<void> CheckLogKickoff() async {
+    try {
+
+      DataSnapshot snapshot = await _kickoffModeDataRef.get();
+      if (snapshot.exists) {
+        var data = snapshot.value as Map<dynamic, dynamic>;
+        print("KIEMTRA - Kickoff value: $data");
+      } else {
+        print('No data available.');
+      }
+    } catch (error) {
+      print('Error getting data: $error');
     }
   }
 
@@ -285,6 +322,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                         _timeLeft = 0;
                       });
                       _myDataRef.update({'timeLeft': _timeLeft});
+                      print("Done?");
                     },
                     title: 'Done',
                     color: Colors.greenAccent,
