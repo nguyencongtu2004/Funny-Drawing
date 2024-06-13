@@ -51,7 +51,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _kickoffModeDataRef.child('/$_userId');
     _myAlbumRef = _kickoffModeDataRef.child('/$_userId/album');
-    CheckLogKickoff();
+
     // Lấy thông tin người chơi trong phòng
     _playersInRoomRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
@@ -86,7 +86,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       final timeLeft = data['timeLeft'] as int;
       setState(() {
         _timeLeft = timeLeft;
-        print("KIEMTRA - TimeLeft? : " + _timeLeft.toString());
       });
       _startTimer();
     });
@@ -96,12 +95,10 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         event.snapshot.value as Map<dynamic, dynamic>,
       );
     });
-    print("KIEMTRA - StartTimer?  1");
     _startTimer();
   }
 
   void _startTimer() {
-    print("KIEMTRA - StartTimer?  2: " + _timeLeft.toString());
     _timer?.cancel(); // Hủy Timer nếu đã tồn tại
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeft > 0) {
@@ -136,103 +133,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       }
     }
   }
-  Future<void> CheckLogKickoff() async {
-    try {
-
-      DataSnapshot snapshot = await _kickoffModeDataRef.get();
-      if (snapshot.exists) {
-        var data = snapshot.value as Map<dynamic, dynamic>;
-        print("KIEMTRA - Kickoff value: $data");
-      } else {
-        print('No data available.');
-      }
-    } catch (error) {
-      print('Error getting data: $error');
-    }
-  }
-
-/*
-
-  // dialog
-
-  late Completer<String> _completer;
-
-  Future<String> _showDialog() async {
-    _completer = Completer<String>();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        var textEditingController = TextEditingController();
-
-        return AlertDialog(
-          backgroundColor: const Color(0xFF00C4A1),
-          surfaceTintColor: const Color(0xFF00C4A1),
-          content: Container(
-            width: 310,
-            height: 250,
-            decoration: ShapeDecoration(
-              color: const Color(0xFF00C4A1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            //padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Hãy chọn 1 chủ đề để người khác vẽ',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: Colors.white),
-                ),
-                Material(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  child: TextField(
-                    controller: textEditingController,
-                    decoration: InputDecoration(
-                      hintText: 'Chủ đề',
-                      hintStyle: const TextStyle(color: Colors.black45),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.black45),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.white),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.black45),
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                ),
-                Button(
-                  width: 100,
-                  onClick: (ctx) {
-                    if (textEditingController.text.isNotEmpty) {
-                      _completer.complete(textEditingController.text);
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  title: 'OK ',
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    return _completer.future;
-  }
-
-  // end dialog
-*/
 
   @override
   Widget build(BuildContext context) {
@@ -322,7 +222,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                         _timeLeft = 0;
                       });
                       _myDataRef.update({'timeLeft': _timeLeft});
-                      print("Done?");
                     },
                     title: 'Done',
                     color: Colors.greenAccent,

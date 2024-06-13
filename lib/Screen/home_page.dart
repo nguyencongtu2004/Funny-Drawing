@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:draw_and_guess_promax/Screen/knock_off_mode_album.dart';
 import 'package:draw_and_guess_promax/Widget/pick_avatar_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../Widget/button.dart';
 import '../firebase.dart';
+import '../model/room.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart'; // Đảm bảo bạn import user_provider đúng cách
 import 'create_room.dart';
@@ -305,7 +307,20 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
               ],
             ),
-          )
+          ),
+          // test only
+          Positioned(
+              top: 135,
+              left: MediaQuery.of(context).size.width / 2 - 100,
+              child: Button(
+                  onClick: (context) {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => KnockoffModeAlbum(
+                                selectedRoom: Room(roomId: '672790'))));
+                  },
+                  title: 'quick to album')),
         ],
       ),
     );
