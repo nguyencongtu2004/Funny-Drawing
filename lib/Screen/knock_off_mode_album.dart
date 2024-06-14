@@ -12,6 +12,8 @@ import '../Widget/button.dart';
 import '../firebase.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart';
+import 'home_page.dart';
+import 'knock_off_mode.dart';
 
 class KnockoffModeAlbum extends ConsumerStatefulWidget {
   const KnockoffModeAlbum({
@@ -31,7 +33,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
-  late DatabaseReference _kickoffModeDataRef;
+  late DatabaseReference _knockoffModeDataRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
@@ -50,10 +52,10 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
     _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
-    _kickoffModeDataRef =
+    _knockoffModeDataRef =
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
-    _myDataRef = _kickoffModeDataRef.child('/$_userId');
-    _myAlbumRef = _kickoffModeDataRef.child('/$_userId/album');
+    _myDataRef = _knockoffModeDataRef.child('/$_userId');
+    _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
 
     // Lấy thông tin người chơi và tranh trong phòng
     _playersInRoomRef.onValue.listen((event) {
@@ -75,7 +77,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     });
 
     //
-    _kickoffModeDataRef.onValue.listen((event) {
+    _knockoffModeDataRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
@@ -87,28 +89,14 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         albumShowingIndex = 0;
       }
 
-      // TODO: Xử lý khi chơi lại nha Thịnh <3
-      if (albumShowingIndex == _playersInRoom.length) {
-        // Nếu đã xem hết tất cả album thì chơi lại
-        Navigator.of(context).pop();
-
-        // Chủ phòng sẽ cập nhật lại thông tin
-        if (_userId == widget.selectedRoom.roomOwner) {
-          _kickoffModeDataRef.update({
-            'turn': 1,
-            'playerDone': 0,
-            'timeLeftMode': 90,
-            'albumShowingIndex': -1,
-          });
-          for (var id in _playersInRoomId) {
-            _kickoffModeDataRef.child('/$id').remove(); // có thể lỗi ở đây
-          }
-        }
+      // có thể chơi lại ở đây
+      if (albumShowingIndex >= _playersInRoom.length) {
+        _playAgain();
+      } else {
+        setState(() {
+          _showingIndex = albumShowingIndex;
+        });
       }
-
-      setState(() {
-        _showingIndex = albumShowingIndex;
-      });
     });
   }
 
@@ -155,7 +143,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     if (widget.selectedRoom.roomOwner == userId) {
       await _roomRef.remove();
       await _playersInRoomRef.remove();
-      await _kickoffModeDataRef.remove();
+      await _knockoffModeDataRef.remove();
     } else {
       final playerRef = database
           .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
@@ -171,187 +159,307 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     }
   }
 
+  late Completer<bool> _completer;
+
+  Future<bool> _showDialog(String title, String content,
+      {bool isKicked = false}) async {
+    _completer = Completer<bool>();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          backgroundColor: const Color(0xFF00C4A0),
+          actions: [
+            if (!isKicked)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _completer.complete(false); // Hoàn thành với giá trị true
+                },
+                child: const Text(
+                  'Hủy',
+                  style: TextStyle(
+                    color: Color(0xFF000000),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _completer.complete(true); // Hoàn thành với giá trị true
+              },
+              child: Text(
+                isKicked ? 'OK' : 'Thoát',
+                style: TextStyle(
+                  color: isKicked ? Colors.black : Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return _completer.future; // Trả về Future từ Completer
+  }
+
+  // Chủ phòng mới gọi được hàm này
+  Future<void> _playAgain() async {
+    // Reset the state in the database
+    if (ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
+      await _knockoffModeDataRef.update({
+        'turn': 1,
+        'playerDone': 0,
+        'timeLeftMode': 90,
+        'albumShowingIndex': -1,
+        // Add more fields if necessary
+      });
+      if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+        print('============================================================');
+        print('Chủ phòng đã cập nhật lại trạng thái phòng');
+        print('============================================================');
+      }
+    }
+    await _myDataRef.remove();
+
+    // Clear the local state
+    setState(() {
+      picturesOfUsers.clear();
+      _showingIndex = 0;
+    });
+
+    // Navigate back to HomePage and then to a new KnockoffModeAlbum instance
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (ctx) => const HomePage(),
+      ),
+      (route) => false,
+    );
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => KnockoffMode(
+          selectedRoom: widget.selectedRoom,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const double widthOfPicture = 250;
     const double heightOfPicture = 400;
     if (picturesOfUsers.isEmpty) {
-      return const Loading();
+      return const Loading(
+        text: 'Đang tải album...',
+      );
     }
-    return Stack(
-      children: [
-        // nền
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: const Color(0xFFE5E5E5),
-        ),
-        // Các bức tranh và nút
-        Positioned(
-            top: 100,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              color: const Color(0xFF00C4A1),
-              // Phải có width và height cố định để CustomPaint biết kích thước cần vẽ
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width + 1,
-              child: ListView.builder(
-                itemCount: picturesOfUsers[_showingIndex].length,
-                itemBuilder: (context, index) {
-                  final name = picturesOfUsers[_showingIndex][index]['name']!;
-                  final avatarIndex =
-                      picturesOfUsers[_showingIndex][index]['avatarIndex']!;
-                  return Column(
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (index != 0) ...[
-                            SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: CircleAvatar(
-                                backgroundImage: AssetImage(
-                                    'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                          ],
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: index == 0
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall!
-                                      .copyWith(
-                                        color: Colors.black,
-                                      ),
+    if (_showingIndex >= _playersInRoom.length) {
+      return const Loading(
+        text: 'Đang chờ chơi lại...',
+      );
+    }
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          return;
+        }
+        final isQuit = (ref.read(userProvider).id ==
+                widget.selectedRoom.roomOwner)
+            ? await _showDialog('Cảnh báo',
+                'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
+            : await _showDialog(
+                'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+
+        if (context.mounted && isQuit) {
+          _playOutRoom(ref);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
+        }
+      },
+      child: Stack(
+        children: [
+          // nền
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: const Color(0xFFE5E5E5),
+          ),
+          // Các bức tranh và nút
+          Positioned(
+              top: 100,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                color: const Color(0xFF00C4A1),
+                // Phải có width và height cố định để CustomPaint biết kích thước cần vẽ
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width + 1,
+                child: ListView.builder(
+                  itemCount: picturesOfUsers[_showingIndex].length,
+                  itemBuilder: (context, index) {
+                    final name = picturesOfUsers[_showingIndex][index]['name']!;
+                    final avatarIndex =
+                        picturesOfUsers[_showingIndex][index]['avatarIndex']!;
+                    return Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (index != 0) ...[
+                              SizedBox(
+                                width: 50,
+                                height: 50,
+                                child: CircleAvatar(
+                                  backgroundImage: AssetImage(
+                                      'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
                                 ),
-                                const SizedBox(height: 5),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: Container(
-                                    color: Colors.white,
-                                    width: widthOfPicture,
-                                    height: heightOfPicture,
-                                    child: picturesOfUsers[_showingIndex]
-                                            .isNotEmpty
-                                        ? CustomPaint(
-                                            painter: PaintCanvas(
-                                              points: scaleOffset(
-                                                  decodeOffsetList(
-                                                      picturesOfUsers[
-                                                              _showingIndex]
-                                                          [index]['Offset']!),
-                                                  scale: 0.5),
-                                              paints: decodePaintList(
-                                                  picturesOfUsers[_showingIndex]
-                                                      [index]['Color']!),
-                                            ),
-                                            size: const Size(widthOfPicture,
-                                                heightOfPicture),
-                                          )
-                                        : Container(
-                                            width: widthOfPicture,
-                                            height: heightOfPicture,
-                                            color: Colors
-                                                .transparent, // Placeholder while loading
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (index == 0) ...[
-                            const SizedBox(width: 5),
-                            SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: CircleAvatar(
-                                backgroundImage: AssetImage(
-                                    'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
                               ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 15),
-                      if (index ==
-                          picturesOfUsers[_showingIndex].length - 1) ...[
-                        const SizedBox(height: 25),
-                        if (_userId == widget.selectedRoom.roomOwner)
-                          Column(
-                            children: [
-                              Button(
-                                onClick: (ctx) {
-                                  setState(() {
-                                    _kickoffModeDataRef.update({
-                                      'albumShowingIndex': _showingIndex + 1,
-                                    });
-                                  });
-                                },
-                                title:
-                                    _showingIndex + 1 != picturesOfUsers.length
-                                        ? 'Tiếp tục'
-                                        : 'Chơi lại',
-                                width: 150,
-                                borderRadius: 25,
-                              ),
-                              const SizedBox(height: 10),
-                              if (_showingIndex + 1 == picturesOfUsers.length)
-                                Text('Xem hết rồi, chơi lại nhé?',
-                                    style:
-                                        Theme.of(context).textTheme.bodyMedium),
+                              const SizedBox(width: 5),
                             ],
-                          )
-                        else
-                          Text(
-                            _showingIndex + 1 != picturesOfUsers.length
-                                ? 'Chờ chủ phòng tiếp tục...'
-                                : 'Xem hết rồi,\nhãy nhắc chủ phòng chơi lại nhé!',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            textAlign: TextAlign.center,
-                          ),
-                        const SizedBox(height: 160),
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                crossAxisAlignment: index == 0
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall!
+                                        .copyWith(
+                                          color: Colors.black,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: Container(
+                                      color: Colors.white,
+                                      width: widthOfPicture,
+                                      height: heightOfPicture,
+                                      child: picturesOfUsers[_showingIndex]
+                                              .isNotEmpty
+                                          ? CustomPaint(
+                                              painter: PaintCanvas(
+                                                points: scaleOffset(
+                                                    decodeOffsetList(
+                                                        picturesOfUsers[
+                                                                _showingIndex]
+                                                            [index]['Offset']!),
+                                                    scale: 0.5),
+                                                paints: decodePaintList(
+                                                    picturesOfUsers[
+                                                            _showingIndex]
+                                                        [index]['Color']!),
+                                              ),
+                                              size: const Size(widthOfPicture,
+                                                  heightOfPicture),
+                                            )
+                                          : Container(
+                                              width: widthOfPicture,
+                                              height: heightOfPicture,
+                                              color: Colors
+                                                  .transparent, // Placeholder while loading
+                                            ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (index == 0) ...[
+                              const SizedBox(width: 5),
+                              SizedBox(
+                                width: 50,
+                                height: 50,
+                                child: CircleAvatar(
+                                  backgroundImage: AssetImage(
+                                      'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        if (index ==
+                            picturesOfUsers[_showingIndex].length - 1) ...[
+                          const SizedBox(height: 25),
+                          if (_userId == widget.selectedRoom.roomOwner)
+                            Column(
+                              children: [
+                                Button(
+                                  onClick: (ctx) {
+                                    setState(() async {
+                                      // Chưa xem hết thì chuyển qua bức tiếp theo
+                                      await _knockoffModeDataRef.update({
+                                        'albumShowingIndex': _showingIndex + 1,
+                                      });
+                                    });
+                                  },
+                                  title: _showingIndex + 1 !=
+                                          picturesOfUsers.length
+                                      ? 'Tiếp tục'
+                                      : 'Chơi lại',
+                                  width: 150,
+                                  borderRadius: 25,
+                                ),
+                                const SizedBox(height: 10),
+                                if (_showingIndex + 1 == picturesOfUsers.length)
+                                  Text('Xem hết rồi, chơi lại nhé?',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
+                              ],
+                            )
+                          else
+                            Text(
+                              _showingIndex + 1 != picturesOfUsers.length
+                                  ? 'Chờ chủ phòng tiếp tục...'
+                                  : 'Xem hết rồi,\nhãy nhắc chủ phòng chơi lại nhé!',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              textAlign: TextAlign.center,
+                            ),
+                          const SizedBox(height: 160),
+                        ],
                       ],
-                    ],
-                  );
-                },
-              ),
-            )),
-        // App bar
-        Container(
-          width: double.infinity,
-          height: 100,
-          decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
-          child: Column(
-            children: [
-              const SizedBox(height: 35),
-              Expanded(
-                flex: 1,
-                child: Center(
-                  child: Text(
-                    'Album của ${picturesOfUsers[_showingIndex].first['name']}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge!
-                        .copyWith(color: Colors.black),
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                    );
+                  },
+                ),
+              )),
+          // App bar
+          Container(
+            width: double.infinity,
+            height: 100,
+            decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
+            child: Column(
+              children: [
+                const SizedBox(height: 35),
+                Expanded(
+                  flex: 1,
+                  child: Center(
+                    child: Text(
+                      'Album của ${picturesOfUsers[_showingIndex].first['name']}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge!
+                          .copyWith(color: Colors.black),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -18,6 +18,7 @@ import '../data/word_to_guess.dart';
 import '../firebase.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart';
+import 'home_page.dart';
 
 class WaitingRoom extends ConsumerStatefulWidget {
   const WaitingRoom({
@@ -54,7 +55,10 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         if (widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
-          Navigator.of(context).pop();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       } else {
         final data = Map<String, dynamic>.from(
@@ -156,14 +160,14 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
     }
   }
 
-  void startMode(String mode) {
+  Future<void> startMode(String mode) async {
     // Khởi tạo trạng thái của phòng chế độ Thường
     if (mode == 'Thường') {
       if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
         var normalModeDataRef =
             database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
         // Khởi tạo trạng thái của phòng
-        normalModeDataRef.update({
+        await normalModeDataRef.update({
           'wordToDraw': pickRandomWordToGuess(),
           'turn': currentPlayers[Random().nextInt(currentPlayers.length)].id,
           'timeLeft': 60,
@@ -182,7 +186,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         var kickoffModeDataRef =
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
         // Khởi tạo trạng thái của phòng
-        kickoffModeDataRef.update({
+        await kickoffModeDataRef.update({
           'turn': 1,
           'playerDone': 0,
           'timeLeftMode': 90,
@@ -200,7 +204,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
     }
   }
 
-  void _startClick(context) {
+  Future<void> _startClick(context) async {
     ScaffoldMessenger.of(context).clearSnackBars();
     if (currentPlayers.length < 2) {
       const sackBar = SnackBar(
@@ -214,7 +218,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       isWaitingStart = true;
     });
 
-    _roomRef.update({'isPlayed': true});
+    await _roomRef.update({'isPlayed': true});
     startMode(widget.selectedRoom.mode);
     setState(() {
       isWaitingStart = false;

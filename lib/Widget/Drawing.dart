@@ -165,6 +165,9 @@ class _Drawing extends ConsumerState<Drawing> {
                     hideMenu: () {
                       _isSizeMenuVisible = false;
                       _isSelectMenuVisible = false;
+                    },
+                    toggleDrawBar: (value) {
+                      _isMenuBarVisible = value;
                     }),
               ))
             ],
@@ -552,6 +555,7 @@ class PaintBoard extends ConsumerStatefulWidget {
   final double width;
   final Room selectedRoom;
   final void Function() hideMenu;
+  final void Function(bool) toggleDrawBar;
 
   const PaintBoard(
       {super.key,
@@ -561,7 +565,9 @@ class PaintBoard extends ConsumerStatefulWidget {
       required this.paintColor,
       required this.paintSize,
       required this.selectedRoom,
-      required this.hideMenu});
+    required this.hideMenu,
+    required this.toggleDrawBar,
+  });
 
   @override
   createState() => _PaintBoardState();
@@ -588,10 +594,12 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late int _playerDone = 0;
   late bool _canEdit = true;
   var userTurn = "";
+  var _timeLeft = -1;
 
   @override
   initState() {
     super.initState();
+
     // setup cho chế độ thường
     if (widget.selectedRoom.mode == 'Thường') {
       drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
@@ -610,8 +618,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         });
 
         // Xóa bảng và Ẩn menu khi có người đoán đúng
-        final timeLeft = data['timeLeft'];
-        if (timeLeft == 60) {
+        _timeLeft = data['timeLeft'];
+        if (_timeLeft == 60) {
           clearPoints();
           widget.hideMenu();
         }
@@ -701,6 +709,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           await _myDataRef.update({
             "timeLeft": 90,
           });
+          widget.toggleDrawBar(true);
           _currentTurn = _countTurn;
           clearPoints();
           _canEdit = (_currentTurn % 2 != 0);
@@ -737,20 +746,26 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>,
         );
-        var timeLeft = data['timeLeft'];
-        if (timeLeft == 0) {
+        _timeLeft = data['timeLeft'];
+        // Hết thời gian vẽ
+        if (_timeLeft == 0) {
           if (_currentTurn % 2 == 1) {
             updatePointsKickoffMode(
               _kickoffModeDataRef.child(
                   '/${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}/album/'),
             );
           }
-          _myDataRef.update({
+          await _myDataRef.update({
             'timeLeft': -1,
           });
-          _kickoffModeDataRef.update({
+          await _kickoffModeDataRef.update({
             'playerDone': _playerDone + 1,
           });
+        }
+        // đã vẽ xong và gửi lên firebase hoàn tất thì:
+        if (_timeLeft == -1) {
+          widget.hideMenu();
+          widget.toggleDrawBar(false);
         }
       });
     }
@@ -769,15 +784,15 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
   Future<void> showPicture() async {
     // Hết lượt vẽ, xem album
-    print('=========================================');
-    print(_currentTurn);
-    print('_playersInRoom.length * 2: ${_playersInRoom.length * 2}');
     if (_currentTurn >= _playersInRoom.length * 2) {
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => KnockoffModeAlbum(
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+            builder: (context) => KnockoffModeAlbum(
                 selectedRoom: widget.selectedRoom,
-              )));
-      _myDataRef.update({
+                )),
+        (route) => false,
+      );
+      await _myDataRef.update({
         "timeLeft": -21,
       });
       return;
@@ -959,6 +974,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           break;
         case 'Tam sao thất bản':
           if (_currentTurn % 2 == 0) return false;
+          //if (_timeLeft == -1) return false;
           break;
         case 'Tuyệt tác':
           break;

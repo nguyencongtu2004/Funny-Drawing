@@ -66,7 +66,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final user = ref.watch(userProvider);
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('hasData', true);
-    prefs.setString('id', user.id ?? 'no-id');
+    prefs.setString('id', user.id ?? await _getRandomId());
     prefs.setInt('avatarIndex', _avatarIndex);
     prefs.setString('name', user.name);
   }

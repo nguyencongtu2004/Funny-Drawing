@@ -111,7 +111,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         'curPlayer': selectedRoom.curPlayer + 1,
       });
 
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
+      Navigator.of(context).push(MaterialPageRoute(
           builder: (ctx) => WaitingRoom(
                 selectedRoom: selectedRoom,
                 isGuest: true,

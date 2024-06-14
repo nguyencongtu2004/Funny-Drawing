@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../firebase.dart';
 import '../provider/chat_provider.dart';
 import '../provider/user_provider.dart';
+import 'home_page.dart';
 
 class NormalModeRoom extends ConsumerStatefulWidget {
   const NormalModeRoom({super.key, required this.selectedRoom});
@@ -81,7 +82,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         if (roomOwner != ref.read(userProvider).id) {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
-          Navigator.of(context).pop();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       }
     });
@@ -218,14 +222,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
         // Xóa bảng vẽ
         _drawingRef.remove();
-
-        // Ket thuc game
-        // if(_endGame) {
-        //   _normalModeDataRef.remove();
-        //   Navigator.of(context).pop();
-        //   Navigator.of(context).push(MaterialPageRoute(
-        //       builder: (ctx) => Ranking(selectedRoom: widget.selectedRoom)));
-        // }
       }
     });
     _playerInRoomIDRef.onValue.listen((event) {
@@ -453,7 +449,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
         if (context.mounted && isQuit) {
           _playOutRoom(ref);
-          Navigator.of(context).pop();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       },
       child: Scaffold(
@@ -490,7 +489,11 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
                             await _playOutRoom(ref);
                             if (context.mounted) {
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (ctx) => const HomePage()),
+                                (route) => false,
+                              );
                             }
                           },
                           icon: Image.asset('assets/images/back.png'),
@@ -563,8 +566,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
               left: 0,
               right: 0,
               child: Container(
+                alignment: Alignment.bottomCenter,
                 padding: const EdgeInsets.all(15),
                 color: const Color(0xFF00C4A1),
+                height: 120,
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -606,21 +611,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 ),
               ),
             ),
-            // Lớp đè lên, khi ấn thì mở chat và bàn phím
-            // Positioned(
-            //   bottom: 0,
-            //   left: 0,
-            //   right: 0,
-            //   child: GestureDetector(
-            //     onTap: () {
-            //       _showChat();
-            //     },
-            //     child: Container(
-            //       height: 95,
-            //       color: Colors.transparent,
-            //     ),
-            //   ),
-            // )
           ],
           Positioned(
               bottom: 90,

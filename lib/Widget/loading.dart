@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class Loading extends StatelessWidget {
-  const Loading({super.key});
+  const Loading({
+    super.key,
+    this.text,
+  });
+
+  final String? text;
 
   @override
   Widget build(BuildContext context) {
@@ -16,10 +21,11 @@ class Loading extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              'Đang tải...',
+              text == null ? 'Đang tải...\nHãy kiên nhẫn chút nhé!' : text!,
               style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Colors.black,
                   ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

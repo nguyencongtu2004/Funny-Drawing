@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
 import 'package:draw_and_guess_promax/Widget/knockoff_mode_status.dart';
+import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -21,32 +23,27 @@ class KnockoffMode extends ConsumerStatefulWidget {
 }
 
 class _KnockoffModeState extends ConsumerState<KnockoffMode> {
-  late final _userId;
+  late final String _userId;
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _chatRef;
-  late DatabaseReference _drawingRef;
   late DatabaseReference _knockoffModeDataRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
-  var _indexTurn = 0;
   var _timeLeft = 90;
-  var _timeLeftMode = 90;
-  var _totalTurn = 0;
+  int? _totalTurn;
 
   Timer? _timer;
-  Timer? _timerMode;
 
   @override
   void initState() {
     super.initState();
-    _userId = ref.read(userProvider).id;
+    _userId = ref.read(userProvider).id!;
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _knockoffModeDataRef =
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
@@ -60,13 +57,16 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         if (widget.selectedRoom.roomOwner != _userId) {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
-          Navigator.of(context).pop();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       }
     });
 
     // Lấy thông tin người chơi trong phòng
-    _playersInRoomRef.onValue.listen((event) {
+    _playersInRoomRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
@@ -74,8 +74,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       var index = 0;
       for (final player in data.entries) {
         if (player.key == ref.read(userProvider).id) {
-          _myDataRef.update({"indexTurn": index});
-          _indexTurn = index;
+          await _myDataRef.update({"indexTurn": index});
         }
         _playersInRoom.add(User(
           id: player.key,
@@ -93,7 +92,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
-      _indexTurn = data['indexTurn'];
       final timeLeft = data['timeLeft'] as int;
       setState(() {
         _timeLeft = timeLeft;
@@ -106,21 +104,15 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         event.snapshot.value as Map<dynamic, dynamic>,
       );
       _totalTurn = data['turn'] as int;
-      /*if (data['albumShowingIndex'] == _playersInRoom.length) {
-        _myDataRef.update({
-          'timeLeft': 90,
-        });
-        _startTimer();
-      }*/
     });
     _startTimer();
   }
 
   void _startTimer() {
     _timer?.cancel(); // Hủy Timer nếu đã tồn tại
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (_timeLeft > 0) {
-        _myDataRef.update({'timeLeft': _timeLeft - 1});
+        await _myDataRef.update({'timeLeft': _timeLeft - 1});
       } else {
         timer.cancel(); // Hủy Timer khi thời gian kết thúc
       }
@@ -198,15 +190,18 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     return _completer.future;
   }
 
-  void _onCompleteDrawing() {
+  Future<void> _onCompleteDrawing() async {
     setState(() {
       _timeLeft = 0;
     });
-    _myDataRef.update({'timeLeft': _timeLeft});
+    await _myDataRef.update({'timeLeft': _timeLeft});
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_totalTurn == null) {
+      return const Loading();
+    }
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -222,7 +217,10 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
 
         if (context.mounted && isQuit) {
           _playOutRoom(ref);
-          Navigator.of(context).pop();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       },
       child: Stack(
@@ -258,7 +256,11 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
 
                             await _playOutRoom(ref);
                             if (context.mounted) {
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (ctx) => const HomePage()),
+                                (route) => false,
+                              );
                             }
                           },
                           icon: Image.asset('assets/images/back.png'),
@@ -276,7 +278,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (_totalTurn % 2 == 1 && _timeLeft > 0)
+                    if (_totalTurn! % 2 == 1 && _timeLeft > 0)
                       Padding(
                         padding: const EdgeInsets.all(10),
                         child: SizedBox(
@@ -317,7 +319,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                 padding: const EdgeInsets.only(left: 15, top: 5),
                 child: KnockoffModeStatus(
                   timeLeft: _timeLeft,
-                  turn: _totalTurn,
+                  turn: _totalTurn!,
                 ),
               ),
             ),
