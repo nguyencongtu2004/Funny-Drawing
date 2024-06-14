@@ -4,7 +4,7 @@ class PickAvatarDialog extends StatelessWidget {
   const PickAvatarDialog({super.key, required this.onPick});
 
   final void Function(int) onPick;
-  final int totalAvatar = 13;
+  final int totalAvatar = 21;
 
   @override
   Widget build(BuildContext context) {
