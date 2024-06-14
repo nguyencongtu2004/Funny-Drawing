@@ -157,7 +157,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   void startMode(String mode) {
-    // if(!isPlayed) return;
+    // Khởi tạo trạng thái của phòng chế độ Thường
     if (mode == 'Thường') {
       if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
         var normalModeDataRef =
@@ -175,10 +175,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
       ref.read(chatProvider.notifier).clearChat();
-
-      // Navigator.of(context).push(MaterialPageRoute(
-      //     builder: (ctx) => Ranking(selectedRoom: widget.selectedRoom)));
-    } else if (mode == 'Tam sao thất bản') {
+    }
+    // Khởi tạo trạng thái của phòng chế độ Tam sao thất bản
+    else if (mode == 'Tam sao thất bản') {
       if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
         var kickoffModeDataRef =
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
@@ -187,7 +186,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
           'turn': 1,
           'playerDone': 0,
           'timeLeftMode': 90,
-          // 'endGame': false,
+          'albumShowingIndex': -1,
         });
       }
       Navigator.of(context).pushReplacement(MaterialPageRoute(

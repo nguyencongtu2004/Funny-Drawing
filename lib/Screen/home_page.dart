@@ -308,19 +308,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               ],
             ),
           ),
-          // test only
-          Positioned(
-              top: 135,
-              left: MediaQuery.of(context).size.width / 2 - 100,
-              child: Button(
-                  onClick: (context) {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => KnockoffModeAlbum(
-                                selectedRoom: Room(roomId: '672790'))));
-                  },
-                  title: 'quick to album')),
         ],
       ),
     );

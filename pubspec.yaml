@@ -121,6 +121,9 @@ flutter:
     - assets/images/color-palette.png
     - assets/images/undo.png
     - assets/images/redo.png
+    - assets/images/canvas.png
+    - assets/images/done.png
+    - assets/images/finish.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

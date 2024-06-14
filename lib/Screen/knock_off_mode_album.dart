@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,8 +39,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   List<List<Map<String, String>>> picturesOfUsers = [];
   var _showingIndex = 0;
 
-  var _timeLeft = 999;
-
   Timer? _timer;
 
   @override
@@ -55,7 +55,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     _myDataRef = _kickoffModeDataRef.child('/$_userId');
     _myAlbumRef = _kickoffModeDataRef.child('/$_userId/album');
 
-    // Lấy thông tin người chơi trong phòng
+    // Lấy thông tin người chơi và tranh trong phòng
     _playersInRoomRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
@@ -72,6 +72,43 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
 
       _getPictures();
+    });
+
+    //
+    _kickoffModeDataRef.onValue.listen((event) {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+
+      var albumShowingIndex = data['albumShowingIndex'];
+      if (albumShowingIndex == -1) {
+        // Nếu chưa có thông tin albumShowingIndex thì set mặc định là 0
+        // Hoặc làm gì đó khác...
+        albumShowingIndex = 0;
+      }
+
+      // TODO: Xử lý khi chơi lại nha Thịnh <3
+      if (albumShowingIndex == _playersInRoom.length) {
+        // Nếu đã xem hết tất cả album thì chơi lại
+        Navigator.of(context).pop();
+
+        // Chủ phòng sẽ cập nhật lại thông tin
+        if (_userId == widget.selectedRoom.roomOwner) {
+          _kickoffModeDataRef.update({
+            'turn': 1,
+            'playerDone': 0,
+            'timeLeftMode': 90,
+            'albumShowingIndex': -1,
+          });
+          for (var id in _playersInRoomId) {
+            _kickoffModeDataRef.child('/$id').remove(); // có thể lỗi ở đây
+          }
+        }
+      }
+
+      setState(() {
+        _showingIndex = albumShowingIndex;
+      });
     });
   }
 
@@ -118,7 +155,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     if (widget.selectedRoom.roomOwner == userId) {
       await _roomRef.remove();
       await _playersInRoomRef.remove();
-      await _chatRef.remove();
       await _kickoffModeDataRef.remove();
     } else {
       final playerRef = database
@@ -139,7 +175,9 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   Widget build(BuildContext context) {
     const double widthOfPicture = 250;
     const double heightOfPicture = 400;
-    final name = picturesOfUsers[_showingIndex].first['name']!;
+    if (picturesOfUsers.isEmpty) {
+      return const Loading();
+    }
     return Stack(
       children: [
         // nền
@@ -148,7 +186,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
           height: double.infinity,
           color: const Color(0xFFE5E5E5),
         ),
-        // Tranh
+        // Các bức tranh và nút
         Positioned(
             top: 100,
             right: 0,
@@ -161,7 +199,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
               child: ListView.builder(
                 itemCount: picturesOfUsers[_showingIndex].length,
                 itemBuilder: (context, index) {
-                  // todo: Thay thế bằng thông tin người chơi thực tế
                   final name = picturesOfUsers[_showingIndex][index]['name']!;
                   final avatarIndex =
                       picturesOfUsers[_showingIndex][index]['avatarIndex']!;
@@ -218,7 +255,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                                   picturesOfUsers[_showingIndex]
                                                       [index]['Color']!),
                                             ),
-                                            size: Size(widthOfPicture,
+                                            size: const Size(widthOfPicture,
                                                 heightOfPicture),
                                           )
                                         : Container(
@@ -249,26 +286,41 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                       if (index ==
                           picturesOfUsers[_showingIndex].length - 1) ...[
                         const SizedBox(height: 25),
-                        if (true)
-                          Button(
-                            onClick: (ctx) {
-                              setState(() {
-                                // todo: Chuyển sang người chơi tiếp theo hoặc kết thúc
-                                _showingIndex = (_showingIndex + 1) %
-                                    picturesOfUsers.length;
-                              });
-                            },
-                            title: 'Tiếp tục',
-                            width: 150,
-                            borderRadius: 25,
+                        if (_userId == widget.selectedRoom.roomOwner)
+                          Column(
+                            children: [
+                              Button(
+                                onClick: (ctx) {
+                                  setState(() {
+                                    _kickoffModeDataRef.update({
+                                      'albumShowingIndex': _showingIndex + 1,
+                                    });
+                                  });
+                                },
+                                title:
+                                    _showingIndex + 1 != picturesOfUsers.length
+                                        ? 'Tiếp tục'
+                                        : 'Chơi lại',
+                                width: 150,
+                                borderRadius: 25,
+                              ),
+                              const SizedBox(height: 10),
+                              if (_showingIndex + 1 == picturesOfUsers.length)
+                                Text('Xem hết rồi, chơi lại nhé?',
+                                    style:
+                                        Theme.of(context).textTheme.bodyMedium),
+                            ],
                           )
                         else
-                          Text('Chờ chủ phòng tiếp tục...',
-                              style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            _showingIndex + 1 != picturesOfUsers.length
+                                ? 'Chờ chủ phòng tiếp tục...'
+                                : 'Xem hết rồi,\nhãy nhắc chủ phòng chơi lại nhé!',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            textAlign: TextAlign.center,
+                          ),
                         const SizedBox(height: 160),
                       ],
-                      //const SizedBox(height: 150),
-                      //Button(onClick: (ctx) {}, title: 'Chơi lại', width: 100),
                     ],
                   );
                 },
@@ -282,35 +334,19 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
           child: Column(
             children: [
               const SizedBox(height: 35),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: SizedBox(
-                      height: 45,
-                      width: 45,
-                      child: IconButton(
-                        onPressed: () {
-                          _playOutRoom(ref);
-                          Navigator.of(context).pop();
-                        },
-                        icon: Image.asset('assets/images/back.png'),
-                        iconSize: 45,
-                      ),
-                    ),
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: Text(
+                    'Album của ${picturesOfUsers[_showingIndex].first['name']}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                        .copyWith(color: Colors.black),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
-                  Expanded(
-                    child: Text(
-                      'Album của $name',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge!
-                          .copyWith(color: Colors.black),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

@@ -739,9 +739,11 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         );
         var timeLeft = data['timeLeft'];
         if (timeLeft == 0) {
-          // TODO send data to firebase one time
           if (_currentTurn % 2 == 1) {
-            updatePointsKickoffMode();
+            updatePointsKickoffMode(
+              _kickoffModeDataRef.child(
+                  '/${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}/album/'),
+            );
           }
           _myDataRef.update({
             'timeLeft': -1,
@@ -766,11 +768,15 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   }
 
   Future<void> showPicture() async {
-    if (_currentTurn == _playersInRoom.length * 2) {
-      _showSnackBar("Done!");
+    // Hết lượt vẽ, xem album
+    print('=========================================');
+    print(_currentTurn);
+    print('_playersInRoom.length * 2: ${_playersInRoom.length * 2}');
+    if (_currentTurn >= _playersInRoom.length * 2) {
       Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) =>
-              KnockoffModeAlbum(selectedRoom: widget.selectedRoom)));
+          builder: (context) => KnockoffModeAlbum(
+                selectedRoom: widget.selectedRoom,
+              )));
       _myDataRef.update({
         "timeLeft": -21,
       });
@@ -928,12 +934,12 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
   }
 
-  void updatePointsKickoffMode() async {
-    if (points.isEmpty && tmp.isEmpty) return;
+  void updatePointsKickoffMode(DatabaseReference ref) async {
+    //if (points.isEmpty && tmp.isEmpty) return;
     List<List<Offset>> fbpush = points;
     if (tmp.isNotEmpty) fbpush.add(tmp);
 
-    await _myAlbumRef.update({
+    await ref.update({
       "Turn $_currentTurn": {
         'Offset': encodeOffsetList(fbpush),
         'Color': encodePaintList(paints)

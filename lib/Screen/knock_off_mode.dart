@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
+import 'package:draw_and_guess_promax/Widget/knockoff_mode_status.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../Widget/button.dart';
 import '../firebase.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart';
@@ -26,7 +26,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
-  late DatabaseReference _kickoffModeDataRef;
+  late DatabaseReference _knockoffModeDataRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
@@ -34,6 +34,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   var _indexTurn = 0;
   var _timeLeft = 90;
   var _timeLeftMode = 90;
+  var _totalTurn = 0;
 
   Timer? _timer;
   Timer? _timerMode;
@@ -47,10 +48,22 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
     _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
-    _kickoffModeDataRef =
+    _knockoffModeDataRef =
         database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
-    _myDataRef = _kickoffModeDataRef.child('/$_userId');
-    _myAlbumRef = _kickoffModeDataRef.child('/$_userId/album');
+    _myDataRef = _knockoffModeDataRef.child('/$_userId');
+    _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
+
+    // Lắng nghe sự kiện thoát phòng
+    _roomRef.onValue.listen((event) async {
+      if (event.snapshot.value == null) {
+        // Room has been deleted
+        if (widget.selectedRoom.roomOwner != _userId) {
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
+          Navigator.of(context).pop();
+        }
+      }
+    });
 
     // Lấy thông tin người chơi trong phòng
     _playersInRoomRef.onValue.listen((event) {
@@ -60,10 +73,8 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       _playersInRoom.clear();
       var index = 0;
       for (final player in data.entries) {
-        if(player.key == ref.read(userProvider).id) {
-          _myDataRef.update({
-            "indexTurn": index
-          });
+        if (player.key == ref.read(userProvider).id) {
+          _myDataRef.update({"indexTurn": index});
           _indexTurn = index;
         }
         _playersInRoom.add(User(
@@ -90,10 +101,17 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       _startTimer();
     });
 
-    _kickoffModeDataRef.onValue.listen((event) {
+    _knockoffModeDataRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+      _totalTurn = data['turn'] as int;
+      /*if (data['albumShowingIndex'] == _playersInRoom.length) {
+        _myDataRef.update({
+          'timeLeft': 90,
+        });
+        _startTimer();
+      }*/
     });
     _startTimer();
   }
@@ -103,7 +121,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeft > 0) {
         _myDataRef.update({'timeLeft': _timeLeft - 1});
-
       } else {
         timer.cancel(); // Hủy Timer khi thời gian kết thúc
       }
@@ -118,7 +135,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       await _roomRef.remove();
       await _playersInRoomRef.remove();
       await _chatRef.remove();
-      await _kickoffModeDataRef.remove();
+      await _knockoffModeDataRef.remove();
     } else {
       final playerRef = database
           .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
@@ -134,105 +151,179 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     }
   }
 
+  late Completer<bool> _completer;
+
+  Future<bool> _showDialog(String title, String content,
+      {bool isKicked = false}) async {
+    _completer = Completer<bool>();
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          backgroundColor: const Color(0xFF00C4A0),
+          actions: [
+            if (!isKicked)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _completer.complete(false);
+                },
+                child: const Text(
+                  'Hủy',
+                  style: TextStyle(
+                    color: Color(0xFF000000),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _completer.complete(true);
+              },
+              child: Text(
+                isKicked ? 'OK' : 'Thoát',
+                style: TextStyle(
+                  color: isKicked ? Colors.black : Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    return _completer.future;
+  }
+
+  void _onCompleteDrawing() {
+    setState(() {
+      _timeLeft = 0;
+    });
+    _myDataRef.update({'timeLeft': _timeLeft});
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // App bar
-        Container(
-          width: double.infinity,
-          height: 100,
-          decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
-          child: Column(
-            children: [
-              const SizedBox(height: 35),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: SizedBox(
-                      height: 45,
-                      width: 45,
-                      child: IconButton(
-                        onPressed: () {
-                          _playOutRoom(ref);
-                          Navigator.of(context).pop();
-                        },
-                        icon: Image.asset('assets/images/back.png'),
-                        iconSize: 45,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          return;
+        }
+        final isQuit = (ref.read(userProvider).id ==
+                widget.selectedRoom.roomOwner)
+            ? await _showDialog('Cảnh báo',
+                'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
+            : await _showDialog(
+                'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+
+        if (context.mounted && isQuit) {
+          _playOutRoom(ref);
+          Navigator.of(context).pop();
+        }
+      },
+      child: Stack(
+        children: [
+          // App bar
+          Container(
+            width: double.infinity,
+            height: 100,
+            decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
+            child: Column(
+              children: [
+                const SizedBox(height: 35),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: SizedBox(
+                        height: 45,
+                        width: 45,
+                        child: IconButton(
+                          onPressed: () async {
+                            if (ref.read(userProvider).id ==
+                                widget.selectedRoom.roomOwner) {
+                              final isQuit = await _showDialog('Cảnh báo',
+                                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                              if (!isQuit) return;
+                            } else {
+                              final isQuit = await _showDialog('Cảnh báo',
+                                  'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+                              if (!isQuit) return;
+                            }
+
+                            await _playOutRoom(ref);
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          icon: Image.asset('assets/images/back.png'),
+                          iconSize: 45,
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Tam sao thất bản',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge!
-                          .copyWith(color: Colors.black),
-                      overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Text(
+                        'Tam sao thất bản',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge!
+                            .copyWith(color: Colors.black),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Positioned(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 100),
-            child: Drawing(
-              height: MediaQuery.of(context).size.height - 100,
-              width: MediaQuery.of(context).size.width,
-              selectedRoom: widget.selectedRoom,
+                    if (_totalTurn % 2 == 1 && _timeLeft > 0)
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: SizedBox(
+                          height: 45,
+                          width: 45,
+                          child: IconButton(
+                            tooltip: 'Hoàn thành vẽ',
+                            onPressed: _onCompleteDrawing,
+                            icon: Image.asset('assets/images/done.png'),
+                            iconSize: 45,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
-        ),
-        // Hint
-        Positioned(
-          top: 100,
-          left: 0,
-          right: 0,
-          child: Container(
-            color: Colors.transparent,
+          // Drawing board
+          Positioned(
             child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Hãy vẽ thứ gì đó:',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge!
-                          .copyWith(color: Colors.black),
-                    ),
-                  ),
-                  Text(
-                    _timeLeft.toString(),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge!
-                        .copyWith(color: Colors.black),
-                  ),
-                  Button(
-                    onClick: (ctx) {
-                      setState(() {
-                        _timeLeft = 0;
-                      });
-                      _myDataRef.update({'timeLeft': _timeLeft});
-                    },
-                    title: 'Done',
-                    color: Colors.greenAccent,
-                    width: 102,
-                  ),
-                ],
+              padding: const EdgeInsets.only(top: 100),
+              child: Drawing(
+                height: MediaQuery.of(context).size.height - 100,
+                width: MediaQuery.of(context).size.width,
+                selectedRoom: widget.selectedRoom,
               ),
             ),
           ),
-        ),
-      ],
+          // Hint
+          Positioned(
+            top: 100,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 15, top: 5),
+                child: KnockoffModeStatus(
+                  timeLeft: _timeLeft,
+                  turn: _totalTurn,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

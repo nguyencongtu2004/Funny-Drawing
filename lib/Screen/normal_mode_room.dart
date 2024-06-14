@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
 import 'package:draw_and_guess_promax/Widget/chat_list.dart';
+import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:draw_and_guess_promax/Widget/normal_mode_status.dart';
 import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:draw_and_guess_promax/model/player_normal_mode.dart';
@@ -85,7 +86,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       }
     });
 
-
     // Lấy thông tin người chơi trong phòng
     _playersInRoomRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
@@ -140,8 +140,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
-      if (
-          data['noOneInRoom'] == true) {
+      if (data['noOneInRoom'] == true) {
         _roomRef.remove();
         _playersInRoomRef.remove();
         _chatRef.remove();
@@ -210,7 +209,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             }
           });
         }
-        ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
+        ref.read(chatProvider.notifier).addMessage(
+            ref.read(userProvider).id!,
             'Đáp án là: $wordToGuess',
             'Đáp án',
             widget.selectedRoom.roomId,
@@ -385,15 +385,14 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
       print("Chu phong");
-      for(var cp in _playersInRoom) {
-        if(cp.id != roomOwner) {
+      for (var cp in _playersInRoom) {
+        if (cp.id != roomOwner) {
           _roomRef.update({
             'roomOwner': cp.id,
           });
           break;
         }
       }
-
     }
   }
 
@@ -438,227 +437,209 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
 
     // Chờ dữ liệu từ Firebase
     if (_isMyTurn == null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 10),
-              Text(
-                'Đang tải...',
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: Colors.black,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } else {
-      return PopScope(
-        canPop: false,
-        onPopInvoked: (didPop) async {
-          if (didPop) {
-            return;
-          }
-          final isQuit = (ref.read(userProvider).id ==
-              roomOwner)
-              ? await _showDialog('Cảnh báo',
-                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
-              : await _showDialog(
-                  'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+      return const Loading();
+    }
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) {
+          return;
+        }
+        final isQuit = (ref.read(userProvider).id == roomOwner)
+            ? await _showDialog('Cảnh báo',
+                'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
+            : await _showDialog(
+                'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
-          if (context.mounted && isQuit) {
-            _playOutRoom(ref);
-            Navigator.of(context).pop();
-          }
-        },
-        child: Scaffold(
-          resizeToAvoidBottomInset: true,
-          body: Stack(children: [
-            // App bar
-            Container(
-              width: double.infinity,
-              height: 100,
-              decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
-              child: Column(
-                children: [
-                  const SizedBox(height: 35),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: SizedBox(
-                          height: 45,
-                          width: 45,
-                          child: IconButton(
-                            onPressed: () async {
-                              if (ref.read(userProvider).id ==
-                                  widget.selectedRoom.roomOwner) {
-                                final isQuit = await _showDialog('Cảnh báo',
-                                    'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
-                                if (!isQuit) return;
-                              } else {
-                                final isQuit = await _showDialog('Cảnh báo',
-                                    'Bạn có chắc chắn muốn thoát khỏi phòng không?');
-                                if (!isQuit) return;
-                              }
-
-                              await _playOutRoom(ref);
-                              if (context.mounted) {
-                                Navigator.of(context).pop();
-                              }
-                            },
-                            icon: Image.asset('assets/images/back.png'),
-                            iconSize: 45,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Thường',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge!
-                              .copyWith(color: Colors.black),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: SizedBox(
-                          height: 45,
-                          width: 45,
-                          child: IconButton(
-                            onPressed: _showChat,
-                            icon: Image.asset('assets/images/chat.png'),
-                            iconSize: 45,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Drawing board
-            Positioned(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 100),
-                child: Drawing(
-                  height: MediaQuery.of(context).size.height - 100,
-                  width: MediaQuery.of(context).size.width,
-                  selectedRoom: widget.selectedRoom,
-                ),
-              ),
-            ),
-            // Hint
-            Positioned(
-              top: 100,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: Colors.transparent,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 15, top: 5),
-                  child: NormalModeStatus(
-                    isMyTurn: isMyTurn,
-                    word: _wordToDraw,
-                    timeLeft: _timeLeft,
-                    player: _currentTurnUser,
-                  ),
-                ),
-              ),
-            ),
-            // Chat
-            if (_isMyTurn == false) ...[
-              // Bình phong
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(15),
-                  color: const Color(0xFF00C4A1),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          decoration: InputDecoration(
-                            hintText:
-                                'Hãy cho ${_currentTurnUser.name} biết câu trả lời của bạn',
-                            hintStyle: const TextStyle(
-                              color: Colors.black45,
-                              fontWeight: FontWeight.normal,
-                              fontSize: 18,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          onSubmitted: (_) {
-                            onSubmitted();
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        height: 50,
-                        width: 50,
+        if (context.mounted && isQuit) {
+          _playOutRoom(ref);
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: Stack(children: [
+          // App bar
+          Container(
+            width: double.infinity,
+            height: 100,
+            decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
+            child: Column(
+              children: [
+                const SizedBox(height: 35),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: SizedBox(
+                        height: 45,
+                        width: 45,
                         child: IconButton(
-                          onPressed: onSubmitted,
-                          icon: Image.asset('assets/images/send.png'),
+                          onPressed: () async {
+                            if (ref.read(userProvider).id ==
+                                widget.selectedRoom.roomOwner) {
+                              final isQuit = await _showDialog('Cảnh báo',
+                                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                              if (!isQuit) return;
+                            } else {
+                              final isQuit = await _showDialog('Cảnh báo',
+                                  'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+                              if (!isQuit) return;
+                            }
+
+                            await _playOutRoom(ref);
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          },
+                          icon: Image.asset('assets/images/back.png'),
                           iconSize: 45,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Thường',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge!
+                            .copyWith(color: Colors.black),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: SizedBox(
+                        height: 45,
+                        width: 45,
+                        child: IconButton(
+                          tooltip: 'Chat',
+                          onPressed: _showChat,
+                          icon: Image.asset('assets/images/chat.png'),
+                          iconSize: 45,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Drawing board
+          Positioned(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 100),
+              child: Drawing(
+                height: MediaQuery.of(context).size.height - 100,
+                width: MediaQuery.of(context).size.width,
+                selectedRoom: widget.selectedRoom,
+              ),
+            ),
+          ),
+          // Hint
+          Positioned(
+            top: 100,
+            left: 0,
+            right: 0,
+            child: Container(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 15, top: 5),
+                child: NormalModeStatus(
+                  isMyTurn: isMyTurn,
+                  word: _wordToDraw,
+                  timeLeft: _timeLeft,
+                  player: _currentTurnUser,
                 ),
               ),
-              // Lớp đè lên, khi ấn thì mở chat và bàn phím
-              // Positioned(
-              //   bottom: 0,
-              //   left: 0,
-              //   right: 0,
-              //   child: GestureDetector(
-              //     onTap: () {
-              //       _showChat();
-              //     },
-              //     child: Container(
-              //       height: 95,
-              //       color: Colors.transparent,
-              //     ),
-              //   ),
-              // )
-            ],
+            ),
+          ),
+          // Chat
+          if (_isMyTurn == false) ...[
+            // Bình phong
             Positioned(
-                bottom: 90,
-                left: 0,
-                right: 0,
-                child: Container(
-                    padding: const EdgeInsets.only(left: 15, right: 15, top: 5),
-                    height: 100,
-                    decoration: const BoxDecoration(
-                        color: Color(0xFF00C4A1),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(15),
-                          topRight: Radius.circular(15),
-                        )),
-                    child: ChatList(
-                        scrollController: _scrollController,
-                        chatMessages: chatMessages))),
-          ]),
-        ),
-      );
-    }
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(15),
+                color: const Color(0xFF00C4A1),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Hãy cho ${_currentTurnUser.name} biết câu trả lời của bạn',
+                          hintStyle: const TextStyle(
+                            color: Colors.black45,
+                            fontWeight: FontWeight.normal,
+                            fontSize: 18,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        onSubmitted: (_) {
+                          onSubmitted();
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      height: 50,
+                      width: 50,
+                      child: IconButton(
+                        onPressed: onSubmitted,
+                        icon: Image.asset('assets/images/send.png'),
+                        iconSize: 45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Lớp đè lên, khi ấn thì mở chat và bàn phím
+            // Positioned(
+            //   bottom: 0,
+            //   left: 0,
+            //   right: 0,
+            //   child: GestureDetector(
+            //     onTap: () {
+            //       _showChat();
+            //     },
+            //     child: Container(
+            //       height: 95,
+            //       color: Colors.transparent,
+            //     ),
+            //   ),
+            // )
+          ],
+          Positioned(
+              bottom: 90,
+              left: 0,
+              right: 0,
+              child: Container(
+                  padding: const EdgeInsets.only(left: 15, right: 15, top: 5),
+                  height: 100,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFF00C4A1),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      )),
+                  child: ChatList(
+                      scrollController: _scrollController,
+                      chatMessages: chatMessages))),
+        ]),
+      ),
+    );
   }
 }
