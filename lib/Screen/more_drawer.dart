@@ -1,3 +1,4 @@
+import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -75,6 +76,17 @@ class MoreDrawer extends StatelessWidget {
                     },
                     child: Text(
                       'TRANG CHỦ',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    )),
+                const SizedBox(height: 5),
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => const HowToPlay()));
+                    },
+                    child: Text(
+                      'CÁCH CHƠI',
                       style: Theme.of(context).textTheme.titleLarge,
                     )),
                 const SizedBox(height: 5),
