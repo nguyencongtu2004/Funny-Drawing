@@ -191,6 +191,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
           'playerDone': 0,
           'timeLeftMode': 90,
           'albumShowingIndex': 0,
+          'playAgain': false,
         });
       }
       Navigator.of(context).pushReplacement(MaterialPageRoute(

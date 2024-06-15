@@ -40,6 +40,8 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   late DatabaseReference _myAlbumRef;
   List<List<Map<String, String>>> picturesOfUsers = [];
   var _showingIndex = 0;
+  var _isPlayAgain = false;
+  var _isEnd = false;
 
   Timer? _timer;
 
@@ -76,22 +78,36 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       _getPictures();
     });
 
-    //
     _knockoffModeDataRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
 
-      var albumShowingIndex = data['albumShowingIndex'];
-      if (albumShowingIndex == -1) {
-        // Nếu chưa có thông tin albumShowingIndex thì set mặc định là 0
-        // Hoặc làm gì đó khác...
-        albumShowingIndex = 0;
+      final albumShowingIndex = data['albumShowingIndex'];
+      _isPlayAgain = data['playAgain'];
+      if (_isPlayAgain) {
+        await _myDataRef.remove();
+        await _knockoffModeDataRef.update({
+          'playAgain': false,
+        });
+        _PlayAgain();
       }
 
-      // có thể chơi lại ở đây
-      if (albumShowingIndex >= _playersInRoom.length) {
-        _playAgain();
+      // có thể chơi lại ở đây (đ!t mẹ nó _playersInRoom.length nó đéo kịp cập nhật nên lỗi mãi)
+      if (albumShowingIndex >= _playersInRoom.length &&
+          _playersInRoom.isNotEmpty) {
+        // Reset lại phòng
+        await _knockoffModeDataRef.update({
+          'turn': 1,
+          'playerDone': 0,
+          'timeLeftMode': 90,
+          'albumShowingIndex': 0,
+        });
+        if (_userId == widget.selectedRoom.roomOwner) {
+          await _knockoffModeDataRef.update({
+            'playAgain': true,
+          });
+        }
       } else {
         setState(() {
           _showingIndex = albumShowingIndex;
@@ -206,31 +222,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     return _completer.future; // Trả về Future từ Completer
   }
 
-  // Chủ phòng mới gọi được hàm này
-  Future<void> _playAgain() async {
-    // Reset the state in the database
-    if (ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
-      await _knockoffModeDataRef.update({
-        'turn': 1,
-        'playerDone': 0,
-        'timeLeftMode': 90,
-        'albumShowingIndex': -1,
-        // Add more fields if necessary
-      });
-      if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
-        print('============================================================');
-        print('Chủ phòng đã cập nhật lại trạng thái phòng');
-        print('============================================================');
-      }
-    }
-    await _myDataRef.remove();
-
-    // Clear the local state
-    setState(() {
-      picturesOfUsers.clear();
-      _showingIndex = 0;
-    });
-
+  Future<void> _PlayAgain() async {
     // Navigate back to HomePage and then to a new KnockoffModeAlbum instance
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
@@ -251,16 +243,17 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   Widget build(BuildContext context) {
     const double widthOfPicture = 250;
     const double heightOfPicture = 400;
-    if (picturesOfUsers.isEmpty) {
+    if (picturesOfUsers.isEmpty || _showingIndex >= _playersInRoom.length) {
       return const Loading(
         text: 'Đang tải album...',
       );
     }
-    if (_showingIndex >= _playersInRoom.length) {
+    if (_isEnd) {
       return const Loading(
-        text: 'Đang chờ chơi lại...',
+        text: 'Đang chơi lại...',
       );
     }
+
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -397,6 +390,10 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                 Button(
                                   onClick: (ctx) {
                                     setState(() async {
+                                      if (_showingIndex + 1 ==
+                                          picturesOfUsers.length) {
+                                        _isEnd = true;
+                                      }
                                       // Chưa xem hết thì chuyển qua bức tiếp theo
                                       await _knockoffModeDataRef.update({
                                         'albumShowingIndex': _showingIndex + 1,
