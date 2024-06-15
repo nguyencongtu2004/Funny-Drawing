@@ -583,7 +583,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late DatabaseReference drawRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _normalModeDataRef;
-  late DatabaseReference _kickoffModeDataRef;
+  late DatabaseReference _knockoffModeDataRef;
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
   late final List<User> _playersInRoom = [];
@@ -606,8 +606,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       _normalModeDataRef =
           database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
 
-      _kickoffModeDataRef =
-          database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
+      _knockoffModeDataRef =
+          database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
 
       _normalModeDataRef.onValue.listen((event) {
         final data = Map<String, dynamic>.from(
@@ -662,10 +662,10 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       _playersInRoomRef =
           database.child('/players_in_room/${widget.selectedRoom.roomId}');
       _myDataRef = database.child(
-          '/kickoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
+          '/knockoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
       _myAlbumRef = _myDataRef.child('/album');
-      _kickoffModeDataRef =
-          database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
+      _knockoffModeDataRef =
+          database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
 
       _playersInRoomRef.onValue.listen((event) {
         final data = Map<String, dynamic>.from(
@@ -688,7 +688,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
       });
 
-      _kickoffModeDataRef.onValue.listen((event) async {
+      _knockoffModeDataRef.onValue.listen((event) async {
         final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>,
         );
@@ -734,7 +734,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         // Chủ phòng chuyển turn khi tất cả người chơi đã vẽ xong
         if (_currentTurn == _countTurn && isNextTurn) {
           if (ref.read(userProvider).id == widget.selectedRoom.roomOwner) {
-            await _kickoffModeDataRef.update({
+            await _knockoffModeDataRef.update({
               'turn': _currentTurn + 1,
               "playerDone": 0,
             });
@@ -750,15 +750,16 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         // Hết thời gian vẽ
         if (_timeLeft == 0) {
           if (_currentTurn % 2 == 1) {
-            updatePointsKickoffMode(
-              _kickoffModeDataRef.child(
+            updatePointsKnockoffMode(
+              _knockoffModeDataRef.child(
                   '/${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}/album/'),
             );
           }
           await _myDataRef.update({
             'timeLeft': -1,
           });
-          await _kickoffModeDataRef.update({
+          // Bất đồng bộ do đây là biến dùng chung
+          await _knockoffModeDataRef.update({
             'playerDone': _playerDone + 1,
           });
         }
@@ -792,14 +793,11 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
                 )),
         (route) => false,
       );
-      await _myDataRef.update({
-        "timeLeft": -21,
-      });
       return;
     }
 
     try {
-      DatabaseReference drawTurn = _kickoffModeDataRef.child(
+      DatabaseReference drawTurn = _knockoffModeDataRef.child(
           '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
 
       DataSnapshot snapshot = await drawTurn.get();
@@ -949,7 +947,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
   }
 
-  void updatePointsKickoffMode(DatabaseReference ref) async {
+  void updatePointsKnockoffMode(DatabaseReference ref) async {
     //if (points.isEmpty && tmp.isEmpty) return;
     List<List<Offset>> fbpush = points;
     if (tmp.isNotEmpty) fbpush.add(tmp);

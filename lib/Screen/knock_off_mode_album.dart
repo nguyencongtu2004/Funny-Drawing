@@ -53,7 +53,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _knockoffModeDataRef =
-        database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
+        database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
     _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
 
@@ -77,7 +77,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     });
 
     //
-    _knockoffModeDataRef.onValue.listen((event) {
+    _knockoffModeDataRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
@@ -104,7 +104,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     for (final id in _playersInRoomId) {
       List<Map<String, String>> pictures = [];
       DatabaseReference albumRef = database
-          .child('/kickoff_mode_data/${widget.selectedRoom.roomId}/$id/album');
+          .child('/knockoff_mode_data/${widget.selectedRoom.roomId}/$id/album');
       DataSnapshot snapshot = await albumRef.get();
 
       final album = Map<String, dynamic>.from(snapshot.value as Map);

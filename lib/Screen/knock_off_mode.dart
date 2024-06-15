@@ -46,7 +46,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _knockoffModeDataRef =
-        database.child('/kickoff_mode_data/${widget.selectedRoom.roomId}');
+        database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
     _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
 
