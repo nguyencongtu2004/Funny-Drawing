@@ -26,7 +26,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   late final String _userId;
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
-  late DatabaseReference _chatRef;
   late DatabaseReference _knockoffModeDataRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
@@ -44,7 +43,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _knockoffModeDataRef =
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
@@ -119,14 +117,13 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     });
   }
 
-  Future<void> _playOutRoom(WidgetRef ref) async {
+  Future<void> _playerOutRoom(WidgetRef ref) async {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
     if (widget.selectedRoom.roomOwner == userId) {
       await _roomRef.remove();
       await _playersInRoomRef.remove();
-      await _chatRef.remove();
       await _knockoffModeDataRef.remove();
     } else {
       final playerRef = database
@@ -216,7 +213,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                 'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
         if (context.mounted && isQuit) {
-          _playOutRoom(ref);
+          _playerOutRoom(ref);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
@@ -254,7 +251,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                               if (!isQuit) return;
                             }
 
-                            await _playOutRoom(ref);
+                            await _playerOutRoom(ref);
                             if (context.mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(

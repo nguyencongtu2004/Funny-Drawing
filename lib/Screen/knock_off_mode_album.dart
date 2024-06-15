@@ -15,6 +15,9 @@ import '../provider/user_provider.dart';
 import 'home_page.dart';
 import 'knock_off_mode.dart';
 
+// milliseconds
+const int timeToShowPerPicture = 3000;
+
 class KnockoffModeAlbum extends ConsumerStatefulWidget {
   const KnockoffModeAlbum({
     super.key,
@@ -44,6 +47,8 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   var _isEnd = false;
 
   Timer? _timer;
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -58,6 +63,21 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
     _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
+
+    // Lắng nghe sự kiện thoát phòng
+    _roomRef.onValue.listen((event) async {
+      if (event.snapshot.value == null) {
+        // Room has been deleted
+        if (widget.selectedRoom.roomOwner != _userId) {
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
+        }
+      }
+    });
 
     // Lấy thông tin người chơi và tranh trong phòng
     _playersInRoomRef.onValue.listen((event) {
@@ -76,6 +96,9 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
 
       _getPictures();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _animatePictures();
+      });
     });
 
     _knockoffModeDataRef.onValue.listen((event) async {
@@ -90,7 +113,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         await _knockoffModeDataRef.update({
           'playAgain': false,
         });
-        _PlayAgain();
+        _playAgain();
       }
 
       // có thể chơi lại ở đây (đ!t mẹ nó _playersInRoom.length nó đéo kịp cập nhật nên lỗi mãi)
@@ -109,9 +132,12 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
           });
         }
       } else {
+        _scrollController.animateTo(0,
+            duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
         setState(() {
           _showingIndex = albumShowingIndex;
         });
+        _animatePictures();
       }
     });
   }
@@ -147,12 +173,45 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         picturesOfUsers.add(pictures);
       });
     }
-    print('========================================');
-    print('Pictures: ${picturesOfUsers[_showingIndex]}');
-    print('========================================');
   }
 
-  Future<void> _playOutRoom(WidgetRef ref) async {
+  void _animatePictures() {
+    // Xóa tất cả các item hiện có
+    final int itemCount = picturesOfUsers[_showingIndex].length;
+    for (int i = itemCount - 1; i >= 0; i--) {
+      _listKey.currentState!.removeItem(
+        i,
+        (context, animation) => SizeTransition(
+          sizeFactor: animation,
+          child: Container(), // Một container rỗng để animate việc xóa
+        ),
+        duration: const Duration(milliseconds: 300),
+      );
+    }
+
+    // Thêm các item mới với độ trễ
+    final int itemsToShow = picturesOfUsers[_showingIndex].length;
+
+    for (int i = 0; i < itemsToShow; i++) {
+      Timer(Duration(milliseconds: i * timeToShowPerPicture), () {
+        if (_listKey.currentState != null) {
+          _listKey.currentState!.insertItem(i);
+          // Thêm một độ trễ nhỏ trước khi scroll để đảm bảo item đã được thêm vào danh sách
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> _playerOutRoom(WidgetRef ref) async {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
@@ -222,7 +281,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     return _completer.future; // Trả về Future từ Completer
   }
 
-  Future<void> _PlayAgain() async {
+  Future<void> _playAgain() async {
     // Navigate back to HomePage and then to a new KnockoffModeAlbum instance
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
@@ -243,6 +302,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   Widget build(BuildContext context) {
     const double widthOfPicture = 250;
     const double heightOfPicture = 400;
+
     if (picturesOfUsers.isEmpty || _showingIndex >= _playersInRoom.length) {
       return const Loading(
         text: 'Đang tải album...',
@@ -253,6 +313,8 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         text: 'Đang chơi lại...',
       );
     }
+
+    final int itemsToShow = picturesOfUsers[_showingIndex].length;
 
     return PopScope(
       canPop: false,
@@ -268,7 +330,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                 'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
         if (context.mounted && isQuit) {
-          _playOutRoom(ref);
+          _playerOutRoom(ref);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
@@ -285,7 +347,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
           ),
           // Các bức tranh và nút
           Positioned(
-              top: 100,
+              top: 0,
               right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -293,139 +355,149 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                 // Phải có width và height cố định để CustomPaint biết kích thước cần vẽ
                 height: MediaQuery.of(context).size.height,
                 width: MediaQuery.of(context).size.width + 1,
-                child: ListView.builder(
-                  itemCount: picturesOfUsers[_showingIndex].length,
-                  itemBuilder: (context, index) {
+                child: AnimatedList(
+                  key: _listKey,
+                  controller: _scrollController,
+                  padding: const EdgeInsets.only(top: 110, bottom: 10),
+                  initialItemCount: itemsToShow,
+                  itemBuilder: (context, index, animation) {
                     final name = picturesOfUsers[_showingIndex][index]['name']!;
                     final avatarIndex =
                         picturesOfUsers[_showingIndex][index]['avatarIndex']!;
-                    return Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (index != 0) ...[
-                              SizedBox(
-                                width: 50,
-                                height: 50,
-                                child: CircleAvatar(
-                                  backgroundImage: AssetImage(
-                                      'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                            ],
-                            Expanded(
-                              flex: 1,
-                              child: Column(
-                                crossAxisAlignment: index == 0
-                                    ? CrossAxisAlignment.end
-                                    : CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall!
-                                        .copyWith(
-                                          color: Colors.black,
-                                        ),
+                    return FadeTransition(
+                      opacity: animation,
+                      child: Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (index != 0) ...[
+                                SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: CircleAvatar(
+                                    backgroundImage: AssetImage(
+                                        'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
                                   ),
-                                  const SizedBox(height: 5),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(15),
-                                    child: Container(
-                                      color: Colors.white,
-                                      width: widthOfPicture,
-                                      height: heightOfPicture,
-                                      child: picturesOfUsers[_showingIndex]
-                                              .isNotEmpty
-                                          ? CustomPaint(
-                                              painter: PaintCanvas(
-                                                points: scaleOffset(
-                                                    decodeOffsetList(
-                                                        picturesOfUsers[
-                                                                _showingIndex]
-                                                            [index]['Offset']!),
-                                                    scale: 0.5),
-                                                paints: decodePaintList(
-                                                    picturesOfUsers[
-                                                            _showingIndex]
-                                                        [index]['Color']!),
-                                              ),
-                                              size: const Size(widthOfPicture,
-                                                  heightOfPicture),
-                                            )
-                                          : Container(
-                                              width: widthOfPicture,
-                                              height: heightOfPicture,
-                                              color: Colors
-                                                  .transparent, // Placeholder while loading
-                                            ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (index == 0) ...[
-                              const SizedBox(width: 5),
-                              SizedBox(
-                                width: 50,
-                                height: 50,
-                                child: CircleAvatar(
-                                  backgroundImage: AssetImage(
-                                      'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
                                 ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 15),
-                        if (index ==
-                            picturesOfUsers[_showingIndex].length - 1) ...[
-                          const SizedBox(height: 25),
-                          if (_userId == widget.selectedRoom.roomOwner)
-                            Column(
-                              children: [
-                                Button(
-                                  onClick: (ctx) {
-                                    setState(() async {
-                                      if (_showingIndex + 1 ==
-                                          picturesOfUsers.length) {
-                                        _isEnd = true;
-                                      }
-                                      // Chưa xem hết thì chuyển qua bức tiếp theo
-                                      await _knockoffModeDataRef.update({
-                                        'albumShowingIndex': _showingIndex + 1,
-                                      });
-                                    });
-                                  },
-                                  title: _showingIndex + 1 !=
-                                          picturesOfUsers.length
-                                      ? 'Tiếp tục'
-                                      : 'Chơi lại',
-                                  width: 150,
-                                  borderRadius: 25,
-                                ),
-                                const SizedBox(height: 10),
-                                if (_showingIndex + 1 == picturesOfUsers.length)
-                                  Text('Xem hết rồi, chơi lại nhé?',
+                                const SizedBox(width: 5),
+                              ],
+                              Expanded(
+                                flex: 1,
+                                child: Column(
+                                  crossAxisAlignment: index == 0
+                                      ? CrossAxisAlignment.end
+                                      : CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyMedium),
+                                          .titleSmall!
+                                          .copyWith(
+                                            color: Colors.black,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Container(
+                                        color: Colors.white,
+                                        width: widthOfPicture,
+                                        height: heightOfPicture,
+                                        child: picturesOfUsers[_showingIndex]
+                                                .isNotEmpty
+                                            ? CustomPaint(
+                                                painter: PaintCanvas(
+                                                  points: scaleOffset(
+                                                      decodeOffsetList(
+                                                          picturesOfUsers[
+                                                                  _showingIndex]
+                                                              [
+                                                              index]['Offset']!),
+                                                      scale: 0.5),
+                                                  paints: decodePaintList(
+                                                      picturesOfUsers[
+                                                              _showingIndex]
+                                                          [index]['Color']!),
+                                                ),
+                                                size: const Size(widthOfPicture,
+                                                    heightOfPicture),
+                                              )
+                                            : Container(
+                                                width: widthOfPicture,
+                                                height: heightOfPicture,
+                                                color: Colors
+                                                    .transparent, // Placeholder while loading
+                                              ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (index == 0) ...[
+                                const SizedBox(width: 5),
+                                SizedBox(
+                                  width: 50,
+                                  height: 50,
+                                  child: CircleAvatar(
+                                    backgroundImage: AssetImage(
+                                        'assets/images/avatars/avatar$avatarIndex.png'), // Sử dụng AssetImage như là ImageProvider
+                                  ),
+                                ),
                               ],
-                            )
-                          else
-                            Text(
-                              _showingIndex + 1 != picturesOfUsers.length
-                                  ? 'Chờ chủ phòng tiếp tục...'
-                                  : 'Xem hết rồi,\nhãy nhắc chủ phòng chơi lại nhé!',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              textAlign: TextAlign.center,
-                            ),
-                          const SizedBox(height: 160),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          if (index == itemsToShow - 1) ...[
+                            const SizedBox(height: 25),
+                            if (_userId == widget.selectedRoom.roomOwner)
+                              Column(
+                                children: [
+                                  Button(
+                                    onClick: (ctx) {
+                                      setState(() async {
+                                        if (_showingIndex + 1 >=
+                                            picturesOfUsers.length) {
+                                          setState(() {
+                                            _isEnd = true;
+                                          });
+                                        }
+                                        // Chưa xem hết thì chuyển qua bức tiếp theo
+                                        await _knockoffModeDataRef.update({
+                                          'albumShowingIndex':
+                                              _showingIndex + 1,
+                                        });
+                                      });
+                                    },
+                                    title: _showingIndex + 1 !=
+                                            picturesOfUsers.length
+                                        ? 'Tiếp tục'
+                                        : 'Chơi lại',
+                                    width: 150,
+                                    borderRadius: 25,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  if (_showingIndex + 1 ==
+                                      picturesOfUsers.length)
+                                    Text('Xem hết rồi, chơi lại nhé?',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium),
+                                ],
+                              )
+                            else
+                              Text(
+                                _showingIndex + 1 != picturesOfUsers.length
+                                    ? 'Chờ chủ phòng tiếp tục...'
+                                    : 'Xem hết rồi,\nHãy nhắc chủ phòng chơi lại nhé!',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                                textAlign: TextAlign.center,
+                              ),
+                            const SizedBox(height: 30),
+                          ],
                         ],
-                      ],
+                      ),
                     );
                   },
                 ),
