@@ -49,6 +49,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
             isPrivate: room.value['isPrivate'],
             password: room.value['password'],
             isPlayed: room.value['isPlayed'],
+            timePerRound: room.value['timePerRound'],
           );
           rooms.add(nextRoom);
         }

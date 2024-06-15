@@ -25,6 +25,19 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
   final selecting = ValueNotifier<String>('none');
   final _passwordController = TextEditingController();
   var _isWaiting = false;
+  final timeChoices = [30, 60, 90, 120, 180, 210, 300];
+
+  late int _timePerRound;
+
+  int get timePerRound {
+    return _timePerRound;
+  }
+
+  set timePerRound(int value) {
+    if (value >= 30 && value <= 300) {
+      _timePerRound = value;
+    }
+  }
 
   int _maxPlayer = 5;
 
@@ -33,7 +46,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
   }
 
   set maxPlayer(int value) {
-    if (value >= 1 && value <= 10) {
+    if (value >= 2 && value <= 10) {
       _maxPlayer = value;
     }
   }
@@ -72,7 +85,9 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
         maxPlayer: _maxPlayer,
         curPlayer: 1,
         mode: selecting.value,
-        isPlayed: false);
+      isPlayed: false,
+      timePerRound: timePerRound,
+    );
 
     // Tạo tham chiếu đến mục rooms trên firebase
     final roomsRef = database.child('/rooms/${createdRoom.roomId}');
@@ -84,6 +99,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
       'curPlayer': createdRoom.curPlayer,
       'mode': createdRoom.mode,
       'isPlayed': createdRoom.isPlayed,
+      'timePerRound': createdRoom.timePerRound,
     });
 
     final User player = ref.read(userProvider);
@@ -107,6 +123,30 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
     setState(() {
       _isWaiting = false;
     });
+  }
+
+  void updateTimePerRound() {
+    switch (selecting.value) {
+      case 'Thường':
+        timePerRound = 60;
+        break;
+      case 'Tam sao thất bản':
+        timePerRound = 90;
+        break;
+      case 'Tuyệt tác':
+        timePerRound = 60;
+        break;
+      default:
+        timePerRound = 60;
+    }
+    // Cập nhật UI
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    updateTimePerRound();
   }
 
   @override
@@ -157,7 +197,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
               ],
             ),
           ),
-          // Các thành phần giao diện khác
+          // Các thành phần giao diện ở giữa
           Positioned(
             top: 100,
             bottom: 120,
@@ -189,6 +229,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                                 if (_isWaiting) return;
                                 print(mode.mode);
                                 selecting.value = mode.mode;
+                                updateTimePerRound();
                               },
                               child: RoomMode(
                                 mode: mode.mode,
@@ -260,6 +301,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                     ],
                   ),
                 ),
+                // Số người chơi tối đa
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 15),
                   child: Column(
@@ -307,6 +349,57 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                             ),
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Thời gian chơi mỗi vòng
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(width: 5),
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          'Thời gian mỗi vòng (giây):',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(children: [
+                          for (final time in timeChoices) ...[
+                            ChoiceChip(
+                              label: Text('$time'),
+                              backgroundColor: Colors.transparent,
+                              selected: time == timePerRound,
+                              surfaceTintColor: Colors.transparent,
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                // Độ cong của viền bo tròn
+                                side: BorderSide(
+                                  color: time == timePerRound
+                                      ? Colors.white
+                                      : Colors.transparent,
+                                  // Màu viền khi được chọn
+                                  width: 1, // Độ dày của viền
+                                ),
+                              ),
+                              selectedColor: Colors.white.withOpacity(0.2),
+                              // Màu nền khi được chọn, có độ trong suốt
+                              onSelected: (value) {
+                                setState(() {
+                                  timePerRound = time;
+                                });
+                              },
+                            ),
+                            const SizedBox(width: 10)
+                          ]
+                        ]),
                       ),
                     ],
                   ),

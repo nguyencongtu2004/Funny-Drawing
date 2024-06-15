@@ -8,6 +8,7 @@ class Room {
     this.isPrivate = false,
     this.password,
     this.isPlayed = false,
+    this.timePerRound = 88,
   });
 
   final String? roomOwner;
@@ -18,6 +19,7 @@ class Room {
   final bool isPrivate;
   final String? password;
   final bool isPlayed;
+  final int timePerRound;
 
   factory Room.fromRTDB(Object snapshot) {
     final data = Map<String, dynamic>.from(snapshot as Map<dynamic, dynamic>);
@@ -34,6 +36,7 @@ class Room {
         isPrivate: room.value['isPrivate'],
         password: room.value['password'],
         isPlayed: room.value['isPlayed'],
+        timePerRound: room.value['timePerRound'],
       );
     }
 

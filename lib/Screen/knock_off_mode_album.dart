@@ -123,7 +123,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         await _knockoffModeDataRef.update({
           'turn': 1,
           'playerDone': 0,
-          'timeLeftMode': 90,
           'albumShowingIndex': 0,
         });
         if (_userId == widget.selectedRoom.roomOwner) {

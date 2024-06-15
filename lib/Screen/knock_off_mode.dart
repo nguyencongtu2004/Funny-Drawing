@@ -31,7 +31,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
-  var _timeLeft = 90;
+  var _timeLeft;
   int? _totalTurn;
 
   Timer? _timer;
@@ -47,6 +47,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
     _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
+    _timeLeft = widget.selectedRoom.timePerRound;
 
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {

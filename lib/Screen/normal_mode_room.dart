@@ -200,7 +200,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           'userGuessed': null,
           'turn': _playersInRoomId[currentPlayerTurnIndex],
           'wordToDraw': pickRandomWordToGuess(),
-          'timeLeft': 60,
+          'timeLeft': widget.selectedRoom.timePerRound,
           'point': (max(10, _playersInRoom.length)),
         });
         for (var player in _playersInRoom) {
@@ -359,7 +359,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     return _completer.future;
   }
 
-  Future<void> _playOutRoom(WidgetRef ref) async {
+  Future<void> _playerOutRoom(WidgetRef ref) async {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
@@ -448,7 +448,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                 'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
         if (context.mounted && isQuit) {
-          _playOutRoom(ref);
+          _playerOutRoom(ref);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
@@ -487,7 +487,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                               if (!isQuit) return;
                             }
 
-                            await _playOutRoom(ref);
+                            await _playerOutRoom(ref);
                             if (context.mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(

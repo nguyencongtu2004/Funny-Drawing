@@ -170,7 +170,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         await normalModeDataRef.update({
           'wordToDraw': pickRandomWordToGuess(),
           'turn': currentPlayers[Random().nextInt(currentPlayers.length)].id,
-          'timeLeft': 60,
+          'timeLeft': widget.selectedRoom.timePerRound,
           'point': 10,
           // 'endGame': false,
         });
@@ -189,7 +189,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         await knockoffModeDataRef.update({
           'turn': 1,
           'playerDone': 0,
-          'timeLeftMode': 90,
+          'timeLeftMode': widget.selectedRoom.timePerRound,
           'albumShowingIndex': 0,
           'playAgain': false,
         });

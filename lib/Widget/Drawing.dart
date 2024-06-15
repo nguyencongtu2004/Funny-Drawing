@@ -619,7 +619,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
         // Xóa bảng và Ẩn menu khi có người đoán đúng
         _timeLeft = data['timeLeft'];
-        if (_timeLeft == 60) {
+        if (_timeLeft == widget.selectedRoom.timePerRound) {
           clearPoints();
           widget.hideMenu();
         }
@@ -707,7 +707,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         // Giai đoạn vẽ
         if (_currentTurn % 2 == 0 && _countTurn != _currentTurn) {
           await _myDataRef.update({
-            "timeLeft": 90,
+            "timeLeft": widget.selectedRoom.timePerRound,
           });
           widget.toggleDrawBar(true);
           _currentTurn = _countTurn;
@@ -721,7 +721,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         // Giai đoạn xem
         if (_currentTurn % 2 == 1 && _countTurn != _currentTurn) {
           await _myDataRef.update({
-            "timeLeft": 8,
+            "timeLeft": 10,
           });
           _currentTurn = _countTurn;
           clearPoints();
