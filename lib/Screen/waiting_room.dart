@@ -405,6 +405,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                         // Tạo một avatar từ index
                         return Player(
                           player: currentPlayers[index],
+                          roomOwner: widget.selectedRoom.roomOwner!,
                           sizeImg: 100,
                         );
                       },
@@ -442,22 +443,22 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                 bottom: 50,
                 left: MediaQuery.of(context).size.width / 2 -
                     (150 + 10 + 150) / 2,
-                child: Row(
-                  children: [
-                    Button(
-                      onClick: (ctx) {
-                        _inviteClick();
-                      },
-                      title: 'Mời',
-                      imageAsset: 'assets/images/invite.png',
-                      width: 150,
-                      isWaiting: isWaitingInvite,
-                      isEnable: !isWaitingStart && !isWaitingInvite,
-                    ),
-                    const SizedBox(width: 10),
-                    Hero(
-                      tag: "create_room",
-                      child: Button(
+                child: Hero(
+                  tag: "create_room",
+                  child: Row(
+                    children: [
+                      Button(
+                        onClick: (ctx) {
+                          _inviteClick();
+                        },
+                        title: 'Mời',
+                        imageAsset: 'assets/images/invite.png',
+                        width: 150,
+                        isWaiting: isWaitingInvite,
+                        isEnable: !isWaitingStart && !isWaitingInvite,
+                      ),
+                      const SizedBox(width: 10),
+                      Button(
                         onClick: (ctx) {
                           _startClick(ctx);
                         },
@@ -466,9 +467,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                         width: 150,
                         isWaiting: isWaitingStart,
                         isEnable: !isWaitingStart && !isWaitingInvite,
-                      ),
-                    )
-                  ],
+                      )
+                    ],
+                  ),
                 ),
               ),
             // Lời nhắc vui

@@ -151,6 +151,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
     });
   }
 
+  // Chắc khỏi làm quá
   void _animateRooms() {
     final int itemsToShow = filteredRoom.length;
 

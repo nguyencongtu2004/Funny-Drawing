@@ -415,6 +415,19 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
             left: MediaQuery.of(context).size.width / 2 - (180) / 2,
             child: Hero(
               tag: 'create_room',
+              flightShuttleBuilder: (flightContext, animation, direction,
+                  fromContext, toContext) {
+                return Button(
+                  onClick: (ctx) {
+                    _startClick(ctx);
+                  },
+                  title: 'Tạo phòng',
+                  imageAsset: 'assets/images/play.png',
+                  width: 180,
+                  isWaiting: _isWaiting,
+                  isEnable: !_isWaiting,
+                );
+              },
               child: Button(
                 onClick: (ctx) {
                   _startClick(ctx);

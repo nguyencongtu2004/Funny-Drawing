@@ -363,6 +363,11 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                     final name = picturesOfUsers[_showingIndex][index]['name']!;
                     final avatarIndex =
                         picturesOfUsers[_showingIndex][index]['avatarIndex']!;
+                    final paintList = decodePaintList(
+                        picturesOfUsers[_showingIndex][index]['Color']!);
+                    final offsetList = decodeOffsetList(
+                        picturesOfUsers[_showingIndex][index]['Offset']!);
+                    const double scale = 0.6;
                     return FadeTransition(
                       opacity: animation,
                       child: Column(
@@ -409,16 +414,10 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                             ? CustomPaint(
                                                 painter: PaintCanvas(
                                                   points: scaleOffset(
-                                                      decodeOffsetList(
-                                                          picturesOfUsers[
-                                                                  _showingIndex]
-                                                              [
-                                                              index]['Offset']!),
-                                                      scale: 0.6),
-                                                  paints: decodePaintList(
-                                                      picturesOfUsers[
-                                                              _showingIndex]
-                                                          [index]['Color']!),
+                                                      offsetList,
+                                                      scale: scale),
+                                                  paints: scalePaint(paintList,
+                                                      scale: scale),
                                                 ),
                                                 size: const Size(widthOfPicture,
                                                     heightOfPicture),
@@ -588,6 +587,19 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       points.add(tmp1);
     }
     return points;
+  }
+
+  // Hàm thu nhỏ stroke width
+  List<Paint> scalePaint(List<Paint> paintList, {double scale = 1.0}) {
+    List<Paint> paints = [];
+    for (Paint paint in paintList) {
+      Paint tmp = Paint()
+        ..color = paint.color
+        ..strokeWidth = paint.strokeWidth * scale
+        ..strokeCap = paint.strokeCap;
+      paints.add(tmp);
+    }
+    return paints;
   }
 
   @override

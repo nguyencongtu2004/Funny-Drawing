@@ -10,10 +10,12 @@ class Player extends StatelessWidget {
     super.key,
     required this.player,
     required this.sizeImg,
+    this.roomOwner = 'null',
   });
 
   final double sizeImg;
   final User player;
+  final String roomOwner;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +41,8 @@ class Player extends StatelessWidget {
             bottom: 0,
             child: Text(
               player.name,
-              style: Theme.of(context).textTheme.titleSmall,
+              style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                  color: player.id == roomOwner ? Colors.yellow : Colors.white),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
