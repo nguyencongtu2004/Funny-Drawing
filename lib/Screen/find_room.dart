@@ -10,7 +10,9 @@ import 'package:draw_and_guess_promax/provider/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../Widget/room_mode.dart';
 import '../Widget/room_to_play.dart';
+import '../data/play_mode_data.dart';
 import '../model/user.dart';
 
 class FindRoom extends ConsumerStatefulWidget {
@@ -435,7 +437,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                         });
                       },
                       child: Hero(
-                        tag: filteredRoom[index].mode,
+                        tag: filteredRoom[index].roomId,
                         child: RoomToPlay(
                           mode: filteredRoom[index].mode,
                           curPlayer: filteredRoom[index].curPlayer,
@@ -483,7 +485,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                     ),
                   )
                 : Hero(
-                    tag: 'create_room',
+                    tag: 'find_room',
                     child: Button(
                       onClick: (ctx) {
                         Navigator.of(context).push(MaterialPageRoute(

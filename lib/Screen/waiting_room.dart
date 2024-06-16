@@ -253,9 +253,13 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
 
         if (context.mounted && isQuit) {
           _playOutRoom(ref);
-          Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (ctx) => const HomePage()),
-              (route) => false);
+          if (widget.isGuest) {
+            Navigator.of(context).pop();
+          } else {
+            Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (ctx) => const HomePage()),
+                (route) => false);
+          }
         }
       },
       child: Scaffold(
@@ -293,10 +297,14 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                               }
 
                               await _playOutRoom(ref);
-                              Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                      builder: (ctx) => const HomePage()),
-                                  (route) => false);
+                              if (widget.isGuest) {
+                                Navigator.of(context).pop();
+                              } else {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (ctx) => const HomePage()),
+                                    (route) => false);
+                              }
                             },
                             icon: Image.asset('assets/images/back.png'),
                             iconSize: 45,
@@ -352,7 +360,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Hero(
-                      tag: widget.selectedRoom.mode,
+                      tag: widget.isGuest
+                          ? widget.selectedRoom.roomId
+                          : widget.selectedRoom.mode,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: RoomMode(
@@ -412,13 +422,16 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                 left: MediaQuery.of(context).size.width / 2 - (150) / 2,
                 child: Row(
                   children: [
-                    Button(
-                      onClick: (ctx) {
-                        _inviteClick();
-                      },
-                      title: 'Mời',
-                      imageAsset: 'assets/images/invite.png',
-                      width: 150,
+                    Hero(
+                      tag: 'find_room',
+                      child: Button(
+                        onClick: (ctx) {
+                          _inviteClick();
+                        },
+                        title: 'Mời',
+                        imageAsset: 'assets/images/invite.png',
+                        width: 150,
+                      ),
                     )
                   ],
                 ),
