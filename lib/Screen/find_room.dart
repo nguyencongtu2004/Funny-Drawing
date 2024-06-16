@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:draw_and_guess_promax/Screen/create_room.dart';
+import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:draw_and_guess_promax/firebase.dart';
@@ -26,46 +30,68 @@ class _FindRoomState extends ConsumerState<FindRoom> {
   late List<Room> filteredRoom = [];
   var _isWaiting = false;
 
+  // GlobalKey để tham chiếu đến AnimatedList
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     database.child('/rooms').onValue.listen((event) {
-      // Quan trọng
       final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>);
 
-      setState(() {
-        // Xóa các phòng không tồn tại trong cơ sở dữ liệu Firebase khỏi danh sách rooms
-        rooms = [];
+      rooms = [];
 
-        // Cập nhật lại các phòng còn tồn tại trong cơ sở dữ liệu Firebase
-        for (final room in data.entries) {
-          final nextRoom = Room(
-            roomId: room.key,
-            roomOwner: room.value['roomOwner'],
-            mode: room.value['mode'],
-            curPlayer: room.value['curPlayer'],
-            maxPlayer: room.value['maxPlayer'],
-            isPrivate: room.value['isPrivate'],
-            password: room.value['password'],
-            isPlayed: room.value['isPlayed'],
-            timePerRound: room.value['timePerRound'],
-          );
-          rooms.add(nextRoom);
-        }
-        filteredRoom = rooms.where((room) => room.isPlayed == false).toList();
-      });
+      for (final room in data.entries) {
+        final nextRoom = Room(
+          roomId: room.key,
+          roomOwner: room.value['roomOwner'],
+          mode: room.value['mode'],
+          curPlayer: room.value['curPlayer'],
+          maxPlayer: room.value['maxPlayer'],
+          isPrivate: room.value['isPrivate'],
+          password: room.value['password'],
+          isPlayed: room.value['isPlayed'],
+          timePerRound: room.value['timePerRound'],
+        );
+        rooms.add(nextRoom);
+      }
+
+      filteredRoom = rooms
+          .where((room) =>
+              room.curPlayer < room.maxPlayer &&
+              ((room.mode == 'Thường') ||
+                  (room.mode == 'Tam sao thất bản' && room.isPlayed == false) ||
+                  (room.mode == 'Tuyệt tác' && room.isPlayed == false)))
+          .toList();
+
+      setState(() {});
     });
   }
 
-  Future<void> _onStartClick(BuildContext context, WidgetRef ref) async {
+  Future<void> _onStartClick(BuildContext context) async {
     ScaffoldMessenger.of(context).clearSnackBars();
     if (selecting.value == 'none') {
       // Hiển thị thông báo khi chưa chọn phòng
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng chọn phòng!'),
+        SnackBar(
+          content: Text(filteredRoom.isEmpty
+              ? 'Hãy tạo phòng mới'
+              : 'Vui lòng chọn phòng!'),
+          action: filteredRoom.isEmpty
+              ? SnackBarAction(
+                  label: 'Tạo phòng',
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (ctx) => const HomePage()),
+                        (route) => false);
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => const CreateRoom()));
+                  },
+                )
+              : null,
         ),
       );
       return;
@@ -123,27 +149,48 @@ class _FindRoomState extends ConsumerState<FindRoom> {
     });
   }
 
+  void _animateRooms() {
+    final int itemsToShow = filteredRoom.length;
+
+    // Xóa các item cũ
+    for (int i = itemsToShow - 1; i >= 0; i--) {
+      _listKey.currentState!.removeItem(
+        i,
+        (context, animation) => SizeTransition(
+          sizeFactor: animation,
+          child: Container(), // Một container rỗng để animate việc xóa
+        ),
+        duration: const Duration(milliseconds: 300),
+      );
+    }
+
+    // Thêm các item mới
+    for (int i = 0; i < itemsToShow; i++) {
+      Timer(Duration(milliseconds: i * 200), () {
+        if (_listKey.currentState != null) {
+          _listKey.currentState!.insertItem(i);
+        }
+      });
+    }
+  }
+
   void _onFilterRoom() {
     final roomId = _idController.text;
     final filter = dropdownValue;
-    print(roomId);
-    print(filter);
 
-    setState(() {
-      if (roomId.isEmpty && filter == 'Tất cả') {
-        filteredRoom = rooms;
-      } else if (roomId.isEmpty && filter != 'Tất cả') {
-        filteredRoom = rooms.where((room) => room.mode == filter).toList();
-      } else if (roomId.isNotEmpty && filter == 'Tất cả') {
-        filteredRoom =
-            rooms.where((room) => room.roomId.contains(roomId)).toList();
-      } else {
-        filteredRoom = rooms
-            .where(
-                (room) => room.roomId.contains(roomId) && room.mode == filter)
-            .toList();
-      }
-    });
+    if (roomId.isEmpty && filter == 'Tất cả') {
+      filteredRoom = rooms;
+    } else if (roomId.isEmpty && filter != 'Tất cả') {
+      filteredRoom = rooms.where((room) => room.mode == filter).toList();
+    } else if (roomId.isNotEmpty && filter == 'Tất cả') {
+      filteredRoom =
+          rooms.where((room) => room.roomId.contains(roomId)).toList();
+    } else {
+      filteredRoom = rooms
+          .where((room) => room.roomId.contains(roomId) && room.mode == filter)
+          .toList();
+    }
+    setState(() {});
   }
 
   // Hàm xây dựng mỗi item trong dropdown menu
@@ -207,6 +254,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
 
   @override
   Widget build(BuildContext context) {
+    final itemsToShow = filteredRoom.length;
     return Scaffold(
       body: Stack(children: [
         // Nền
@@ -348,42 +396,56 @@ class _FindRoomState extends ConsumerState<FindRoom> {
           ),
         ),
         // Danh sách các phòng
+        // Danh sách các phòng
         if (filteredRoom.isEmpty)
           Center(
-            child: Text(
-              'Hiện không có phòng nào\nHãy tạo phòng mới!',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium!
-                  .copyWith(color: Colors.black),
-              textAlign: TextAlign.center,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 30),
+              child: Text(
+                'Hiện không có phòng nào\nHãy tạo phòng mới!',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium!
+                    .copyWith(color: Colors.black),
+                textAlign: TextAlign.center,
+              ),
             ),
           )
         else
+          // Widget sử dụng AnimatedList
           Padding(
-            padding: const EdgeInsets.only(top: 170),
-            child: ListView.builder(
-              key: ValueKey(filteredRoom),
+            padding: const EdgeInsets.only(top: 165),
+            child: AnimatedList(
+              key: _listKey,
               padding: EdgeInsets.zero,
-              itemCount: filteredRoom.length,
-              itemBuilder: (ctx, index) {
+              initialItemCount: filteredRoom.length,
+              itemBuilder: (ctx, index, animation) {
                 final isLastItem = index == filteredRoom.length - 1;
-                return Padding(
-                  padding: EdgeInsets.only(
-                      left: 8, right: 8, bottom: isLastItem ? 120 : 8),
-                  child: InkWell(
-                    onTap: () {
-                      if (_isWaiting) return;
-                      selecting.value = filteredRoom[index].roomId;
-                    },
-                    child: RoomToPlay(
-                      mode: filteredRoom[index].mode,
-                      curPlayer: filteredRoom[index].curPlayer,
-                      maxPlayer: filteredRoom[index].maxPlayer,
-                      roomId: filteredRoom[index].roomId,
-                      isPrivate: filteredRoom[index].isPrivate,
-                      selecting: selecting,
-                      password: password,
+                // Sử dụng SizeTransition để thực hiện animation xuất hiện
+                return SizeTransition(
+                  sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)),
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        left: 8, right: 8, bottom: isLastItem ? 120 : 8),
+                    child: InkWell(
+                      onTap: () {
+                        if (_isWaiting) return;
+                        setState(() {
+                          selecting.value = filteredRoom[index].roomId;
+                        });
+                      },
+                      child: Hero(
+                        tag: filteredRoom[index].mode,
+                        child: RoomToPlay(
+                          mode: filteredRoom[index].mode,
+                          curPlayer: filteredRoom[index].curPlayer,
+                          maxPlayer: filteredRoom[index].maxPlayer,
+                          roomId: filteredRoom[index].roomId,
+                          isPrivate: filteredRoom[index].isPrivate,
+                          selecting: selecting,
+                          password: password,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -391,26 +453,49 @@ class _FindRoomState extends ConsumerState<FindRoom> {
             ),
           ),
 
-        // Nút
-        if (filteredRoom.isNotEmpty)
+        if (filteredRoom.isEmpty)
           Positioned(
+              bottom: 120,
+              right: 50,
+              child: SizedBox(
+                height: 150,
+                width: 150,
+                child: Image.asset(
+                  'assets/images/arrow.png',
+                ),
+              )),
+        // Nút
+        Positioned(
             bottom: 50,
             left: MediaQuery.of(context).size.width / 2 - 180 / 2,
-            child: Row(
-              children: [
-                Button(
-                  onClick: (ctx) {
-                    _onStartClick(ctx, ref);
-                  },
-                  title: 'Vào phòng',
-                  imageAsset: 'assets/images/play.png',
-                  color: const Color(0xFFC45F00),
-                  isWaiting: _isWaiting,
-                  isEnable: !(_isWaiting),
-                )
-              ],
-            ),
-          ),
+            child: filteredRoom.isNotEmpty
+                ? Hero(
+                    tag: 'find_room',
+                    child: Button(
+                      onClick: (ctx) {
+                        _onStartClick(ctx);
+                      },
+                      title: 'Vào phòng',
+                      imageAsset: 'assets/images/play.png',
+                      isWaiting: _isWaiting,
+                      isEnable: !(_isWaiting),
+                      width: 180,
+                    ),
+                  )
+                : Hero(
+                    tag: 'create_room',
+                    child: Button(
+                      onClick: (ctx) {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (ctx) => const CreateRoom()));
+                      },
+                      title: 'Tạo phòng',
+                      imageAsset: 'assets/images/plus.png',
+                      isWaiting: _isWaiting,
+                      isEnable: !(_isWaiting),
+                      width: 180,
+                    ),
+                  )),
       ]),
     );
   }

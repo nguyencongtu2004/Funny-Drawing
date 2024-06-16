@@ -1,12 +1,17 @@
 import 'package:draw_and_guess_promax/Screen/how_to_play.dart';
+import 'package:draw_and_guess_promax/animation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MoreDrawer extends StatelessWidget {
-  const MoreDrawer({super.key});
+  const MoreDrawer({
+    super.key,
+    required this.onHowToPlayClick,
+  });
 
+  final void Function() onHowToPlayClick;
   final buttonSize = const Size(100, 100);
 
   void _onCloseClick(context) {
@@ -80,11 +85,7 @@ class MoreDrawer extends StatelessWidget {
                     )),
                 const SizedBox(height: 5),
                 TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => const HowToPlay()));
-                    },
+                    onPressed: onHowToPlayClick,
                     child: Text(
                       'CÁCH CHƠI',
                       style: Theme.of(context).textTheme.titleLarge,

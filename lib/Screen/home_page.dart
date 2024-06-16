@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Widget/button.dart';
+import '../animation.dart';
 import '../firebase.dart';
 import '../model/room.dart';
 import '../model/user.dart';
@@ -86,8 +87,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   void _onInformationClick(context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (ctx) => const HowToPlay()));
+    Navigator.of(context).push(
+      createRouteRightToLeftTransition(
+        oldPage: widget,
+        newPage: const HowToPlay(),
+      ),
+    );
   }
 
   void _findRoomClick(context) async {
@@ -115,6 +120,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     await usersRef.update({'name': name, 'avatarIndex': _avatarIndex
     });
 
+    //Navigator.of(context).push(createRouteBottomToTopTransition(oldPage: widget, newPage: const FindRoom()));
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const FindRoom()));
     setState(() {
@@ -178,9 +184,19 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const Drawer(
+      drawer: Drawer(
         surfaceTintColor: Colors.transparent,
-        child: MoreDrawer(),
+        child: MoreDrawer(
+          onHowToPlayClick: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).push(
+              createRouteRightToLeftTransition(
+                oldPage: widget,
+                newPage: const HowToPlay(),
+              ),
+            );
+          },
+        ),
       ),
       body: Container(
         width: double.infinity,
@@ -263,7 +279,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 5),
-                    GestureDetector(
+                    InkWell(
                       onTap: () {
                         if (!_isWaitingFindRoom && !_isWaitingCreateRoom) {
                           _pickAvatar(context);
@@ -338,20 +354,30 @@ class _HomePageState extends ConsumerState<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Button(
-                    onClick: _findRoomClick,
-                    imageAsset: 'assets/images/search.png',
-                    title: 'Tìm phòng',
-                    isWaiting: _isWaitingFindRoom,
-                    isEnable: !_isWaitingFindRoom && !_isWaitingCreateRoom,
+                  Hero(
+                    tag: 'find_room',
+                    /*flightShuttleBuilder: (flightContext, animation, direction,
+                        fromContext, toContext) {
+                      return const FindRoom();
+                    },*/
+                    child: Button(
+                      onClick: _findRoomClick,
+                      imageAsset: 'assets/images/search.png',
+                      title: 'Tìm phòng',
+                      isWaiting: _isWaitingFindRoom,
+                      isEnable: !_isWaitingFindRoom && !_isWaitingCreateRoom,
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  Button(
-                    onClick: _createRoomClick,
-                    imageAsset: 'assets/images/plus.png',
-                    title: 'Tạo phòng',
-                    isWaiting: _isWaitingCreateRoom,
-                    isEnable: !_isWaitingFindRoom && !_isWaitingCreateRoom,
+                  Hero(
+                    tag: 'create_room',
+                    child: Button(
+                      onClick: _createRoomClick,
+                      imageAsset: 'assets/images/plus.png',
+                      title: 'Tạo phòng',
+                      isWaiting: _isWaitingCreateRoom,
+                      isEnable: !_isWaitingFindRoom && !_isWaitingCreateRoom,
+                    ),
                   ),
                 ],
               ),

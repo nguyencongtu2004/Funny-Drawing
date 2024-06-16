@@ -253,7 +253,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
 
         if (context.mounted && isQuit) {
           _playOutRoom(ref);
-          Navigator.pop(context);
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (ctx) => const HomePage()),
+              (route) => false);
         }
       },
       child: Scaffold(
@@ -291,9 +293,10 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                               }
 
                               await _playOutRoom(ref);
-                              if (context.mounted) {
-                                Navigator.of(context).pop();
-                              }
+                              Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (ctx) => const HomePage()),
+                                  (route) => false);
                             },
                             icon: Image.asset('assets/images/back.png'),
                             iconSize: 45,
@@ -348,9 +351,11 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   // Chế độ đã chọn
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      children: [
-                        RoomMode(
+                    child: Hero(
+                      tag: widget.selectedRoom.mode,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: RoomMode(
                           mode: widget.selectedRoom.mode,
                           description: availabePlayMode
                               .firstWhere((mode) =>
@@ -359,8 +364,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                           selecting: ValueNotifier<String>(
                               'bla'), // dòng này không cần thiết nhưng lỡ thiết kế vậy rồi :((
                         ),
-                        const SizedBox(height: 8),
-                      ],
+                      ),
                     ),
                   ),
                   Padding(
@@ -438,15 +442,18 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       isEnable: !isWaitingStart && !isWaitingInvite,
                     ),
                     const SizedBox(width: 10),
-                    Button(
-                      onClick: (ctx) {
-                        _startClick(ctx);
-                      },
-                      title: 'Bắt đầu',
-                      imageAsset: 'assets/images/play.png',
-                      width: 150,
-                      isWaiting: isWaitingStart,
-                      isEnable: !isWaitingStart && !isWaitingInvite,
+                    Hero(
+                      tag: "create_room",
+                      child: Button(
+                        onClick: (ctx) {
+                          _startClick(ctx);
+                        },
+                        title: 'Bắt đầu',
+                        imageAsset: 'assets/images/play.png',
+                        width: 150,
+                        isWaiting: isWaitingStart,
+                        isEnable: !isWaitingStart && !isWaitingInvite,
+                      ),
                     )
                   ],
                 ),

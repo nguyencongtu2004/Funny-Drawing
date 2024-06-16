@@ -222,9 +222,11 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                   child: Column(
                     children: [
                       for (final mode in availabePlayMode)
-                        Column(
-                          children: [
-                            InkWell(
+                        Hero(
+                          tag: mode.mode,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: InkWell(
                               onTap: () {
                                 if (_isWaiting) return;
                                 print(mode.mode);
@@ -237,8 +239,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                                 selecting: selecting,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                          ],
+                          ),
                         ),
                     ],
                   ),
@@ -412,19 +413,18 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
           Positioned(
             bottom: 50,
             left: MediaQuery.of(context).size.width / 2 - (180) / 2,
-            child: Row(
-              children: [
-                Button(
-                  onClick: (ctx) {
-                    _startClick(ctx);
-                  },
-                  title: 'Tạo phòng',
-                  imageAsset: 'assets/images/play.png',
-                  width: 180,
-                  isWaiting: _isWaiting,
-                  isEnable: !_isWaiting,
-                )
-              ],
+            child: Hero(
+              tag: 'create_room',
+              child: Button(
+                onClick: (ctx) {
+                  _startClick(ctx);
+                },
+                title: 'Tạo phòng',
+                imageAsset: 'assets/images/play.png',
+                width: 180,
+                isWaiting: _isWaiting,
+                isEnable: !_isWaiting,
+              ),
             ),
           ),
         ],
