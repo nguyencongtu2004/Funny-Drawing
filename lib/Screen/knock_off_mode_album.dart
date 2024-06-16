@@ -300,7 +300,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   @override
   Widget build(BuildContext context) {
     const double widthOfPicture = 250;
-    const double heightOfPicture = 400;
+    const double heightOfPicture = 430;
 
     if (picturesOfUsers.isEmpty || _showingIndex >= _playersInRoom.length) {
       return const Loading(
@@ -414,7 +414,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                                                   _showingIndex]
                                                               [
                                                               index]['Offset']!),
-                                                      scale: 0.5),
+                                                      scale: 0.6),
                                                   paints: decodePaintList(
                                                       picturesOfUsers[
                                                               _showingIndex]
@@ -575,11 +575,19 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   // Hàm thu nhỏ offset
   List<List<Offset>> scaleOffset(List<List<Offset>> offsetList,
       {double scale = 1.0}) {
-    return offsetList.map((offsets) {
-      return offsets.map((offset) {
-        return Offset(offset.dx * scale, offset.dy * scale);
-      }).toList();
-    }).toList();
+    List<List<Offset>> points = [];
+    for (List<Offset> iList in offsetList) {
+      List<Offset> tmp1 = [];
+      for (Offset os in iList) {
+        if (os.dx != -1 && os.dy != -1) {
+          tmp1.add(Offset(os.dx * scale, os.dy * scale));
+        } else {
+          tmp1.add(os);
+        }
+      }
+      points.add(tmp1);
+    }
+    return points;
   }
 
   @override
