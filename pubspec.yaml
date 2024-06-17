@@ -43,6 +43,7 @@ dependencies:
   uuid: ^4.4.0
   flutter_keyboard_visibility: ^6.0.0
   shared_preferences: ^2.2.3
+  flutter_screenutil: ^5.0.0
 
 dev_dependencies:
   flutter_test:
