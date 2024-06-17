@@ -565,7 +565,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         }
       }
     }
-
     return offsetList;
   }
 

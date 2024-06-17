@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:draw_and_guess_promax/Screen/masterpiece_mark.dart';
+import 'package:draw_and_guess_promax/Screen/masterpiece_scoring.dart';
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
 import 'package:draw_and_guess_promax/Widget/masterpiece_mode_status.dart';
@@ -30,22 +30,19 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
   late String roomOwner = widget.selectedRoom.roomOwner!;
   String _wordToDraw = '';
   late final String _userId;
-  late final List<PlayerInMasterPieceMode> _playersInRoom = [];
+  late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   List<Map<String, dynamic>> album = [];
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _playerInRoomIDRef;
   late DatabaseReference _myAlbumRef;
-  late DatabaseReference _chatRef;
-  late DatabaseReference _drawingRef;
   late DatabaseReference _masterpieceModeDataRef;
   late PlayerInMasterPieceMode? _currentUser;
 
 
   var _timeLeft = -1;
-  var _pointLeft = 0;
-  var _curPlayer = 2;
+  late int _curPlayer;
 
   Timer? _timer;
 
@@ -56,15 +53,14 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
-    _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _masterpieceModeDataRef =
         database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
     _myAlbumRef = _masterpieceModeDataRef.child('/$_userId/album');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
 
-    // Lắng nghe sự kiện thoát phòng TODO
+    _startTimer();
+    // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
       if (event.snapshot.value == null) {
         final data = Map<String, dynamic>.from(
@@ -88,11 +84,10 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
       );
       _playersInRoom.clear();
       for (final player in data.entries) {
-        _playersInRoom.add(PlayerInMasterPieceMode(
+        _playersInRoom.add(User(
           id: player.key,
           name: player.value['name'],
           avatarIndex: player.value['avatarIndex'],
-          point: player.value['point'],
         ));
       }
 
@@ -105,11 +100,6 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map
       );
-      print(data);
-      print(data['wordToDraw'].runtimeType);
-      print(data['point'].runtimeType);
-      print(data['timeLeft'].runtimeType);
-
 
       setState(() {
         _wordToDraw = data['wordToDraw'] as String;
@@ -119,22 +109,16 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
         _timeLeft = timeLeft;
       });
 
-
-      // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
-      _startTimer();
-
       if (timeLeft == 0) {
-        //TODO chuyển qua màn hình chấm điểm
-
-        //Lưu bức tranh đã vẽ và id người vẽ
-
+        _masterpieceModeDataRef.update({
+          'timeLeft': 15,
+        });
 
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (ctx) => MasterPieceMark(selectedRoom: widget.selectedRoom)));
+            builder: (ctx) =>
+                MasterPieceScoring(selectedRoom: widget.selectedRoom)));
       }
     });
-
-
   }
 
   late Completer<bool> _completer;
@@ -197,10 +181,7 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
           'noOneInRoom': true,
         });
       } else {
-        // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
-        _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
-        });
+        //todo
       }
     }
     await _playerInRoomIDRef.remove();
@@ -234,7 +215,6 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
   @override
   void dispose() {
     _timer?.cancel(); // Hủy Timer khi widget bị dispose
-
     super.dispose();
   }
 

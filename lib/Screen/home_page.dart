@@ -1,8 +1,7 @@
 import 'dart:math';
 
-import 'package:draw_and_guess_promax/Screen/knock_off_mode_album.dart';
+import 'package:draw_and_guess_promax/Screen/master_piece_mode_rank.dart';
 import 'package:draw_and_guess_promax/Widget/pick_avatar_dialog.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,8 +9,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Widget/button.dart';
 import '../animation.dart';
 import '../firebase.dart';
-import '../model/room.dart';
-import '../model/user.dart';
 import '../provider/user_provider.dart'; // Đảm bảo bạn import user_provider đúng cách
 import 'create_room.dart';
 import 'find_room.dart';
@@ -117,8 +114,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     final user = ref.watch(userProvider);
     final usersRef = database.child('/users/${user.id}');
-    await usersRef.update({'name': name, 'avatarIndex': _avatarIndex
-    });
+    await usersRef.update({'name': name, 'avatarIndex': _avatarIndex});
 
     //Navigator.of(context).push(createRouteBottomToTopTransition(oldPage: widget, newPage: const FindRoom()));
     Navigator.of(context)
@@ -150,8 +146,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     final user = ref.watch(userProvider);
     final usersRef = database.child('/users/${user.id}');
-    await usersRef.update({'name': name, 'avatarIndex': _avatarIndex
-    });
+    await usersRef.update({'name': name, 'avatarIndex': _avatarIndex});
 
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (ctx) => const CreateRoom()));
@@ -380,6 +375,17 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            Positioned(
+              top: 100,
+              left: (MediaQuery.of(context).size.width - 180) / 2,
+              child: Button(
+                title: 'Bảng xếp hạng',
+                onClick: (BuildContext context) {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => const MasterPieceModeRank()));
+                },
               ),
             ),
           ],

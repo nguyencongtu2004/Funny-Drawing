@@ -194,13 +194,12 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
           builder: (ctx) => KnockoffMode(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tuyệt tác') {
       if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
-        var MasterPieceModeDataRef =
-        database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
+        var masterPieceModeDataRef = database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
         // Khởi tạo trạng thái của phòng
-        await MasterPieceModeDataRef.update({
+        await masterPieceModeDataRef.update({
           'wordToDraw': pickRandomWordToGuess(),
-          'timeLeft': 60,
-          'point': 0,
+          'timeLeft': widget.selectedRoom.timePerRound,
+          'showingIndex': 0,
           // 'endGame': false,
         });
       }
