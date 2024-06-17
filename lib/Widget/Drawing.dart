@@ -37,7 +37,6 @@ class _Drawing extends ConsumerState<Drawing> {
   late double _paintSize;
   late IconData _selectIcon;
   late DatabaseReference _normalModeDataRef;
-  late DatabaseReference _drawRef;
   bool? _isMenuBarVisible;
   final GlobalKey _sizemenu = GlobalKey();
   final GlobalKey _selectmenu = GlobalKey();
@@ -56,8 +55,6 @@ class _Drawing extends ConsumerState<Drawing> {
     _isSizeMenuVisible = false;
     _containerPositionSize = Offset.zero;
     _isErase = false;
-
-    _drawRef = database.child('/draw/${widget.selectedRoom}');
 
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
@@ -580,7 +577,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late Queue<List<Offset>> Qpn = Queue<List<Offset>>();
   late Queue<Paint> Qpt = Queue<Paint>();
   late bool isDrawLine = false;
-  late DatabaseReference drawRef;
+  late DatabaseReference _drawingRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _normalModeDataRef;
   late DatabaseReference _knockoffModeDataRef;
@@ -602,7 +599,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
     // setup cho chế độ thường
     if (widget.selectedRoom.mode == 'Thường') {
-      drawRef = database.child('/draw/${widget.selectedRoom.roomId}');
+      _drawingRef = database
+          .child('/normal_mode_data/${widget.selectedRoom.roomId}/draw');
       _normalModeDataRef =
           database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
 
@@ -625,7 +623,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         }
       });
 
-      drawRef.onValue.listen((event) async {
+      _drawingRef.onValue.listen((event) async {
         // Khi có sự thay đổi dữ liệu trên Firebase
         if (event.snapshot.value == null) {
           clearPoints();
@@ -943,7 +941,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     List<List<Offset>> fbpush = points;
     if (tmp.isNotEmpty) fbpush.add(tmp);
 
-    await drawRef.update(
+    await _drawingRef.update(
         {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
   }
 

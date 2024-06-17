@@ -33,6 +33,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   late DatabaseReference _myAlbumRef;
   var _timeLeft = -1;
   int? _totalTurn;
+  late int _curPlayer;
 
   Timer? _timer;
 
@@ -51,17 +52,25 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
 
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        // Room has been deleted
+        /*final snapshot = await _knockoffModeDataRef.get();
+        final data = Map<String, dynamic>.from(snapshot.value as Map,);
+        final noOneInRoom = data['noOneInRoom'] as bool? ?? false;*/
         if (widget.selectedRoom.roomOwner != _userId) {
-          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
-              isKicked: true);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
           );
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
         }
       }
+
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      _curPlayer = data['curPlayer'] as int;
     });
 
     // Lấy thông tin người chơi trong phòng
@@ -102,6 +111,20 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+      if (data['noOneInRoom'] == true) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _knockoffModeDataRef.remove();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
+        if (_userId == widget.selectedRoom.roomOwner) {
+          _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+              isKicked: true);
+        }
+      }
       _totalTurn = data['turn'] as int;
     });
     _startTimer();
@@ -122,7 +145,20 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
-    if (widget.selectedRoom.roomOwner == userId) {
+    final currentPlayerCount = _curPlayer;
+    if (currentPlayerCount > 0) {
+      // Nếu còn 2 người chơi thì xóa phòng
+      if (currentPlayerCount <= 2) {
+        _knockoffModeDataRef.update({
+          'noOneInRoom': true,
+        });
+      } else {
+        // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
+        await _playersInRoomRef.child(userId).remove();
+      }
+    }
+
+    /*if (widget.selectedRoom.roomOwner == userId) {
       await _roomRef.remove();
       await _playersInRoomRef.remove();
       await _knockoffModeDataRef.remove();
@@ -134,11 +170,9 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       final currentPlayerCount =
           (await _roomRef.child('curPlayer').get()).value as int;
       if (currentPlayerCount > 0) {
-        await _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
-        });
+        await _playersInRoomRef.child(userId).remove();
       }
-    }
+    }*/
   }
 
   late Completer<bool> _completer;

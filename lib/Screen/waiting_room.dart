@@ -50,8 +50,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
 
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        // Room has been deleted
         if (widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
@@ -64,7 +64,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         final data = Map<String, dynamic>.from(
             event.snapshot.value as Map<dynamic, dynamic>);
         isPlayed = data['isPlayed'];
-        // print("Callnav 3  " + data['isPlayed'].toString());
         if (data['isPlayed'] == true) {
           startMode(widget.selectedRoom.mode);
         }
@@ -85,6 +84,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
           ));
         }
       });
+
+      // Cập nhật số người chơi trong phòng
+      _roomRef.update({'curPlayer': currentPlayers.length});
     });
   }
 
@@ -148,15 +150,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       final playerRef = database
           .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
       await playerRef.remove();
-
-      // Cập nhật thông tin phòng
-      final currentPlayerCount =
-          (await _roomRef.child('curPlayer').get()).value as int;
-      if (currentPlayerCount > 0) {
-        await _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
-        });
-      }
     }
   }
 

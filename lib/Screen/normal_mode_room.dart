@@ -64,30 +64,31 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
+    _drawingRef = database.child('/normal_mode_data/draw/');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-    // Lắng nghe sự kiện thoát phòng TODO
+    // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        final data = Map<String, dynamic>.from(
-          event.snapshot.value as Map<dynamic, dynamic>,
-        );
-        _curPlayer = data['curPlayer'] as int;
-        roomOwner = data['roomOwner']!;
-        // Room has been deleted
         if (roomOwner != ref.read(userProvider).id) {
-          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
-              isKicked: true);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
           );
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
         }
       }
+
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      _curPlayer = data['curPlayer'] as int;
+      roomOwner = data['roomOwner']!;
     });
 
     // Lấy thông tin người chơi trong phòng
@@ -151,7 +152,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         _drawingRef.remove();
         _normalModeDataRef.remove();
 
-        Navigator.of(context).pop();
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
         _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
             isKicked: true);
       }
@@ -364,7 +368,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     if (userId == null) return;
 
     final currentPlayerCount = _curPlayer;
-    print("So luong: " + currentPlayerCount.toString());
     if (currentPlayerCount > 0) {
       // Nếu còn 2 người chơi thì xóa phòng
       if (currentPlayerCount <= 2) {
@@ -373,9 +376,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         });
       } else {
         // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
-        _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
-        });
+        await _playersInRoomRef.child(userId).remove();
       }
     }
     await _playerInRoomIDRef.remove();
