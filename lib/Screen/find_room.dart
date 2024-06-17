@@ -31,6 +31,8 @@ class _FindRoomState extends ConsumerState<FindRoom> {
   var rooms = <Room>[];
   late List<Room> filteredRoom = [];
   var _isWaiting = false;
+  late int itemsToShow = 0;
+  Timer? _timer;
 
   // GlobalKey để tham chiếu đến AnimatedList
   final GlobalKey<AnimatedListState> _listKey = GlobalKey();
@@ -39,6 +41,9 @@ class _FindRoomState extends ConsumerState<FindRoom> {
   void initState() {
     super.initState();
     database.child('/rooms').onValue.listen((event) {
+      _onRefresh();
+    });
+    /*database.child('/rooms').onValue.listen((event) {
       final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>);
 
@@ -59,6 +64,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         rooms.add(nextRoom);
       }
 
+      setState(() {
       filteredRoom = rooms
           .where((room) =>
               room.curPlayer < room.maxPlayer &&
@@ -66,9 +72,78 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                   (room.mode == 'Tam sao thất bản' && room.isPlayed == false) ||
                   (room.mode == 'Tuyệt tác' && room.isPlayed == false)))
           .toList();
+      itemsToShow = filteredRoom.length;
+      });
+    });*/
+  }
 
-      setState(() {});
-    });
+  Future<void> _onRefresh() async {
+    print('Refresh triggered'); // Debugging statement
+    final snapshot = await database.child('/rooms').get();
+
+    // Ensure snapshot has data
+    if (snapshot.value != null) {
+      final data =
+          Map<String, dynamic>.from(snapshot.value as Map<dynamic, dynamic>);
+
+      rooms = [];
+
+      for (final room in data.entries) {
+        final nextRoom = Room(
+          roomId: room.key,
+          roomOwner: room.value['roomOwner'],
+          mode: room.value['mode'],
+          curPlayer: room.value['curPlayer'],
+          maxPlayer: room.value['maxPlayer'],
+          isPrivate: room.value['isPrivate'],
+          password: room.value['password'],
+          isPlayed: room.value['isPlayed'],
+          timePerRound: room.value['timePerRound'],
+        );
+        rooms.add(nextRoom);
+      }
+
+      setState(() {
+        filteredRoom = rooms
+            .where((room) =>
+                room.curPlayer < room.maxPlayer &&
+                ((room.mode == 'Thường') ||
+                    (room.mode == 'Tam sao thất bản' &&
+                        room.isPlayed == false) ||
+                    (room.mode == 'Tuyệt tác' && room.isPlayed == false)))
+            .toList();
+        itemsToShow = filteredRoom.length;
+        print(
+            'Filtered rooms count: ${filteredRoom.length}'); // Debugging statement
+      });
+    } else {
+      setState(() {
+        filteredRoom = [];
+        itemsToShow = 0;
+      });
+      print('No data found'); // Debugging statement
+    }
+  }
+
+  // Chắc khỏi làm quá
+  void _animateRooms() {
+    // Xóa các item cũ
+    _listKey.currentState?.removeAllItems(
+      (context, animation) => SizeTransition(
+        sizeFactor: animation,
+        child: Container(), // Một container rỗng để animate việc xóa
+      ),
+      duration: const Duration(milliseconds: 300),
+    );
+
+    // Thêm các item mới
+    for (int i = 0; i < itemsToShow; i++) {
+      Timer(Duration(milliseconds: i * 200), () {
+        if (_listKey.currentState != null) {
+          _listKey.currentState?.insertItem(i);
+        }
+      });
+    }
   }
 
   Future<void> _onStartClick(BuildContext context) async {
@@ -151,32 +226,6 @@ class _FindRoomState extends ConsumerState<FindRoom> {
     });
   }
 
-  // Chắc khỏi làm quá
-  void _animateRooms() {
-    final int itemsToShow = filteredRoom.length;
-
-    // Xóa các item cũ
-    for (int i = itemsToShow - 1; i >= 0; i--) {
-      _listKey.currentState!.removeItem(
-        i,
-        (context, animation) => SizeTransition(
-          sizeFactor: animation,
-          child: Container(), // Một container rỗng để animate việc xóa
-        ),
-        duration: const Duration(milliseconds: 300),
-      );
-    }
-
-    // Thêm các item mới
-    for (int i = 0; i < itemsToShow; i++) {
-      Timer(Duration(milliseconds: i * 200), () {
-        if (_listKey.currentState != null) {
-          _listKey.currentState!.insertItem(i);
-        }
-      });
-    }
-  }
-
   void _onFilterRoom() {
     final roomId = _idController.text;
     final filter = dropdownValue;
@@ -257,7 +306,6 @@ class _FindRoomState extends ConsumerState<FindRoom> {
 
   @override
   Widget build(BuildContext context) {
-    final itemsToShow = filteredRoom.length;
     return Scaffold(
       body: Stack(children: [
         // Nền
@@ -399,18 +447,32 @@ class _FindRoomState extends ConsumerState<FindRoom> {
           ),
         ),
         // Danh sách các phòng
-        // Danh sách các phòng
         if (filteredRoom.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 30),
-              child: Text(
-                'Hiện không có phòng nào\nHãy tạo phòng mới!',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium!
-                    .copyWith(color: Colors.black),
-                textAlign: TextAlign.center,
+          Padding(
+            padding: const EdgeInsets.only(top: 165),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _onRefresh();
+                _animateRooms();
+              },
+              color: const Color(0xFF00C4A0),
+              child: SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child: ListView(
+                  children: [
+                    Center(
+                      child: Text(
+                        'Hiện không có phòng nào\nHãy tạo phòng mới!',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium!
+                            .copyWith(color: Colors.black),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  ],
+                ),
               ),
             ),
           )
@@ -418,41 +480,54 @@ class _FindRoomState extends ConsumerState<FindRoom> {
           // Widget sử dụng AnimatedList
           Padding(
             padding: const EdgeInsets.only(top: 165),
-            child: AnimatedList(
-              key: _listKey,
-              padding: EdgeInsets.zero,
-              initialItemCount: filteredRoom.length,
-              itemBuilder: (ctx, index, animation) {
-                final isLastItem = index == filteredRoom.length - 1;
-                // Sử dụng SizeTransition để thực hiện animation xuất hiện
-                return SizeTransition(
-                  sizeFactor: animation.drive(Tween(begin: 0.0, end: 1.0)),
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                        left: 8, right: 8, bottom: isLastItem ? 120 : 8),
-                    child: InkWell(
-                      onTap: () {
-                        if (_isWaiting) return;
-                        setState(() {
-                          selecting.value = filteredRoom[index].roomId;
-                        });
-                      },
-                      child: Hero(
-                        tag: filteredRoom[index].roomId,
-                        child: RoomToPlay(
-                          mode: filteredRoom[index].mode,
-                          curPlayer: filteredRoom[index].curPlayer,
-                          maxPlayer: filteredRoom[index].maxPlayer,
-                          roomId: filteredRoom[index].roomId,
-                          isPrivate: filteredRoom[index].isPrivate,
-                          selecting: selecting,
-                          password: password,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _onRefresh();
+                _animateRooms();
+              },
+              color: const Color(0xFF00C4A0),
+              child: AnimatedList(
+                key: _listKey,
+                padding: EdgeInsets.zero,
+                initialItemCount: itemsToShow,
+                itemBuilder: (ctx, index, animation) {
+                  final isLastItem = index == itemsToShow - 1;
+                  // Sử dụng SizeTransition để thực hiện animation xuất hiện
+                  try {
+                    return FadeTransition(
+                      key: ValueKey(filteredRoom[index]),
+                      opacity: animation,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                            left: 8, right: 8, bottom: isLastItem ? 120 : 8),
+                        child: InkWell(
+                          onTap: () {
+                            if (_isWaiting) return;
+                            setState(() {
+                              selecting.value = filteredRoom[index].roomId;
+                            });
+                          },
+                          child: Hero(
+                            tag: filteredRoom[index].roomId,
+                            child: RoomToPlay(
+                              mode: filteredRoom[index].mode,
+                              curPlayer: filteredRoom[index].curPlayer,
+                              maxPlayer: filteredRoom[index].maxPlayer,
+                              roomId: filteredRoom[index].roomId,
+                              isPrivate: filteredRoom[index].isPrivate,
+                              selecting: selecting,
+                              password: password,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                    );
+                  } catch (e) {
+                    print('[Lỗi từ AnimatedList] $e');
+                    return Container();
+                  }
+                },
+              ),
             ),
           ),
 
@@ -501,5 +576,11 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                   )),
       ]),
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 }

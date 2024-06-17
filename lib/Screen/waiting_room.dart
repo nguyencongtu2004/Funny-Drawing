@@ -176,8 +176,12 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         });
       }
 
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false);
+      Navigator.of(context).push(MaterialPageRoute(
           builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
+
       ref.read(chatProvider.notifier).clearChat();
     }
     // Khởi tạo trạng thái của phòng chế độ Tam sao thất bản
@@ -438,13 +442,13 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                 ),
               )
             // Chủ phòng
-            else
+            else ...[
               Positioned(
                 bottom: 50,
                 left: MediaQuery.of(context).size.width / 2 -
                     (150 + 10 + 150) / 2,
                 child: Hero(
-                  tag: "create_room",
+                  tag: 'create_room',
                   child: Row(
                     children: [
                       Button(
@@ -472,6 +476,23 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   ),
                 ),
               ),
+              /*Positioned(
+                    bottom: 50,
+                    left: MediaQuery.of(context).size.width / 2 -
+                        (150 + 10 + 150) / 2,
+                    right: MediaQuery.of(context).size.width / 2 -
+                        (150 + 10 + 150) / 2,
+                    child: Hero(
+                      tag: "create_room",
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(1.0),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: const SizedBox(height: 50,),
+                      ),
+                    ),
+                ),*/
+            ],
             // Lời nhắc vui
             Positioned(
               bottom: 20,

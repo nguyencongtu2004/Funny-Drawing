@@ -31,7 +31,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
-  var _timeLeft;
+  var _timeLeft = -1;
   int? _totalTurn;
 
   Timer? _timer;
@@ -197,133 +197,146 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
 
   @override
   Widget build(BuildContext context) {
-    if (_totalTurn == null) {
-      return const Loading();
-    }
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        if (didPop) {
-          return;
-        }
-        final isQuit = (ref.read(userProvider).id ==
-                widget.selectedRoom.roomOwner)
-            ? await _showDialog('Cảnh báo',
-                'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
-            : await _showDialog(
-                'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+    final isRoomOwner =
+        ref.read(userProvider).id == widget.selectedRoom.roomOwner;
+    final isLoading = _totalTurn == null;
+    return Hero(
+        tag: isRoomOwner ? 'create_room' : 'find_room',
+        child: isLoading
+            ? const Loading()
+            : PopScope(
+                canPop: false,
+                onPopInvoked: (didPop) async {
+                  if (didPop) {
+                    return;
+                  }
+                  final isQuit = (ref.read(userProvider).id ==
+                          widget.selectedRoom.roomOwner)
+                      ? await _showDialog('Cảnh báo',
+                          'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
+                      : await _showDialog('Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
-        if (context.mounted && isQuit) {
-          _playerOutRoom(ref);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (ctx) => const HomePage()),
-            (route) => false,
-          );
-        }
-      },
-      child: Stack(
-        children: [
-          // App bar
-          Container(
-            width: double.infinity,
-            height: 100,
-            decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
-            child: Column(
-              children: [
-                const SizedBox(height: 35),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  if (context.mounted && isQuit) {
+                    _playerOutRoom(ref);
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (ctx) => const HomePage()),
+                      (route) => false,
+                    );
+                  }
+                },
+                child: Stack(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: SizedBox(
-                        height: 45,
-                        width: 45,
-                        child: IconButton(
-                          onPressed: () async {
-                            if (ref.read(userProvider).id ==
-                                widget.selectedRoom.roomOwner) {
-                              final isQuit = await _showDialog('Cảnh báo',
-                                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
-                              if (!isQuit) return;
-                            } else {
-                              final isQuit = await _showDialog('Cảnh báo',
-                                  'Bạn có chắc chắn muốn thoát khỏi phòng không?');
-                              if (!isQuit) return;
-                            }
+                    // App bar
+                    Container(
+                      width: double.infinity,
+                      height: 100,
+                      decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 35),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: SizedBox(
+                                  height: 45,
+                                  width: 45,
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      if (ref.read(userProvider).id ==
+                                          widget.selectedRoom.roomOwner) {
+                                        final isQuit = await _showDialog(
+                                            'Cảnh báo',
+                                            'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                                        if (!isQuit) return;
+                                      } else {
+                                        final isQuit = await _showDialog(
+                                            'Cảnh báo',
+                                            'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+                                        if (!isQuit) return;
+                                      }
 
-                            await _playerOutRoom(ref);
-                            if (context.mounted) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (ctx) => const HomePage()),
-                                (route) => false,
-                              );
-                            }
-                          },
-                          icon: Image.asset('assets/images/back.png'),
-                          iconSize: 45,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Tam sao thất bản',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge!
-                            .copyWith(color: Colors.black),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (_totalTurn! % 2 == 1 && _timeLeft > 0)
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: SizedBox(
-                          height: 45,
-                          width: 45,
-                          child: IconButton(
-                            tooltip: 'Hoàn thành vẽ',
-                            onPressed: _onCompleteDrawing,
-                            icon: Image.asset('assets/images/done.png'),
-                            iconSize: 45,
+                                      await _playerOutRoom(ref);
+                                if (context.mounted) {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (ctx) => const HomePage()),
+                                        (route) => false,
+                                  );
+                                }
+                              },
+                              icon: Image.asset('assets/images/back.png'),
+                              iconSize: 45,
+                            ),
                           ),
                         ),
-                      ),
+                        Expanded(
+                          child: Text(
+                            'Tam sao thất bản',
+                            style: Theme
+                                .of(context)
+                                .textTheme
+                                .titleLarge!
+                                .copyWith(color: Colors.black),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (_totalTurn! % 2 == 1 && _timeLeft > 0)
+                          Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: SizedBox(
+                              height: 45,
+                              width: 45,
+                              child: IconButton(
+                                tooltip: 'Hoàn thành vẽ',
+                                onPressed: _onCompleteDrawing,
+                                icon: Image.asset('assets/images/done.png'),
+                                iconSize: 45,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          // Drawing board
-          Positioned(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 100),
-              child: Drawing(
-                height: MediaQuery.of(context).size.height - 100,
-                width: MediaQuery.of(context).size.width,
-                selectedRoom: widget.selectedRoom,
               ),
-            ),
-          ),
-          // Hint
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
-            child: Container(
-              color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 15, top: 5),
-                child: KnockoffModeStatus(
-                  timeLeft: _timeLeft,
-                  turn: _totalTurn!,
+              // Drawing board
+              Positioned(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 100),
+                  child: Drawing(
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height - 100,
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
+                    selectedRoom: widget.selectedRoom,
+                  ),
                 ),
               ),
-            ),
+              // Hint
+              Positioned(
+                top: 100,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15, top: 5),
+                    child: KnockoffModeStatus(
+                      timeLeft: _timeLeft,
+                      turn: _totalTurn!,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        )
     );
   }
 
