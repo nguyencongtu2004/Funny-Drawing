@@ -41,7 +41,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   var currentPlayers = <User>[];
   var isWaitingStart = false;
   var isWaitingInvite = false;
-
   @override
   void initState() {
     super.initState();
@@ -194,9 +193,20 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => KnockoffMode(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tuyệt tác') {
+      if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+        var MasterPieceModeDataRef =
+        database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
+        // Khởi tạo trạng thái của phòng
+        await MasterPieceModeDataRef.update({
+          'wordToDraw': pickRandomWordToGuess(),
+          'timeLeft': 60,
+          'point': 0,
+          // 'endGame': false,
+        });
+      }
+
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (ctx) =>
-              MasterPieceMode(selectedRoom: widget.selectedRoom)));
+          builder: (ctx) => MasterPieceMode(selectedRoom: widget.selectedRoom)));
     } else {
       throw 'Unknown mode: $mode';
     }

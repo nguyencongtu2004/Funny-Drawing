@@ -64,7 +64,8 @@ class _Drawing extends ConsumerState<Drawing> {
           event.snapshot.value as Map<dynamic, dynamic>,
         );
         setState(() {
-          _isMenuBarVisible = (widget.selectedRoom.mode != 'Thường' || data['turn'] == ref.read(userProvider).id);
+          _isMenuBarVisible = (widget.selectedRoom.mode != 'Thường' ||
+              data['turn'] == ref.read(userProvider).id);
         });
       });
     } else if (widget.selectedRoom.mode == 'Tam sao thất bản') {
@@ -554,14 +555,14 @@ class PaintBoard extends ConsumerStatefulWidget {
   final void Function() hideMenu;
   final void Function(bool) toggleDrawBar;
 
-  const PaintBoard(
-      {super.key,
-      required this.chose,
-      required this.height,
-      required this.width,
-      required this.paintColor,
-      required this.paintSize,
-      required this.selectedRoom,
+  const PaintBoard({
+    super.key,
+    required this.chose,
+    required this.height,
+    required this.width,
+    required this.paintColor,
+    required this.paintSize,
+    required this.selectedRoom,
     required this.hideMenu,
     required this.toggleDrawBar,
   });
@@ -581,6 +582,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _normalModeDataRef;
   late DatabaseReference _knockoffModeDataRef;
+  late DatabaseReference _masterpieceModeDataRef;
   late DatabaseReference _myDataRef;
   late DatabaseReference _myAlbumRef;
   late final List<User> _playersInRoom = [];
@@ -672,7 +674,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
         _playersInRoom.clear();
         var index = 0;
         for (final player in data.entries) {
-          if(player.key == ref.read(userProvider).id) {
+          if (player.key == ref.read(userProvider).id) {
             _indexCurrent = index;
           }
           _playersInRoom.add(User(
@@ -770,7 +772,26 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     }
 
     // setup cho chế độ tuyệt tác
-    if (widget.selectedRoom.mode == 'Tuyệt tác') {}
+    if (widget.selectedRoom.mode == 'Tuyệt tác') {
+      _playersInRoomRef =
+          database.child('/players_in_room/${widget.selectedRoom.roomId}');
+      _myDataRef = database.child(
+          '/knockoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
+      _myAlbumRef = _myDataRef.child('/album');
+      _masterpieceModeDataRef = database
+          .child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
+      _masterpieceModeDataRef.onValue.listen((event) async {
+        final data = Map<String, dynamic>.from(
+          event.snapshot.value as Map<dynamic, dynamic>,
+        );
+        _timeLeft = data['timeLeft'];
+
+        // Hết thời gian vẽ
+        if (_timeLeft == 0) {
+          updatePointsMasterPieceMode(ref.read(userProvider).id!);
+        }
+      });
+    }
   }
 
   _showSnackBar(String message) {
@@ -787,7 +808,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
             builder: (context) => KnockoffModeAlbum(
-                selectedRoom: widget.selectedRoom,
+                  selectedRoom: widget.selectedRoom,
                 )),
         (route) => false,
       );
@@ -958,6 +979,14 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     });
   }
 
+  void updatePointsMasterPieceMode(String id) async {
+    //if (points.isEmpty && tmp.isEmpty) return;
+    List<List<Offset>> fbpush = points;
+    if (tmp.isNotEmpty) fbpush.add(tmp);
+
+    await _masterpieceModeDataRef.child('/album/$id').update(
+        {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
+  }
 
   @override
   Widget build(BuildContext context) {

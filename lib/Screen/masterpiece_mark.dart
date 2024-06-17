@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:draw_and_guess_promax/Screen/masterpiece_mark.dart';
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
+import 'package:draw_and_guess_promax/Widget/button.dart';
+import 'package:draw_and_guess_promax/Widget/masterpiece_mark_status.dart';
 import 'package:draw_and_guess_promax/Widget/masterpiece_mode_status.dart';
 import 'package:draw_and_guess_promax/Widget/normal_mode_status.dart';
 import 'package:draw_and_guess_promax/data/word_to_guess.dart';
@@ -17,42 +20,54 @@ import '../firebase.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart';
 
-class MasterPieceMode extends ConsumerStatefulWidget {
-  const MasterPieceMode({super.key, required this.selectedRoom,});
+class MasterPieceMark extends ConsumerStatefulWidget {
+  const MasterPieceMark({super.key, required this.selectedRoom,});
 
   final Room selectedRoom;
 
   @override
-  createState() => _MasterPieceModeState();
+  createState() => _MasterPieceMarkState();
 }
 
-class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
+class _MasterPieceMarkState extends ConsumerState<MasterPieceMark> {
   late String roomOwner = widget.selectedRoom.roomOwner!;
   String _wordToDraw = '';
-  late final String _userId;
   late final List<PlayerInMasterPieceMode> _playersInRoom = [];
+  List<List<Map<String, String>>> pictures = [];
   late List<String> _playersInRoomId = [];
-  List<Map<String, dynamic>> album = [];
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _playerInRoomIDRef;
-  late DatabaseReference _myAlbumRef;
+  List<Map<String, String>> picturesOfUsers = [];
   late DatabaseReference _chatRef;
   late DatabaseReference _drawingRef;
   late DatabaseReference _masterpieceModeDataRef;
-  late PlayerInMasterPieceMode? _currentUser;
+  late final  album;
+  List<bool> buttonStates = [false, false, false, false, false];
+  late int _pointSelect;
 
+  int get pointSelect {
+    return _pointSelect;
+  }
 
+  set pointSelect(int value) {
+    if (value >= 1 && value <= 5) {
+      _pointSelect = value;
+    }
+  }
+
+  var _showingIndex = 0;
   var _timeLeft = -1;
-  var _pointLeft = 0;
+  var _point = 0;
   var _curPlayer = 2;
+
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _userId = ref.read(userProvider).id!;
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
@@ -60,7 +75,6 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _masterpieceModeDataRef =
         database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
-    _myAlbumRef = _masterpieceModeDataRef.child('/$_userId/album');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
 
@@ -98,12 +112,17 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
 
       _playersInRoomId.clear();
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
+
+      _getPictures();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _animatePictures();
+      });
     });
 
     // Lấy thông tin từ cần vẽ
     _masterpieceModeDataRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
-        event.snapshot.value as Map
+          event.snapshot.value as Map
       );
       print(data);
       print(data['wordToDraw'].runtimeType);
@@ -123,14 +142,8 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
       // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
       _startTimer();
 
-      if (timeLeft == 0) {
-        //TODO chuyển qua màn hình chấm điểm
+      if (_timeLeft == 0) {
 
-        //Lưu bức tranh đã vẽ và id người vẽ
-
-
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (ctx) => MasterPieceMark(selectedRoom: widget.selectedRoom)));
       }
     });
 
@@ -206,7 +219,7 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
       print("Chu phong");
-        for(var cp in _playersInRoom) {
+      for(var cp in _playersInRoom) {
         if(cp.id != roomOwner) {
           _roomRef.update({
             'roomOwner': cp.id,
@@ -218,7 +231,8 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     }
   }
 
-  void _startTimer() {
+
+    void _startTimer() {
     if (roomOwner == ref.read(userProvider).id) {
       _timer?.cancel(); // Hủy Timer nếu đã tồn tại
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -228,6 +242,31 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
           timer.cancel(); // Hủy Timer khi thời gian kết thúc
         }
       });
+    }
+  }
+
+  Future<void> _getPictures() async {
+      for (var id in _playersInRoomId){
+        final snapshot = await _masterpieceModeDataRef.child('/album/$id').get();
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        print(data);
+
+      }
+  }
+
+  void _animatePictures() {
+    // Xóa tất cả các item hiện có
+    final int itemCount = picturesOfUsers[_showingIndex].length;
+    for (int i = itemCount - 1; i >= 0; i--) {
+      _listKey.currentState!.removeItem(
+        i,
+            (context, animation) =>
+            SizeTransition(
+              sizeFactor: animation,
+              child: Container(), // Một container rỗng để animate việc xóa
+            ),
+        duration: const Duration(milliseconds: 300),
+      );
     }
   }
 
@@ -319,28 +358,53 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
           Positioned(
             child: Padding(
               padding: const EdgeInsets.only(top: 100),
-              child: Drawing(
-                height: MediaQuery.of(context).size.height - 100,
-                width: MediaQuery.of(context).size.width,
-                selectedRoom: widget.selectedRoom,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
-            child: Container(
-              color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 15, top: 5),
-                child: MasterpieceModeStatus(
-                  word: _wordToDraw,
-                  timeLeft: _timeLeft,
+              child: Container(
+                color: Colors.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 15, top: 5),
+                  child: MasterpieceMarkStatus(
+                    timeLeft: _timeLeft,
+                  )
                 ),
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Positioned(
+                child: Container(
+                    width: 400,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (var i = 0; i < buttonStates.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Container(
+                                  width: 70,
+                                  child: Button(
+                                      color: buttonStates[i] ? Color(0xFF00C4A0) : Colors.grey,
+                                      onClick: (ctx) {
+                                        setState(() {
+                                          _point = i + 1;
+                                          for (var j = 0; j < buttonStates.length; j++) {
+                                            buttonStates[j] = (j == i);
+                                          }
+                                        });
+                                      },
+                                      title: '${i + 1}',
+                                  )
+                                ),
+                              )
+                          ],
+                        ),
+                      )
+                    )
+                ),
+              )
+
         ]),
       ),
     );

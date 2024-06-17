@@ -4,6 +4,7 @@ import 'package:draw_and_guess_promax/Screen/create_room.dart';
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
+import 'package:draw_and_guess_promax/data/word_to_guess.dart';
 import 'package:draw_and_guess_promax/firebase.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:draw_and_guess_promax/provider/user_provider.dart';
