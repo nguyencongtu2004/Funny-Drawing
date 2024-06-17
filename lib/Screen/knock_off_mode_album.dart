@@ -145,8 +145,9 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       DatabaseReference albumRef = database
           .child('/knockoff_mode_data/${widget.selectedRoom.roomId}/$id/album');
       DataSnapshot snapshot = await albumRef.get();
-
-      final album = Map<String, dynamic>.from(snapshot.value as Map);
+      final playerRef = Map<String, dynamic>.from(snapshot.value as Map);
+      print("ZCHECK - player ref ${playerRef}");
+      final album = Map<String, dynamic>.from(playerRef[id]["album"] as Map);
       final firstPlayerIndex =
           _playersInRoom.indexWhere((player) => player.id == id);
       var bias = 0;
