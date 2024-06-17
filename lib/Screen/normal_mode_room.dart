@@ -47,7 +47,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
   late List<String> _playersInRoomId = [];
   bool? _isMyTurn;
   int currentPlayerTurnIndex = 0;
-  late PlayerInNormalMode _currentTurnUser;
+  late PlayerInNormalMode? _currentTurnUser;
 
   var isMyTurn = false;
   var _timeLeft = -1;
@@ -64,30 +64,31 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
+    _drawingRef = database.child('/normal_mode_data/draw/');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-    // Lắng nghe sự kiện thoát phòng TODO
+    // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        final data = Map<String, dynamic>.from(
-          event.snapshot.value as Map<dynamic, dynamic>,
-        );
-        _curPlayer = data['curPlayer'] as int;
-        roomOwner = data['roomOwner']!;
-        // Room has been deleted
         if (roomOwner != ref.read(userProvider).id) {
-          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
-              isKicked: true);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
           );
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
         }
       }
+
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      _curPlayer = data['curPlayer'] as int;
+      roomOwner = data['roomOwner']!;
     });
 
     // Lấy thông tin người chơi trong phòng
@@ -151,7 +152,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         _drawingRef.remove();
         _normalModeDataRef.remove();
 
-        Navigator.of(context).pop();
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
         _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
             isKicked: true);
       }
@@ -364,7 +368,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     if (userId == null) return;
 
     final currentPlayerCount = _curPlayer;
-    print("So luong: " + currentPlayerCount.toString());
     if (currentPlayerCount > 0) {
       // Nếu còn 2 người chơi thì xóa phòng
       if (currentPlayerCount <= 2) {
@@ -373,9 +376,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         });
       } else {
         // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
-        _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
-        });
+        await _playersInRoomRef.child(userId).remove();
       }
     }
     await _playerInRoomIDRef.remove();
@@ -431,205 +432,218 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       }
     }
 
-    // Chờ dữ liệu từ Firebase
-    if (_isMyTurn == null) {
-      return const Loading();
-    }
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        if (didPop) {
-          return;
-        }
-        final isQuit = (ref.read(userProvider).id == roomOwner)
-            ? await _showDialog('Cảnh báo',
-                'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
-            : await _showDialog(
-                'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+    final isRoomOwner = ref.read(userProvider).id == roomOwner;
+    final isLoading = _isMyTurn == null || _currentTurnUser == null;
+    return Hero(
+        tag: isRoomOwner ? 'create_room' : 'find_room',
+        child: isLoading
+            ? const Loading()
+            : PopScope(
+                canPop: false,
+                onPopInvoked: (didPop) async {
+                  if (didPop) {
+                    return;
+                  }
+                  final isQuit = (ref.read(userProvider).id == roomOwner)
+                      ? await _showDialog('Cảnh báo',
+                          'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
+                      : await _showDialog('Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
-        if (context.mounted && isQuit) {
-          _playerOutRoom(ref);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (ctx) => const HomePage()),
-            (route) => false,
-          );
-        }
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        body: Stack(children: [
-          // App bar
-          Container(
-            width: double.infinity,
-            height: 100,
-            decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
-            child: Column(
-              children: [
-                const SizedBox(height: 35),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: SizedBox(
-                        height: 45,
-                        width: 45,
-                        child: IconButton(
-                          onPressed: () async {
-                            if (ref.read(userProvider).id ==
-                                widget.selectedRoom.roomOwner) {
-                              final isQuit = await _showDialog('Cảnh báo',
-                                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
-                              if (!isQuit) return;
-                            } else {
-                              final isQuit = await _showDialog('Cảnh báo',
-                                  'Bạn có chắc chắn muốn thoát khỏi phòng không?');
-                              if (!isQuit) return;
-                            }
+                  if (context.mounted && isQuit) {
+                    _playerOutRoom(ref);
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (ctx) => const HomePage()),
+                      (route) => false,
+                    );
+                  }
+                },
+                child: Scaffold(
+                  resizeToAvoidBottomInset: true,
+                  body: Stack(children: [
+                    // App bar
+                    Container(
+                      width: double.infinity,
+                      height: 100,
+                      decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 35),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(10),
+                                child: SizedBox(
+                                  height: 45,
+                                  width: 45,
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      if (ref.read(userProvider).id ==
+                                          widget.selectedRoom.roomOwner) {
+                                        final isQuit = await _showDialog(
+                                            'Cảnh báo',
+                                            'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                                        if (!isQuit) return;
+                                      } else {
+                                        final isQuit = await _showDialog(
+                                            'Cảnh báo',
+                                            'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+                                        if (!isQuit) return;
+                                      }
 
-                            await _playerOutRoom(ref);
-                            if (context.mounted) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (ctx) => const HomePage()),
-                                (route) => false,
-                              );
-                            }
-                          },
-                          icon: Image.asset('assets/images/back.png'),
-                          iconSize: 45,
+                                      await _playerOutRoom(ref);
+                                if (context.mounted) {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (ctx) => const HomePage()),
+                                        (route) => false,
+                                  );
+                                }
+                              },
+                              icon: Image.asset('assets/images/back.png'),
+                              iconSize: 45,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Thường',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge!
-                            .copyWith(color: Colors.black),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: SizedBox(
-                        height: 45,
-                        width: 45,
-                        child: IconButton(
-                          tooltip: 'Chat',
-                          onPressed: _showChat,
-                          icon: Image.asset('assets/images/chat.png'),
-                          iconSize: 45,
+                        Expanded(
+                          child: Text(
+                            'Thường',
+                            style: Theme
+                                .of(context)
+                                .textTheme
+                                .titleLarge!
+                                .copyWith(color: Colors.black),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: SizedBox(
+                            height: 45,
+                            width: 45,
+                            child: IconButton(
+                              tooltip: 'Chat',
+                              onPressed: _showChat,
+                              icon: Image.asset('assets/images/chat.png'),
+                              iconSize: 45,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
+                ),
+              ),
+              // Drawing board
+              Positioned(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 100),
+                  child: Drawing(
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height - 100,
+                    width: MediaQuery
+                        .of(context)
+                        .size
+                        .width,
+                    selectedRoom: widget.selectedRoom,
+                  ),
+                ),
+              ),
+              // Hint
+              Positioned(
+                top: 100,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 15, top: 5),
+                    child: NormalModeStatus(
+                      isMyTurn: isMyTurn,
+                      word: _wordToDraw,
+                      timeLeft: _timeLeft,
+                      player: _currentTurnUser!,
+                    ),
+                  ),
+                ),
+              ),
+              // Chat
+              if (_isMyTurn == false) ...[
+                // Bình phong
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    alignment: Alignment.bottomCenter,
+                    padding: const EdgeInsets.all(15),
+                    color: const Color(0xFF00C4A1),
+                    height: 120,
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            decoration: InputDecoration(
+                              hintText:
+                              'Hãy cho ${_currentTurnUser!
+                                  .name} biết câu trả lời của bạn',
+                              hintStyle: const TextStyle(
+                                color: Colors.black45,
+                                fontWeight: FontWeight.normal,
+                                fontSize: 18,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                            ),
+                            onSubmitted: (_) {
+                              onSubmitted();
+                            },
+                          ),
+                        ),
+                        SizedBox(
+                          height: 50,
+                          width: 50,
+                          child: IconButton(
+                            onPressed: onSubmitted,
+                            icon: Image.asset('assets/images/send.png'),
+                            iconSize: 45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ),
+              Positioned(
+                  bottom: 90,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                      padding: const EdgeInsets.only(
+                          left: 15, right: 15, top: 5),
+                      height: 100,
+                      decoration: const BoxDecoration(
+                          color: Color(0xFF00C4A1),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(15),
+                            topRight: Radius.circular(15),
+                          )),
+                      child: ChatList(
+                          scrollController: _scrollController,
+                          chatMessages: chatMessages))),
+            ]),
           ),
-          // Drawing board
-          Positioned(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 100),
-              child: Drawing(
-                height: MediaQuery.of(context).size.height - 100,
-                width: MediaQuery.of(context).size.width,
-                selectedRoom: widget.selectedRoom,
-              ),
-            ),
-          ),
-          // Hint
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
-            child: Container(
-              color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 15, top: 5),
-                child: NormalModeStatus(
-                  isMyTurn: isMyTurn,
-                  word: _wordToDraw,
-                  timeLeft: _timeLeft,
-                  player: _currentTurnUser,
-                ),
-              ),
-            ),
-          ),
-          // Chat
-          if (_isMyTurn == false) ...[
-            // Bình phong
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                alignment: Alignment.bottomCenter,
-                padding: const EdgeInsets.all(15),
-                color: const Color(0xFF00C4A1),
-                height: 120,
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText:
-                              'Hãy cho ${_currentTurnUser.name} biết câu trả lời của bạn',
-                          hintStyle: const TextStyle(
-                            color: Colors.black45,
-                            fontWeight: FontWeight.normal,
-                            fontSize: 18,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                        ),
-                        onSubmitted: (_) {
-                          onSubmitted();
-                        },
-                      ),
-                    ),
-                    SizedBox(
-                      height: 50,
-                      width: 50,
-                      child: IconButton(
-                        onPressed: onSubmitted,
-                        icon: Image.asset('assets/images/send.png'),
-                        iconSize: 45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          Positioned(
-              bottom: 90,
-              left: 0,
-              right: 0,
-              child: Container(
-                  padding: const EdgeInsets.only(left: 15, right: 15, top: 5),
-                  height: 100,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFF00C4A1),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15),
-                      )),
-                  child: ChatList(
-                      scrollController: _scrollController,
-                      chatMessages: chatMessages))),
-        ]),
-      ),
+        )
     );
   }
 }

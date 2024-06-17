@@ -35,7 +35,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _chatRef;
-  late DatabaseReference _drawingRef;
   late DatabaseReference _knockoffModeDataRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
@@ -57,7 +56,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _drawingRef = database.child('/draw/${widget.selectedRoom.roomId}');
     _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _knockoffModeDataRef =
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
@@ -568,7 +566,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         }
       }
     }
-
     return offsetList;
   }
 

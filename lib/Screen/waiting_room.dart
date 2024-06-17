@@ -41,7 +41,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   var currentPlayers = <User>[];
   var isWaitingStart = false;
   var isWaitingInvite = false;
-
   @override
   void initState() {
     super.initState();
@@ -50,8 +49,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
 
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        // Room has been deleted
         if (widget.selectedRoom.roomOwner != ref.read(userProvider).id) {
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
@@ -64,7 +63,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         final data = Map<String, dynamic>.from(
             event.snapshot.value as Map<dynamic, dynamic>);
         isPlayed = data['isPlayed'];
-        // print("Callnav 3  " + data['isPlayed'].toString());
         if (data['isPlayed'] == true) {
           startMode(widget.selectedRoom.mode);
         }
@@ -85,6 +83,9 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
           ));
         }
       });
+
+      // Cập nhật số người chơi trong phòng
+      _roomRef.update({'curPlayer': currentPlayers.length});
     });
   }
 
@@ -148,15 +149,6 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       final playerRef = database
           .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
       await playerRef.remove();
-
-      // Cập nhật thông tin phòng
-      final currentPlayerCount =
-          (await _roomRef.child('curPlayer').get()).value as int;
-      if (currentPlayerCount > 0) {
-        await _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
-        });
-      }
     }
   }
 
@@ -176,8 +168,12 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         });
       }
 
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false);
+      Navigator.of(context).push(MaterialPageRoute(
           builder: (ctx) => NormalModeRoom(selectedRoom: widget.selectedRoom)));
+
       ref.read(chatProvider.notifier).clearChat();
     }
     // Khởi tạo trạng thái của phòng chế độ Tam sao thất bản
@@ -197,9 +193,19 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => KnockoffMode(selectedRoom: widget.selectedRoom)));
     } else if (mode == 'Tuyệt tác') {
+      if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
+        var masterPieceModeDataRef = database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
+        // Khởi tạo trạng thái của phòng
+        await masterPieceModeDataRef.update({
+          'wordToDraw': pickRandomWordToGuess(),
+          'timeLeft': widget.selectedRoom.timePerRound,
+          'showingIndex': 0,
+          // 'endGame': false,
+        });
+      }
+
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (ctx) =>
-              MasterPieceMode(selectedRoom: widget.selectedRoom)));
+          builder: (ctx) => MasterPieceMode(selectedRoom: widget.selectedRoom)));
     } else {
       throw 'Unknown mode: $mode';
     }
@@ -438,13 +444,13 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                 ),
               )
             // Chủ phòng
-            else
+            else ...[
               Positioned(
                 bottom: 50,
                 left: MediaQuery.of(context).size.width / 2 -
                     (150 + 10 + 150) / 2,
                 child: Hero(
-                  tag: "create_room",
+                  tag: 'create_room',
                   child: Row(
                     children: [
                       Button(
@@ -472,6 +478,23 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   ),
                 ),
               ),
+              /*Positioned(
+                    bottom: 50,
+                    left: MediaQuery.of(context).size.width / 2 -
+                        (150 + 10 + 150) / 2,
+                    right: MediaQuery.of(context).size.width / 2 -
+                        (150 + 10 + 150) / 2,
+                    child: Hero(
+                      tag: "create_room",
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(1.0),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: const SizedBox(height: 50,),
+                      ),
+                    ),
+                ),*/
+            ],
             // Lời nhắc vui
             Positioned(
               bottom: 20,
