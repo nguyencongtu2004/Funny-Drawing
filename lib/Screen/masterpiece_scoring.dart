@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:draw_and_guess_promax/Screen/master_piece_mode_rank.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
+import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:draw_and_guess_promax/Widget/masterpiece_mark_status.dart';
 import 'package:draw_and_guess_promax/model/player_masterpiece_mode.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
@@ -11,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../firebase.dart';
 import '../provider/user_provider.dart';
+import 'home_page.dart';
 import 'knock_off_mode_album.dart';
 
 class MasterPieceScoring extends ConsumerStatefulWidget {
@@ -22,10 +25,10 @@ class MasterPieceScoring extends ConsumerStatefulWidget {
   final Room selectedRoom;
 
   @override
-  createState() => _MasterPieceMarkState();
+  createState() => _MasterPieceScoringState();
 }
 
-class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
+class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   late String roomOwner = widget.selectedRoom.roomOwner!;
   late final List<PlayerInMasterPieceMode> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
@@ -61,28 +64,33 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
     // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
     _startTimer();
 
-    // Lắng nghe sự kiện thoát phòng TODO
+    // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        final data = Map<String, dynamic>.from(
-          event.snapshot.value as Map<dynamic, dynamic>,
-        );
-        _curPlayer = data['curPlayer'] as int;
-        roomOwner = data['roomOwner']!;
-        // Room has been deleted
         if (roomOwner != ref.read(userProvider).id) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
-          Navigator.of(context).pop();
         }
       }
-    });
 
-    // Lấy thông tin người chơi trong phòng
-    _playersInRoomRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+      _curPlayer = data['curPlayer'] as int;
+      roomOwner = data['roomOwner'] as String;
+    });
+
+    // Lấy thông tin người chơi trong phòng
+    _playersInRoomRef.onValue.listen((event) async {
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+
       _playersInRoom.clear();
       for (final player in data.entries) {
         _playersInRoom.add(PlayerInMasterPieceMode(
@@ -95,37 +103,55 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
 
       _playersInRoomId.clear();
       _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
-
+      print('=======================================');
+      _playersInRoomId.forEach((element) => print('Player in room: $element'));
       _getPictures();
     });
 
     // Lấy thông tin từ cần vẽ
-    _masterpieceModeDataRef.onValue.listen((event) {
+    _masterpieceModeDataRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>);
       setState(() {
         _showingIndex = data['showingIndex'] as int;
         _timeLeft = data['timeLeft'] as int;
       });
-      if (_showingIndex >= _playersInRoomId.length) {
+      final scoringDone = data['scoringDone'] as bool;
+      // todo: nhảy quá nhanh, thêm điều kiện
+      if (scoringDone && _showingIndex >= _playersInRoomId.length) {
         _timer?.cancel();
-        // todo: sang màn tổng kêt
-        print('End game');
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => MasterPieceModeRank(
+                  selectedRoom: widget.selectedRoom,
+                )));
       }
 
       if (_timeLeft == 0) {
-        // todo
-        _masterpieceModeDataRef
-            .child(
-                '/score/${pictures.firstWhere((e) => e['Index'] == _showingIndex)['Id']}')
-            .set({
+        // Cập nhật điểm
+        final path =
+            '/score/${pictures.firstWhere((e) => e['Index'] == _showingIndex)['Id']}';
+        await _masterpieceModeDataRef.child(path).update({
           '${ref.read(userProvider).id}': _selectedPoint,
         });
+        _selectedPoint = 0;
+
+        // Chủ phòng chuyển bức tranh tiếp theo
         if (ref.read(userProvider).id == roomOwner) {
-          _masterpieceModeDataRef.update({
-            'showingIndex': _showingIndex + 1,
-            'timeLeft': 15,
-          });
+          print('Chủ phòng chuyển bức tranh tiếp theo');
+          print('_showingIndex: $_showingIndex');
+          print('_playersInRoomId.length: ${_playersInRoomId.length}');
+          if (_showingIndex < _playersInRoomId.length) {
+            await _masterpieceModeDataRef.update({
+              'showingIndex': _showingIndex + 1,
+              'timeLeft': 15,
+            });
+            print('Chuyển bức tranh tiếp theo');
+          } else {
+            await _masterpieceModeDataRef.update({
+              'scoringDone': true,
+            });
+            print('Chuyển sang màn hình xếp hạng');
+          }
         }
       }
     });
@@ -178,7 +204,7 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
     return _completer.future;
   }
 
-  Future<void> _playOutRoom(WidgetRef ref) async {
+  Future<void> _playerOutRoom(WidgetRef ref) async {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
@@ -186,22 +212,21 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
     if (currentPlayerCount > 0) {
       // Nếu còn 2 người chơi thì xóa phòng
       if (currentPlayerCount <= 2) {
-        _masterpieceModeDataRef.update({
+        await _masterpieceModeDataRef.update({
           'noOneInRoom': true,
         });
       } else {
         // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
-        // todo
+        await _playersInRoomRef.child(userId).remove();
       }
     }
 
     // ??
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
-      print("Chu phong");
       for (var cp in _playersInRoom) {
         if (cp.id != roomOwner) {
-          _roomRef.update({
+          await _roomRef.update({
             'roomOwner': cp.id,
           });
           break;
@@ -213,9 +238,9 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
   void _startTimer() {
     if (roomOwner == ref.read(userProvider).id) {
       _timer?.cancel(); // Hủy Timer nếu đã tồn tại
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
         if (_timeLeft > 0) {
-          _masterpieceModeDataRef.update({'timeLeft': _timeLeft - 1});
+          await _masterpieceModeDataRef.update({'timeLeft': _timeLeft - 1});
         } else {
           timer.cancel(); // Hủy Timer khi thời gian kết thúc
         }
@@ -224,13 +249,33 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
   }
 
   Future<void> _getPictures() async {
+    final masterpieceSnapshot = await _masterpieceModeDataRef.get();
+    final masterpieceData = Map<String, dynamic>.from(
+      masterpieceSnapshot.value as Map<dynamic, dynamic>,
+    );
+
+    // Chờ cho việc upload ảnh hoàn tất (khai sáng vl)
+    while (!(masterpieceData['uploadDone'] as bool)) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+
     var count = 0;
     for (var id in _playersInRoomId) {
-      List<Map<String, String>> picture = [];
       final snapshot = await _masterpieceModeDataRef.child('/album/$id').get();
-      final data = Map<String, String>.from(snapshot.value as Map);
+
+      // Kiểm tra nếu snapshot.value là null
+      if (snapshot.value == null) {
+        print('Không có dữ liệu cho người chơi với id: $id');
+        continue; // Bỏ qua người chơi này và tiếp tục vòng lặp
+      }
+
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
       final color = data['Color'] as String;
       final offset = data['Offset'] as String;
+      print('type of data:');
+      print(data.runtimeType);
+      print(color.runtimeType);
+      print(offset.runtimeType);
       pictures.add({
         'Index': count,
         'Id': id,
@@ -239,7 +284,15 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
       });
       count++;
     }
-    print(pictures.length); // worked
+    setState(() {
+      pictures = pictures;
+    });
+
+    print('================================');
+    print(pictures.length);
+    pictures.forEach((element) {
+      print(element['Offset']);
+    });
   }
 
   @override
@@ -251,6 +304,12 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showingIndex >= pictures.length) {
+      return const Loading(
+        text: 'đang ở scoring',
+      );
+    }
+
     final offsetList = decodeOffsetList(pictures[_showingIndex]['Offset']!);
     final paintList = decodePaintList(pictures[_showingIndex]['Color']!);
 
@@ -267,8 +326,11 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
                 'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
         if (context.mounted && isQuit) {
-          _playOutRoom(ref);
-          Navigator.of(context).pop();
+          _playerOutRoom(ref);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       },
       child: Stack(children: [
@@ -301,7 +363,7 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
                             if (!isQuit) return;
                           }
 
-                          await _playOutRoom(ref);
+                          await _playerOutRoom(ref);
                           if (context.mounted) {
                             Navigator.of(context).pop();
                           }
@@ -433,4 +495,42 @@ class _MasterPieceMarkState extends ConsumerState<MasterPieceScoring> {
 
     return offsetList;
   }
+}
+
+class PaintCanvas extends CustomPainter {
+  final List<List<Offset>> points;
+  final List<Offset> tmp;
+  final List<Paint> paints;
+
+  PaintCanvas({
+    required this.points,
+    this.tmp = const [],
+    required this.paints,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < points.length; i++) {
+      for (int j = 0; j < points[i].length - 1; j++) {
+        if (points[i][j] != const Offset(-1, -1) &&
+            points[i][j + 1] != const Offset(-1, -1)) {
+          canvas.drawLine(points[i][j], points[i][j + 1], paints[i]);
+        }
+      }
+    }
+
+    if (paints.isNotEmpty) {
+      Paint tmpPaint = paints.last;
+
+      for (int j = 0; j < tmp.length - 1; j++) {
+        if (tmp[j] != const Offset(-1, -1) &&
+            tmp[j + 1] != const Offset(-1, -1)) {
+          canvas.drawLine(tmp[j], tmp[j + 1], tmpPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(PaintCanvas oldDelegate) => true;
 }

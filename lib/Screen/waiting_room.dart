@@ -199,7 +199,10 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         await masterPieceModeDataRef.update({
           'wordToDraw': pickRandomWordToGuess(),
           'timeLeft': widget.selectedRoom.timePerRound,
+          'scoringDone': false,
           'showingIndex': 0,
+          'playAgain': false,
+          'uploadDone': false,
           // 'endGame': false,
         });
       }

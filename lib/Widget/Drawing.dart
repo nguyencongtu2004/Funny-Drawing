@@ -955,7 +955,6 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   }
 
   void updatePointsKnockoffMode(DatabaseReference ref) async {
-    //if (points.isEmpty && tmp.isEmpty) return;
     List<List<Offset>> fbpush = points;
     if (tmp.isNotEmpty) fbpush.add(tmp);
 
@@ -968,12 +967,14 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   }
 
   void updatePointsMasterPieceMode(String id) async {
-    //if (points.isEmpty && tmp.isEmpty) return;
     List<List<Offset>> fbpush = points;
     if (tmp.isNotEmpty) fbpush.add(tmp);
 
     await _masterpieceModeDataRef.child('/album/$id').update(
         {'Offset': encodeOffsetList(fbpush), 'Color': encodePaintList(paints)});
+    await _masterpieceModeDataRef.update({
+      'uploadDone': true,
+    });
   }
 
   @override

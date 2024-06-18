@@ -278,8 +278,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     return _completer.future; // Trả về Future từ Completer
   }
 
-  Future<void> _playAgain() async {
-    // Navigate back to HomePage and then to a new KnockoffModeAlbum instance
+  _playAgain() {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (ctx) => const HomePage(),
@@ -299,6 +298,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   Widget build(BuildContext context) {
     const double widthOfPicture = 250;
     const double heightOfPicture = 430;
+    const double scale = 0.6;
 
     if (picturesOfUsers.isEmpty || _showingIndex >= _playersInRoom.length) {
       return const Loading(
@@ -365,7 +365,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                         picturesOfUsers[_showingIndex][index]['Color']!);
                     final offsetList = decodeOffsetList(
                         picturesOfUsers[_showingIndex][index]['Offset']!);
-                    const double scale = 0.6;
                     return FadeTransition(
                       opacity: animation,
                       child: Column(

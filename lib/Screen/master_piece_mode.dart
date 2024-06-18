@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:draw_and_guess_promax/Screen/masterpiece_scoring.dart';
 import 'package:draw_and_guess_promax/Widget/ChatWidget.dart';
 import 'package:draw_and_guess_promax/Widget/Drawing.dart';
+import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:draw_and_guess_promax/Widget/masterpiece_mode_status.dart';
 import 'package:draw_and_guess_promax/Widget/normal_mode_status.dart';
 import 'package:draw_and_guess_promax/data/word_to_guess.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../firebase.dart';
 import '../model/user.dart';
 import '../provider/user_provider.dart';
+import 'home_page.dart';
 
 class MasterPieceMode extends ConsumerStatefulWidget {
   const MasterPieceMode({super.key, required this.selectedRoom,});
@@ -62,19 +64,23 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     _startTimer();
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        final data = Map<String, dynamic>.from(
-          event.snapshot.value as Map<dynamic, dynamic>,
-        );
-        _curPlayer = data['curPlayer'] as int;
-        roomOwner = data['roomOwner']!;
-        // Room has been deleted
         if (roomOwner != ref.read(userProvider).id) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
-          Navigator.of(context).pop();
         }
       }
+
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      _curPlayer = data['curPlayer'] as int;
+      roomOwner = data['roomOwner']!;
     });
 
     // Lấy thông tin người chơi trong phòng
@@ -96,7 +102,7 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     });
 
     // Lấy thông tin từ cần vẽ
-    _masterpieceModeDataRef.onValue.listen((event) {
+    _masterpieceModeDataRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map
       );
@@ -110,13 +116,21 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
       });
 
       if (timeLeft == 0) {
-        _masterpieceModeDataRef.update({
+        await _masterpieceModeDataRef.update({
           'timeLeft': 15,
+          'scoringDone': false,
         });
 
         Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (ctx) =>
                 MasterPieceScoring(selectedRoom: widget.selectedRoom)));
+      }
+
+      // nếu mới vừa chơi lại thì cập nhật lại
+      if (data['playAgain'] == true) {
+        await _masterpieceModeDataRef.update({
+          'playAgain': false,
+        });
       }
     });
   }
@@ -168,20 +182,20 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
     return _completer.future;
   }
 
-  Future<void> _playOutRoom(WidgetRef ref) async {
+  Future<void> _playerOutRoom(WidgetRef ref) async {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
     final currentPlayerCount = _curPlayer;
-    print("So luong: " + currentPlayerCount.toString());
     if (currentPlayerCount > 0) {
       // Nếu còn 2 người chơi thì xóa phòng
       if (currentPlayerCount <= 2) {
-        _masterpieceModeDataRef.update({
+        await _masterpieceModeDataRef.update({
           'noOneInRoom': true,
         });
       } else {
-        //todo
+        // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
+        await _playersInRoomRef.child(userId).remove();
       }
     }
     await _playerInRoomIDRef.remove();
@@ -189,7 +203,7 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
       print("Chu phong");
         for(var cp in _playersInRoom) {
         if(cp.id != roomOwner) {
-          _roomRef.update({
+          await _roomRef.update({
             'roomOwner': cp.id,
           });
           break;
@@ -202,9 +216,9 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
   void _startTimer() {
     if (roomOwner == ref.read(userProvider).id) {
       _timer?.cancel(); // Hủy Timer nếu đã tồn tại
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
         if (_timeLeft > 0) {
-          _masterpieceModeDataRef.update({'timeLeft': _timeLeft - 1});
+          await _masterpieceModeDataRef.update({'timeLeft': _timeLeft - 1});
         } else {
           timer.cancel(); // Hủy Timer khi thời gian kết thúc
         }
@@ -220,6 +234,9 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
 
   @override
   Widget build(BuildContext context) {
+    if (_playersInRoomId.isEmpty || _wordToDraw.isEmpty || _timeLeft == -1) {
+      return const Loading();
+    }
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -234,8 +251,11 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
             'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
         if (context.mounted && isQuit) {
-          _playOutRoom(ref);
-          Navigator.of(context).pop();
+          _playerOutRoom(ref);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => const HomePage()),
+            (route) => false,
+          );
         }
       },
       child: Scaffold(
@@ -270,7 +290,7 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
                               if (!isQuit) return;
                             }
 
-                            await _playOutRoom(ref);
+                            await _playerOutRoom(ref);
                             if (context.mounted) {
                               Navigator.of(context).pop();
                             }

@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Widget/button.dart';
 import '../animation.dart';
 import '../firebase.dart';
+import '../model/room.dart';
 import '../provider/user_provider.dart'; // Đảm bảo bạn import user_provider đúng cách
 import 'create_room.dart';
 import 'find_room.dart';
@@ -375,17 +376,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            Positioned(
-              top: 100,
-              left: (MediaQuery.of(context).size.width - 180) / 2,
-              child: Button(
-                title: 'Bảng xếp hạng',
-                onClick: (BuildContext context) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => const MasterPieceModeRank()));
-                },
               ),
             ),
           ],
