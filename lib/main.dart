@@ -7,6 +7,8 @@ import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+
 
 void main() async {
   // Kết nối Firebase
@@ -35,7 +37,11 @@ void main() async {
       ),
     );
   }
-
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const ProviderScope(child: DrawAndGuestApp()));
 }
 

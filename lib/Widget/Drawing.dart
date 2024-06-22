@@ -790,6 +790,8 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     ));
   }
 
+
+
   Future<void> showPicture() async {
     // Hết lượt vẽ, xem album
     if (_currentTurn >= _playersInRoom.length * 2) {
@@ -808,12 +810,16 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
 
       DataSnapshot snapshot = await drawTurn.get();
+      print("KIEMTRA - ID player : ${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}");
       if (snapshot.exists) {
+        print("KIEMTRA - OK ko nao?");
         final data = Map<String, dynamic>.from(snapshot.value as Map);
-        final album = Map<String, dynamic>.from(data["album"] as Map);
+        print("KIEMTRA - data: ${data}");
+        final album = Map<String, dynamic>.from(data[_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id]["album"] as Map);
+        print("KIEMTRA - album: ${album}");
         final picture =
             Map<String, dynamic>.from(album["Turn ${_currentTurn - 1}"] as Map);
-
+        print("KIEMTRA - diem de xem: $picture");
         points = decodeOffsetList(picture["Offset"]!);
         paints = decodePaintList(picture["Color"]!);
       } else {
