@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:draw_and_guess_promax/Screen/knock_off_mode_album.dart';
 import 'package:draw_and_guess_promax/firebase.dart';
@@ -805,28 +806,53 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       return;
     }
 
-    try {
-      DatabaseReference drawTurn = _knockoffModeDataRef.child(
-          '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
+    if (Platform.isIOS) {
+      try {
+        DatabaseReference drawTurn = _knockoffModeDataRef.child(
+            '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
 
-      DataSnapshot snapshot = await drawTurn.get();
-      print("KIEMTRA - ID player : ${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}");
-      if (snapshot.exists) {
-        print("KIEMTRA - OK ko nao?");
-        final data = Map<String, dynamic>.from(snapshot.value as Map);
-        print("KIEMTRA - data: ${data}");
-        final album = Map<String, dynamic>.from(data[_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id]["album"] as Map);
-        print("KIEMTRA - album: ${album}");
-        final picture =
-            Map<String, dynamic>.from(album["Turn ${_currentTurn - 1}"] as Map);
-        print("KIEMTRA - diem de xem: $picture");
-        points = decodeOffsetList(picture["Offset"]!);
-        paints = decodePaintList(picture["Color"]!);
-      } else {
-        print('No data available.');
+        DataSnapshot snapshot = await drawTurn.get();
+        print(
+            "KIEMTRA - ID player : ${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}");
+        if (snapshot.exists) {
+          print("KIEMTRA - OK ko nao?");
+          final data = Map<String, dynamic>.from(snapshot.value as Map);
+          print("KIEMTRA - data: ${data}");
+          final album = Map<String, dynamic>.from(data[_playersInRoom[
+                  (_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length]
+              .id]["album"] as Map);
+          print("KIEMTRA - album: ${album}");
+          final picture = Map<String, dynamic>.from(
+              album["Turn ${_currentTurn - 1}"] as Map);
+          print("KIEMTRA - diem de xem: $picture");
+          points = decodeOffsetList(picture["Offset"]!);
+          paints = decodePaintList(picture["Color"]!);
+        } else {
+          print('No data available.');
+        }
+      } catch (error) {
+        print('Lỗi: $error');
       }
-    } catch (error) {
-      print('Lỗi: $error');
+    } else {
+      try {
+        DatabaseReference drawTurn = _knockoffModeDataRef.child(
+            '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
+
+        DataSnapshot snapshot = await drawTurn.get();
+        if (snapshot.exists) {
+          final data = Map<String, dynamic>.from(snapshot.value as Map);
+          final album = Map<String, dynamic>.from(data["album"] as Map);
+          final picture = Map<String, dynamic>.from(
+              album["Turn ${_currentTurn - 1}"] as Map);
+
+          points = decodeOffsetList(picture["Offset"]!);
+          paints = decodePaintList(picture["Color"]!);
+        } else {
+          print('No data available.');
+        }
+      } catch (error) {
+        print('Lỗi: $error');
+      }
     }
   }
 

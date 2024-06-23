@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
@@ -39,7 +40,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
-  late DatabaseReference _myAlbumRef;
   List<List<Map<String, String>>> picturesOfUsers = [];
   var _showingIndex = 0;
   var _isPlayAgain = false;
@@ -61,7 +61,6 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     _knockoffModeDataRef =
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
-    _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
 
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
@@ -136,7 +135,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         _playAgain();
       }
 
-      // có thể chơi lại ở đây (đ!t mẹ nó _playersInRoom.length nó đéo kịp cập nhật nên lỗi mãi)
+      // có thể chơi lại ở đây
       if (albumShowingIndex >= _playersInRoom.length &&
           _playersInRoom.isNotEmpty) {
         // Reset lại phòng
@@ -167,9 +166,17 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       DatabaseReference albumRef = database
           .child('/knockoff_mode_data/${widget.selectedRoom.roomId}/$id/album');
       DataSnapshot snapshot = await albumRef.get();
-      final playerRef = Map<String, dynamic>.from(snapshot.value as Map);
-      print("ZCHECK - player ref ${playerRef}");
-      final album = Map<String, dynamic>.from(playerRef[id]["album"] as Map);
+
+      final Map<String, dynamic> playerRef;
+      final Map<String, dynamic> album;
+      if (Platform.isIOS) {
+        playerRef = Map<String, dynamic>.from(snapshot.value as Map);
+        print("ZCHECK - player ref ${playerRef}");
+        album = Map<String, dynamic>.from(playerRef[id]["album"] as Map);
+      } else {
+        album = Map<String, dynamic>.from(snapshot.value as Map);
+      }
+
       final firstPlayerIndex =
           _playersInRoom.indexWhere((player) => player.id == id);
       var bias = 0;
