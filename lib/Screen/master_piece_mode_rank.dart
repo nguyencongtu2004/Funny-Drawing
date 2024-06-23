@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:draw_and_guess_promax/Widget/loading.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,14 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
   late String roomOwner;
   List<Map<String, dynamic>> picturesAndScores = [];
 
+  final pageController = PageController(
+    initialPage: 0,
+    viewportFraction: 0.8,
+  );
+
+  Timer? _timer;
+  Timer? _pauseTimer;
+
   @override
   void initState() {
     super.initState();
@@ -74,26 +83,6 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
       roomOwner = data['roomOwner']!;
     });
 
-    // Lấy thông tin người chơi trong phòng
-    _playersInRoomRef.onValue.listen((event) {
-      final data = Map<String, dynamic>.from(
-        event.snapshot.value as Map<dynamic, dynamic>,
-      );
-      _playersInRoom.clear();
-      for (final player in data.entries) {
-        _playersInRoom.add(PlayerInMasterPieceMode(
-          id: player.key,
-          name: player.value['name'],
-          avatarIndex: player.value['avatarIndex'],
-          point: 0,
-        ));
-      }
-
-      _playersInRoomId.clear();
-      _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
-      _getPicturesAndScores();
-    });
-
     _masterpieceModeDataRef.onValue.listen((event) {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
@@ -102,6 +91,10 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
         _playAgain();
       }
     });
+
+    _getPlayerInRoom();
+    _getPicturesAndScores();
+    _startTimer();
   }
 
   void _playAgain() {
@@ -121,6 +114,17 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
   }
 
   Future<void> _getPicturesAndScores() async {
+    final masterpieceSnapshot = await _masterpieceModeDataRef.get();
+    final masterpieceData = Map<String, dynamic>.from(
+      masterpieceSnapshot.value as Map<dynamic, dynamic>,
+    );
+
+    // Chờ cho việc upload ảnh hoàn tất
+    while (!(masterpieceData['uploadDone'] as bool)) {
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+
+    picturesAndScores.clear();
     for (var player in _playersInRoom) {
       final albumSnapshot =
           await _masterpieceModeDataRef.child('/album/${player.id}').get();
@@ -154,6 +158,58 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
     picturesAndScores.forEach((element) {
       print(element['Name']);
       print(element['TotalScore']);
+    });
+  }
+
+  Future<void> _getPlayerInRoom() async {
+    final snapshot = await _playersInRoomRef.get();
+    final playersInRoomData = Map<String, dynamic>.from(
+      snapshot.value as Map<dynamic, dynamic>,
+    );
+
+    setState(() {
+      _playersInRoom.clear();
+      for (final player in playersInRoomData.entries) {
+        _playersInRoom.add(PlayerInMasterPieceMode(
+          id: player.key,
+          name: player.value['name'],
+          avatarIndex: player.value['avatarIndex'],
+          point: player.value['point'],
+        ));
+      }
+
+      _playersInRoomId.clear();
+      _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
+      print('Debug:');
+      _playersInRoomId.forEach((element) => print('Player in room: $element'));
+    });
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      if (pageController.page!.round() == picturesAndScores.length - 1) {
+        // Nếu đã đến trang cuối cùng, cuộn về trang đầu tiên
+        pageController.animateToPage(
+          0,
+          duration: Duration(milliseconds: picturesAndScores.length * 400),
+          curve: Curves.easeInOutQuad,
+        );
+      } else {
+        // Nếu chưa đến trang cuối cùng, cuộn đến trang tiếp theo
+        pageController.nextPage(
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOutQuad,
+        );
+      }
+    });
+  }
+
+  // todo: sao nó không dừng
+  void _pausingTimer() {
+    _timer?.cancel();
+    _pauseTimer?.cancel();
+    _pauseTimer = Timer(const Duration(seconds: 5), () {
+      _startTimer();
     });
   }
 
@@ -224,12 +280,13 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
 
   @override
   Widget build(BuildContext context) {
-    /*const double widthOfPicture = 270;
-    const double heightOfPicture = 460;
-    const double scale = 0.6;*/
     final double widthOfPicture = MediaQuery.of(context).size.width * 0.75;
     final double heightOfPicture = MediaQuery.of(context).size.height * 0.5;
     const double scale = 0.6;
+
+    if (picturesAndScores.isEmpty) {
+      return const Loading();
+    }
 
     return PopScope(
       canPop: false,
@@ -280,135 +337,141 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                             .copyWith(color: Colors.black),
                       ),
                     )
-                  : PageView(
-                      scrollDirection: Axis.horizontal,
-                      controller: PageController(
-                        initialPage: 0,
-                      ),
-                      children: [
-                        for (final picAndScore in picturesAndScores)
-                          Container(
-                            width: double.infinity,
-                            height: double.infinity,
-                            color: Colors.transparent, // Nền trong suốt
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                // Hạng
-                                Text(
-                                  'Hạng ${picturesAndScores.indexOf(picAndScore) + 1}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge!
-                                      .copyWith(color: Colors.black),
-                                ),
-                                // Ảnh lớn ở giữa
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(15),
-                                  child: Container(
-                                    color: Colors.white,
-                                    width: widthOfPicture,
-                                    height: heightOfPicture,
-                                    child: picAndScore['Offset']
-                                            .toString()
-                                            .isNotEmpty
-                                        ? CustomPaint(
-                                            painter: PaintCanvas(
-                                              points: scaleOffset(
-                                                  decodeOffsetList(
-                                                      picAndScore['Offset']),
-                                                  scale: scale),
-                                              paints: scalePaint(
-                                                  decodePaintList(
-                                                      picAndScore['Color']),
-                                                  scale: scale),
-                                            ),
-                                            size: Size(widthOfPicture,
-                                                heightOfPicture),
-                                          )
-                                        : Container(
-                                            width: widthOfPicture,
-                                            height: heightOfPicture,
-                                            color: Colors
-                                                .transparent, // Placeholder while loading
-                                          ),
+                  : GestureDetector(
+                      onTap: () {
+                        _pausingTimer();
+                      },
+                      child: PageView(
+                        scrollDirection: Axis.horizontal,
+                        controller: pageController,
+                        children: [
+                          for (final picAndScore in picturesAndScores)
+                            Container(
+                              width: double.infinity,
+                              height: double.infinity,
+                              color: Colors.transparent, // Nền trong suốt
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  // Hạng
+                                  Text(
+                                    'Hạng ${picturesAndScores.indexOf(picAndScore) + 1}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge!
+                                        .copyWith(color: Colors.black),
                                   ),
-                                ),
-                                // Phần dưới với avatar, tên và điểm
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 15),
-                                  child: SizedBox(
-                                    width: widthOfPicture + 50,
-                                    height: 90,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Container(
-                                            margin:
-                                                const EdgeInsets.only(left: 30),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.all(
-                                                Radius.circular(45),
+                                  // Ảnh lớn ở giữa
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: Container(
+                                      color: Colors.white,
+                                      width: widthOfPicture,
+                                      height: heightOfPicture,
+                                      child: picAndScore['Offset']
+                                              .toString()
+                                              .isNotEmpty
+                                          ? CustomPaint(
+                                              painter: PaintCanvas(
+                                                points: scaleOffset(
+                                                    decodeOffsetList(
+                                                        picAndScore['Offset']),
+                                                    scale: scale),
+                                                paints: scalePaint(
+                                                    decodePaintList(
+                                                        picAndScore['Color']),
+                                                    scale: scale),
                                               ),
+                                              size: Size(widthOfPicture,
+                                                  heightOfPicture),
+                                            )
+                                          : Container(
+                                              width: widthOfPicture,
+                                              height: heightOfPicture,
+                                              color: Colors
+                                                  .transparent, // Placeholder while loading
                                             ),
-                                            child: const SizedBox(
-                                              //height: double.infinity,
-                                              height: 50,
-                                              width: double.infinity,
-                                            )),
-                                        Row(
-                                          children: [
-                                            // Avatar
-                                            Container(
-                                              width: 70,
-                                              height: 70,
-                                              margin: const EdgeInsets.all(10),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                image: DecorationImage(
-                                                  image: AssetImage(
-                                                      'assets/images/avatars/avatar${picAndScore['AvatarIndex']}.png'),
-                                                  fit: BoxFit.fill,
-                                                ),
-                                              ),
-                                            ),
-                                            // Tên người chơi
-                                            Expanded(
-                                              child: Text(
-                                                picAndScore['Name'] as String,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge!
-                                                    .copyWith(
-                                                        color: Colors.black),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            // Điểm
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 20),
-                                              child: Text(
-                                                '${picAndScore['TotalScore']}',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleLarge!
-                                                    .copyWith(
-                                                        color: Colors.black),
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      ],
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                              ],
+                                  // Phần dưới với avatar, tên và điểm
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 15),
+                                    child: SizedBox(
+                                      width: widthOfPicture + 50,
+                                      height: 90,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Container(
+                                              margin: const EdgeInsets.only(
+                                                  left: 30),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.all(
+                                                  Radius.circular(45),
+                                                ),
+                                              ),
+                                              child: const SizedBox(
+                                                //height: double.infinity,
+                                                height: 50,
+                                                width: double.infinity,
+                                              )),
+                                          Row(
+                                            children: [
+                                              // Avatar
+                                              Container(
+                                                width: 70,
+                                                height: 70,
+                                                margin:
+                                                    const EdgeInsets.all(10),
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  image: DecorationImage(
+                                                    image: AssetImage(
+                                                        'assets/images/avatars/avatar${picAndScore['AvatarIndex']}.png'),
+                                                    fit: BoxFit.fill,
+                                                  ),
+                                                ),
+                                              ),
+                                              // Tên người chơi
+                                              Expanded(
+                                                child: Text(
+                                                  picAndScore['Name'] as String,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge!
+                                                      .copyWith(
+                                                          color: Colors.black),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              // Điểm
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 20),
+                                                child: Text(
+                                                  '${picAndScore['TotalScore']}',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge!
+                                                      .copyWith(
+                                                          color: Colors.black),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     )),
           // Nút thoát
           if (ref.read(userProvider).id == roomOwner)
@@ -487,6 +550,12 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
   }
 
   // Hàm decode chuỗi JSON thành List<Paint>

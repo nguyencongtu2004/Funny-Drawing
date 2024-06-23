@@ -14,7 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../firebase.dart';
 import '../provider/user_provider.dart';
 import 'home_page.dart';
-import 'knock_off_mode_album.dart';
 
 class MasterPieceScoring extends ConsumerStatefulWidget {
   const MasterPieceScoring({
@@ -45,8 +44,16 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
 
   var _timeLeft = -1;
   late int _curPlayer;
+  static const _timeToScore = 15;
 
   Timer? _timer;
+
+  Timer? _debounceTimer;
+  final int _debounceDuration = 300; // duration in milliseconds
+
+  late StreamSubscription _roomSubscription;
+  late StreamSubscription _playersInRoomSubscription;
+  late StreamSubscription _masterpieceModeDataSubscription;
 
   @override
   void initState() {
@@ -65,14 +72,16 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
     _startTimer();
 
     // Lắng nghe sự kiện thoát phòng
-    _roomRef.onValue.listen((event) async {
+    _roomSubscription = _roomRef.onValue.listen((event) async {
       // Room has been deleted
       if (event.snapshot.value == null) {
         if (roomOwner != ref.read(userProvider).id) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (ctx) => const HomePage()),
-            (route) => false,
-          );
+          if (context.mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (ctx) => const HomePage()),
+              (route) => false,
+            );
+          }
           await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
               isKicked: true);
         }
@@ -85,75 +94,66 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
       roomOwner = data['roomOwner'] as String;
     });
 
-    // Lấy thông tin người chơi trong phòng
-    _playersInRoomRef.onValue.listen((event) async {
-      final data = Map<String, dynamic>.from(
-        event.snapshot.value as Map<dynamic, dynamic>,
-      );
-
-      _playersInRoom.clear();
-      for (final player in data.entries) {
-        _playersInRoom.add(PlayerInMasterPieceMode(
-          id: player.key,
-          name: player.value['name'],
-          avatarIndex: player.value['avatarIndex'],
-          point: player.value['point'],
-        ));
-      }
-
-      _playersInRoomId.clear();
-      _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
-      print('=======================================');
-      _playersInRoomId.forEach((element) => print('Player in room: $element'));
+    _getPlayerInRoom();
+    Future.delayed(const Duration(milliseconds: 300), () {
       _getPictures();
     });
 
     // Lấy thông tin từ cần vẽ
-    _masterpieceModeDataRef.onValue.listen((event) async {
+    _masterpieceModeDataSubscription =
+        _masterpieceModeDataRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>);
-      setState(() {
-        _showingIndex = data['showingIndex'] as int;
-        _timeLeft = data['timeLeft'] as int;
-      });
-      final scoringDone = data['scoringDone'] as bool;
-      // todo: nhảy quá nhanh, thêm điều kiện
-      if (scoringDone && _showingIndex >= _playersInRoomId.length) {
-        _timer?.cancel();
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => MasterPieceModeRank(
-                  selectedRoom: widget.selectedRoom,
-                )));
-      }
 
-      if (_timeLeft == 0) {
-        // Cập nhật điểm
-        final path =
-            '/score/${pictures.firstWhere((e) => e['Index'] == _showingIndex)['Id']}';
-        await _masterpieceModeDataRef.child(path).update({
-          '${ref.read(userProvider).id}': _selectedPoint,
+      // Cancel any existing debounce timer
+      if (_debounceTimer?.isActive ?? false) _debounceTimer?.cancel();
+
+      // Set up a new debounce timer
+      _debounceTimer =
+          Timer(Duration(milliseconds: _debounceDuration), () async {
+        setState(() {
+          _showingIndex = data['showingIndex'] as int;
+          _timeLeft = data['timeLeft'] as int;
         });
-        _selectedPoint = 0;
 
-        // Chủ phòng chuyển bức tranh tiếp theo
-        if (ref.read(userProvider).id == roomOwner) {
-          print('Chủ phòng chuyển bức tranh tiếp theo');
-          print('_showingIndex: $_showingIndex');
-          print('_playersInRoomId.length: ${_playersInRoomId.length}');
-          if (_showingIndex < _playersInRoomId.length) {
+        final scoringDone = data['scoringDone'] as bool;
+
+        // Kiểm tra điều kiện chuyển màn hình ở những giây đầu
+        if (scoringDone) {
+          _timer?.cancel();
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (context) => MasterPieceModeRank(
+                    selectedRoom: widget.selectedRoom,
+                  )));
+        }
+
+        if (_timeLeft == 0) {
+                  // Cập nhật điểm
+                  final path = '/score/${pictures.firstWhere((
+                      e) => e['Index'] == _showingIndex)['Id']}';
+                  await _masterpieceModeDataRef.child(path).update({
+                    '${ref
+                        .read(userProvider)
+                        .id}': _selectedPoint,
+                  });
+                  _selectedPoint = 0;
+
+          // Chủ phòng chuyển bức tranh tiếp theo
+          if (ref.read(userProvider).id == roomOwner) {
             await _masterpieceModeDataRef.update({
               'showingIndex': _showingIndex + 1,
-              'timeLeft': 15,
+              'timeLeft': _timeToScore,
             });
-            print('Chuyển bức tranh tiếp theo');
-          } else {
-            await _masterpieceModeDataRef.update({
-              'scoringDone': true,
-            });
-            print('Chuyển sang màn hình xếp hạng');
+
+            if (_showingIndex >= pictures.length - 1) {
+              await _masterpieceModeDataRef.update({
+                'scoringDone': true,
+              });
+              print('Chuyển sang màn hình xếp hạng');
+            }
           }
         }
-      }
+      });
     });
   }
 
@@ -221,7 +221,6 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
       }
     }
 
-    // ??
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
       for (var cp in _playersInRoom) {
@@ -248,6 +247,30 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
     }
   }
 
+  Future<void> _getPlayerInRoom() async {
+    final snapshot = await _playersInRoomRef.get();
+    final playersInRoomData = Map<String, dynamic>.from(
+      snapshot.value as Map<dynamic, dynamic>,
+    );
+
+    setState(() {
+      _playersInRoom.clear();
+      for (final player in playersInRoomData.entries) {
+        _playersInRoom.add(PlayerInMasterPieceMode(
+          id: player.key,
+          name: player.value['name'],
+          avatarIndex: player.value['avatarIndex'],
+          point: player.value['point'],
+        ));
+      }
+
+      _playersInRoomId.clear();
+      _playersInRoomId = _playersInRoom.map((player) => player.id!).toList();
+      print('Debug:');
+      _playersInRoomId.forEach((element) => print('Player in room: $element'));
+    });
+  }
+
   Future<void> _getPictures() async {
     final masterpieceSnapshot = await _masterpieceModeDataRef.get();
     final masterpieceData = Map<String, dynamic>.from(
@@ -259,6 +282,7 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
+    List<Map<String, dynamic>> newPictures = [];
     var count = 0;
     for (var id in _playersInRoomId) {
       final snapshot = await _masterpieceModeDataRef.child('/album/$id').get();
@@ -272,11 +296,7 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       final color = data['Color'] as String;
       final offset = data['Offset'] as String;
-      print('type of data:');
-      print(data.runtimeType);
-      print(color.runtimeType);
-      print(offset.runtimeType);
-      pictures.add({
+      newPictures.add({
         'Index': count,
         'Id': id,
         'Color': color,
@@ -285,29 +305,51 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
       count++;
     }
     setState(() {
-      pictures = pictures;
+      pictures = newPictures;
     });
 
-    print('================================');
+    print('Debug:');
     print(pictures.length);
     pictures.forEach((element) {
-      print(element['Offset']);
+      print(element['Index']);
+      print(element['Id']);
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel(); // Hủy Timer khi widget bị dispose
-
+    _roomSubscription.cancel();
+    _playersInRoomSubscription.cancel();
+    _masterpieceModeDataSubscription.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_showingIndex >= pictures.length) {
-      return const Loading(
-        text: 'đang ở scoring',
-      );
+    if (_showingIndex >= pictures.length ||
+        pictures.length < _playersInRoom.length) {
+      return Stack(children: [
+        const Loading(
+            //text: 'đang ở scoring',
+            ),
+        Positioned(
+          top: 35,
+          child: Container(
+            color: Colors.black54,
+            padding: const EdgeInsets.all(10),
+            child: Text(
+              'Debug:'
+              '\n_showingIndex: $_showingIndex'
+              '\n_timeLeft: $_timeLeft'
+              '\n_playersInRoomId.length: ${_playersInRoomId.length}'
+              '\n_picture.length: ${pictures.length}'
+              '\n_myId: ${ref.read(userProvider).id}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ]);
     }
 
     final offsetList = decodeOffsetList(pictures[_showingIndex]['Offset']!);
@@ -422,35 +464,55 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
         // Chấm điểm
         if (ref.read(userProvider).id != pictures[_showingIndex]['Id'])
           Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      for (final number in buttonStates)
-                        SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.2 - 10,
-                            child: Button(
-                              title: '$number',
-                              color: number == _selectedPoint
-                                  ? const Color(0xFF00C4A0)
-                                  : Colors.grey,
-                              onClick: (ctx) {
-                                setState(() {
-                                  _selectedPoint = number;
-                                });
-                              },
-                            ))
-                    ],
-                  ),
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    for (final number in buttonStates)
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.2 - 10,
+                        child: Button(
+                          title: '$number',
+                          color: number == _selectedPoint
+                              ? const Color(0xFF00C4A0)
+                              : Colors.grey,
+                          onClick: (ctx) {
+                            setState(() {
+                              _selectedPoint = number;
+                            });
+                          },
+                        ),
+                      ),
+                  ],
                 ),
-              ))
+              ),
+            ),
+          ),
+        Positioned(
+          top: 35,
+          child: Container(
+            color: Colors.black54,
+            padding: const EdgeInsets.all(10),
+            child: Text(
+              'Debug:'
+              '\n_showingIndex: $_showingIndex'
+              '\n_timeLeft: $_timeLeft'
+              '\n_playersInRoomId.length: ${_playersInRoomId.length}'
+              '\n_picture.length: ${pictures.length}'
+              '\n_picture[$_showingIndex][\'Id\']: ${pictures[_showingIndex]['Id']}'
+              '\n_myId: ${ref.read(userProvider).id}'
+              '\n_picture[$_showingIndex][\'Id\'] == myId: ${pictures[_showingIndex]['Id'] == ref.read(userProvider).id}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
       ]),
     );
   }

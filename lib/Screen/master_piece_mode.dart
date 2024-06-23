@@ -234,115 +234,121 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
 
   @override
   Widget build(BuildContext context) {
-    if (_playersInRoomId.isEmpty || _wordToDraw.isEmpty || _timeLeft == -1) {
-      return const Loading();
-    }
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        if (didPop) {
-          return;
-        }
-        final isQuit = (ref.read(userProvider).id ==
-            roomOwner)
-            ? await _showDialog('Cảnh báo',
-            'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
-            : await _showDialog(
-            'Cảnh báo', 'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+    final isRoomOwner = ref.read(userProvider).id == roomOwner;
+    final isLoading =
+        _playersInRoomId.isEmpty || _wordToDraw.isEmpty || _timeLeft == -1;
+    return Hero(
+      tag: isRoomOwner ? 'create_room' : 'find_room',
+      child: isLoading
+          ? const Loading()
+          : PopScope(
+              canPop: false,
+              onPopInvoked: (didPop) async {
+                if (didPop) {
+                  return;
+                }
+                final isQuit = (ref.read(userProvider).id == roomOwner)
+                    ? await _showDialog('Cảnh báo',
+                        'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?')
+                    : await _showDialog('Cảnh báo',
+                        'Bạn có chắc chắn muốn thoát khỏi phòng không?');
 
-        if (context.mounted && isQuit) {
-          _playerOutRoom(ref);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (ctx) => const HomePage()),
-            (route) => false,
-          );
-        }
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        body: Stack(children: [
-          // App bar
-          Container(
-            width: double.infinity,
-            height: 100,
-            decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
-            child: Column(
-              children: [
-                const SizedBox(height: 35),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: SizedBox(
-                        height: 45,
-                        width: 45,
-                        child: IconButton(
-                          onPressed: () async {
-                            if (ref.read(userProvider).id ==
-                                widget.selectedRoom.roomOwner) {
-                              final isQuit = await _showDialog('Cảnh báo',
-                                  'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
-                              if (!isQuit) return;
-                            } else {
-                              final isQuit = await _showDialog('Cảnh báo',
-                                  'Bạn có chắc chắn muốn thoát khỏi phòng không?');
-                              if (!isQuit) return;
-                            }
+                if (context.mounted && isQuit) {
+            _playerOutRoom(ref);
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (ctx) => const HomePage()),
+                  (route) => false,
+            );
+          }
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          body: Stack(children: [
+            // App bar
+            Container(
+              width: double.infinity,
+              height: 100,
+              decoration: const BoxDecoration(color: Color(0xFF00C4A1)),
+              child: Column(
+                children: [
+                  const SizedBox(height: 35),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: SizedBox(
+                          height: 45,
+                          width: 45,
+                          child: IconButton(
+                            onPressed: () async {
+                              if (ref
+                                  .read(userProvider)
+                                  .id ==
+                                  widget.selectedRoom.roomOwner) {
+                                final isQuit = await _showDialog('Cảnh báo',
+                                    'Nếu bạn thoát, phòng sẽ bị xóa và tất cả người chơi khác cũng sẽ bị đuổi ra khỏi phòng. Bạn có chắc chắn muốn thoát không?');
+                                if (!isQuit) return;
+                              } else {
+                                final isQuit = await _showDialog('Cảnh báo',
+                                    'Bạn có chắc chắn muốn thoát khỏi phòng không?');
+                                if (!isQuit) return;
+                              }
 
-                            await _playerOutRoom(ref);
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                            }
-                          },
-                          icon: Image.asset('assets/images/back.png'),
-                          iconSize: 45,
+                                    await _playerOutRoom(ref);
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  },
+                                  icon: Image.asset('assets/images/back.png'),
+                                  iconSize: 45,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                'Tuyệt tác',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge!
+                                    .copyWith(color: Colors.black),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Drawing board
+                  Positioned(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 100),
+                      child: Drawing(
+                        height: MediaQuery.of(context).size.height - 100,
+                        width: MediaQuery.of(context).size.width,
+                        selectedRoom: widget.selectedRoom,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 100,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 15, top: 5),
+                        child: MasterpieceModeStatus(
+                          word: _wordToDraw,
+                          timeLeft: _timeLeft,
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: Text(
-                        'Tuyệt tác',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge!
-                            .copyWith(color: Colors.black),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Drawing board
-          Positioned(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 100),
-              child: Drawing(
-                height: MediaQuery.of(context).size.height - 100,
-                width: MediaQuery.of(context).size.width,
-                selectedRoom: widget.selectedRoom,
+                  ),
+                ]),
               ),
             ),
-          ),
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
-            child: Container(
-              color: Colors.transparent,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 15, top: 5),
-                child: MasterpieceModeStatus(
-                  word: _wordToDraw,
-                  timeLeft: _timeLeft,
-                ),
-              ),
-            ),
-          ),
-        ]),
-      ),
     );
   }
 }
