@@ -185,12 +185,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: MoreDrawer(
           onHowToPlayClick: () {
             Navigator.of(context).pop();
-            Navigator.of(context).push(
-              createRouteRightToLeftTransition(
-                oldPage: widget,
-                newPage: const HowToPlay(),
-              ),
-            );
+            Future.delayed(const Duration(milliseconds: 250), () {
+              Navigator.of(context).push(
+                createRouteRightToLeftTransition(
+                  oldPage: widget,
+                  newPage: const HowToPlay(),
+                ),
+              );
+            });
           },
         ),
       ),
@@ -207,13 +209,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: Stack(
           children: [
             Positioned(
-              top: 60,
+              top: 100,
               left: 0,
               right: 0,
-              child: SizedBox(
-                width: 160,
-                height: 150,
-                child: Image.asset('assets/images/logo.png'),
+              child: Center(
+                child: SizedBox(
+                  height: 120,
+                  child: Image.asset('assets/images/new_logo.png'),
+                ),
               ),
             ),
             Positioned(
@@ -352,10 +355,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 children: [
                   Hero(
                     tag: 'find_room',
-                    /*flightShuttleBuilder: (flightContext, animation, direction,
-                        fromContext, toContext) {
-                      return const FindRoom();
-                    },*/
                     child: Button(
                       onClick: _findRoomClick,
                       imageAsset: 'assets/images/search.png',

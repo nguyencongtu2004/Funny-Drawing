@@ -415,7 +415,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                         return Player(
                           player: currentPlayers[index],
                           roomOwner: widget.selectedRoom.roomOwner!,
-                          sizeImg: 100,
+                          sizeImg: 80,
                         );
                       },
                     ),
@@ -450,53 +450,43 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
             else ...[
               Positioned(
                 bottom: 50,
-                left: MediaQuery.of(context).size.width / 2 -
-                    (150 + 10 + 150) / 2,
+                left: 15,
+                right: 15,
                 child: Hero(
                   tag: 'create_room',
                   child: Row(
                     children: [
-                      Button(
-                        onClick: (ctx) {
-                          _inviteClick();
-                        },
-                        title: 'Mời',
-                        imageAsset: 'assets/images/invite.png',
-                        width: 150,
-                        isWaiting: isWaitingInvite,
-                        isEnable: !isWaitingStart && !isWaitingInvite,
+                      Expanded(
+                        flex: 1,
+                        child: Button(
+                          onClick: (ctx) {
+                            _inviteClick();
+                          },
+                          title: 'Mời',
+                          imageAsset: 'assets/images/invite.png',
+                          //width: 150,
+                          isWaiting: isWaitingInvite,
+                          isEnable: !isWaitingStart && !isWaitingInvite,
+                        ),
                       ),
                       const SizedBox(width: 10),
-                      Button(
-                        onClick: (ctx) {
-                          _startClick(ctx);
-                        },
-                        title: 'Bắt đầu',
-                        imageAsset: 'assets/images/play.png',
-                        width: 150,
-                        isWaiting: isWaitingStart,
-                        isEnable: !isWaitingStart && !isWaitingInvite,
+                      Expanded(
+                        flex: 1,
+                        child: Button(
+                          onClick: (ctx) {
+                            _startClick(ctx);
+                          },
+                          title: 'Bắt đầu',
+                          imageAsset: 'assets/images/play.png',
+                          //width: 150,
+                          isWaiting: isWaitingStart,
+                          isEnable: !isWaitingStart && !isWaitingInvite,
+                        ),
                       )
                     ],
                   ),
                 ),
               ),
-              /*Positioned(
-                    bottom: 50,
-                    left: MediaQuery.of(context).size.width / 2 -
-                        (150 + 10 + 150) / 2,
-                    right: MediaQuery.of(context).size.width / 2 -
-                        (150 + 10 + 150) / 2,
-                    child: Hero(
-                      tag: "create_room",
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(1.0),
-                            borderRadius: BorderRadius.circular(10)),
-                        child: const SizedBox(height: 50,),
-                      ),
-                    ),
-                ),*/
             ],
             // Lời nhắc vui
             Positioned(

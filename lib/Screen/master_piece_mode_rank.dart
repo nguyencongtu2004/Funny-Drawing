@@ -511,34 +511,34 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
           if (ref.read(userProvider).id == roomOwner)
             Positioned(
               bottom: 50,
-              left: MediaQuery.of(context).size.width / 2 - (150) / 2,
-              child: Row(
-                children: [
-                  Button(
-                    onClick: (ctx) async {
-                      if (_playersInRoom.isNotEmpty) {
+              left: 0,
+              right: 0,
+              child: Align(
+                alignment: Alignment.center,
+                child: Button(
+                  onClick: (ctx) async {
+                    if (_playersInRoom.isNotEmpty) {
+                      await _masterpieceModeDataRef.update({
+                        'wordToDraw': pickRandomWordToGuess(),
+                        'timeLeft': widget.selectedRoom.timePerRound,
+                        'scoringDone': false,
+                        'uploadDone': false,
+                        'showingIndex': 0,
+                      });
+                      await _masterpieceModeDataRef.child('album').remove();
+                      await _masterpieceModeDataRef.child('score').remove();
+                      if (ref.read(userProvider).id == roomOwner) {
                         await _masterpieceModeDataRef.update({
-                          'wordToDraw': pickRandomWordToGuess(),
-                          'timeLeft': widget.selectedRoom.timePerRound,
-                          'scoringDone': false,
-                          'uploadDone': false,
-                          'showingIndex': 0,
+                          'playAgain': true,
                         });
-                        await _masterpieceModeDataRef.child('album').remove();
-                        await _masterpieceModeDataRef.child('score').remove();
-                        if (ref.read(userProvider).id == roomOwner) {
-                          await _masterpieceModeDataRef.update({
-                            'playAgain': true,
-                          });
-                        }
-                        _playAgain();
                       }
-                    },
-                    title: 'Chơi lại',
-                    imageAsset: 'assets/images/play-again.png',
-                    width: 150,
-                  )
-                ],
+                      _playAgain();
+                    }
+                  },
+                  title: 'Chơi lại',
+                  imageAsset: 'assets/images/play-again.png',
+                  //width: 150,
+                ),
               ),
             )
           else

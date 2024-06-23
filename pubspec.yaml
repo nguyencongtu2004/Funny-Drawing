@@ -77,6 +77,7 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/images/logo.png
+    - assets/images/new_logo.png
 
     - assets/images/avatars/avatar0.png
     - assets/images/avatars/avatar1.png
@@ -103,6 +104,8 @@ flutter:
     - assets/images/facebook.png
     - assets/images/instagram.png
     - assets/images/youtube.png
+    - assets/images/github.png
+    - assets/images/discord.png
 
     - assets/images/information.png
     - assets/images/more.png

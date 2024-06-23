@@ -4,6 +4,7 @@ import 'package:draw_and_guess_promax/Screen/Ranking.dart';
 import 'package:draw_and_guess_promax/Screen/home_page.dart';
 import 'package:draw_and_guess_promax/Screen/waiting_room.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
+import 'package:draw_and_guess_promax/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,38 +89,7 @@ class _DrawAndGuestAppState extends State<DrawAndGuestApp>
     Widget content = const HomePage();
 
     return MaterialApp(
-      theme: ThemeData().copyWith(
-        textTheme: const TextTheme().copyWith(
-          titleLarge: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            height: 0,
-          ),
-          titleMedium: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            height: 0,
-          ),
-          bodyMedium: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w300,
-            height: 0,
-          ),
-          bodySmall: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w200,
-            height: 0,
-          ),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       home: Scaffold(body: content),
       routes: {
         '/ranking': (context) => Ranking(selectedRoom: ModalRoute.of(context)?.settings.arguments as Room),

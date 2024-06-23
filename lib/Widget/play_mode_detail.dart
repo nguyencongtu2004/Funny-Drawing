@@ -80,12 +80,15 @@ class PlayModeDetail extends StatelessWidget {
                           ),
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      howToPlay,
-                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                            color: Colors.black,
-                          ),
-                      textAlign: TextAlign.justify,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      child: Text(
+                        howToPlay,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                              color: Colors.black,
+                            ),
+                        textAlign: TextAlign.justify,
+                      ),
                     ),
                   ],
                 ),

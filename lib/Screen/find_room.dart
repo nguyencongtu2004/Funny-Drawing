@@ -463,13 +463,16 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                 child: ListView(
                   children: [
                     Center(
-                      child: Text(
-                        'Hiện không có phòng nào\nHãy tạo phòng mới!',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium!
-                            .copyWith(color: Colors.black),
-                        textAlign: TextAlign.center,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'Hiện không có phòng nào\nHãy làm mời hoặc thử tạo phòng mới!',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium!
+                              .copyWith(color: Colors.black),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     )
                   ],
@@ -546,35 +549,37 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         // Nút
         Positioned(
             bottom: 50,
-            left: MediaQuery.of(context).size.width / 2 - 180 / 2,
-            child: filteredRoom.isNotEmpty
-                ? Hero(
-                    tag: 'find_room',
-                    child: Button(
-                      onClick: (ctx) {
-                        _onStartClick(ctx);
-                      },
-                      title: 'Vào phòng',
-                      imageAsset: 'assets/images/play.png',
-                      isWaiting: _isWaiting,
-                      isEnable: !(_isWaiting),
-                      width: 180,
+            left: 0,
+            right: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: filteredRoom.isNotEmpty
+                  ? Hero(
+                      tag: 'find_room',
+                      child: Button(
+                        onClick: (ctx) {
+                          _onStartClick(ctx);
+                        },
+                        title: 'Vào phòng',
+                        imageAsset: 'assets/images/play.png',
+                        isWaiting: _isWaiting,
+                        isEnable: !(_isWaiting),
+                      ),
+                    )
+                  : Hero(
+                      tag: 'find_room',
+                      child: Button(
+                        onClick: (ctx) {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (ctx) => const CreateRoom()));
+                        },
+                        title: 'Tạo phòng',
+                        imageAsset: 'assets/images/plus.png',
+                        isWaiting: _isWaiting,
+                        isEnable: !(_isWaiting),
+                      ),
                     ),
-                  )
-                : Hero(
-                    tag: 'find_room',
-                    child: Button(
-                      onClick: (ctx) {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (ctx) => const CreateRoom()));
-                      },
-                      title: 'Tạo phòng',
-                      imageAsset: 'assets/images/plus.png',
-                      isWaiting: _isWaiting,
-                      isEnable: !(_isWaiting),
-                      width: 180,
-                    ),
-                  )),
+            )),
       ]),
     );
   }

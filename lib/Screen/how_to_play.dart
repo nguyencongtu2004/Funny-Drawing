@@ -3,13 +3,14 @@ import 'package:draw_and_guess_promax/data/play_mode_data.dart';
 import 'package:flutter/material.dart';
 
 class HowToPlay extends StatefulWidget {
-  const HowToPlay({Key? key});
+  const HowToPlay({super.key});
 
   @override
   State<HowToPlay> createState() => _HowToPlayState();
 }
 
-class _HowToPlayState extends State<HowToPlay> {
+class _HowToPlayState extends State<HowToPlay>
+    with SingleTickerProviderStateMixin {
   void _onCloseClick(context) {
     Navigator.pop(context);
   }
@@ -61,7 +62,6 @@ class _HowToPlayState extends State<HowToPlay> {
             right: 0,
             bottom: 80,
             child: SingleChildScrollView(
-              //padding: EdgeInsets.zero,
               scrollDirection: Axis.vertical,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -74,17 +74,18 @@ class _HowToPlayState extends State<HowToPlay> {
                           _isExpanded1 = !_isExpanded1;
                         });
                       },
-                      child: AnimatedContainer(
+                      child: AnimatedSize(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOutCubic,
-                        height: _isExpanded1 ? 560.0 : 120.0,
-                        //color: Colors.blue,
-                        child: Center(
-                          child: PlayModeDetail(
-                            mode: availabePlayMode[0].mode,
-                            description: availabePlayMode[0].description,
-                            howToPlay: availabePlayMode[0].howToPlay,
-                            isVisible: _isExpanded1,
+                        alignment: Alignment.topCenter,
+                        child: Container(
+                          child: Center(
+                            child: PlayModeDetail(
+                              mode: availabePlayMode[0].mode,
+                              description: availabePlayMode[0].description,
+                              howToPlay: availabePlayMode[0].howToPlay,
+                              isVisible: _isExpanded1,
+                            ),
                           ),
                         ),
                       ),
@@ -96,17 +97,19 @@ class _HowToPlayState extends State<HowToPlay> {
                           _isExpanded2 = !_isExpanded2;
                         });
                       },
-                      child: AnimatedContainer(
+                      child: AnimatedSize(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOutCubic,
-                        height: _isExpanded2 ? 490.0 : 120.0,
-                        //color: Colors.blue,
-                        child: Center(
-                          child: PlayModeDetail(
-                            mode: availabePlayMode[1].mode,
-                            description: availabePlayMode[1].description,
-                            howToPlay: availabePlayMode[1].howToPlay,
-                            isVisible: _isExpanded2,
+                        alignment: Alignment.topCenter,
+                        reverseDuration: const Duration(milliseconds: 300),
+                        child: Container(
+                          child: Center(
+                            child: PlayModeDetail(
+                              mode: availabePlayMode[1].mode,
+                              description: availabePlayMode[1].description,
+                              howToPlay: availabePlayMode[1].howToPlay,
+                              isVisible: _isExpanded2,
+                            ),
                           ),
                         ),
                       ),
@@ -118,17 +121,18 @@ class _HowToPlayState extends State<HowToPlay> {
                           _isExpanded3 = !_isExpanded3;
                         });
                       },
-                      child: AnimatedContainer(
+                      child: AnimatedSize(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOutCubic,
-                        height: _isExpanded3 ? 600.0 : 120.0,
-                        //color: Colors.blue,
-                        child: Center(
-                          child: PlayModeDetail(
-                            mode: availabePlayMode[2].mode,
-                            description: availabePlayMode[2].description,
-                            howToPlay: availabePlayMode[2].howToPlay,
-                            isVisible: _isExpanded3,
+                        alignment: Alignment.topCenter,
+                        child: Container(
+                          child: Center(
+                            child: PlayModeDetail(
+                              mode: availabePlayMode[2].mode,
+                              description: availabePlayMode[2].description,
+                              howToPlay: availabePlayMode[2].howToPlay,
+                              isVisible: _isExpanded3,
+                            ),
                           ),
                         ),
                       ),

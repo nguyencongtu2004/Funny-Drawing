@@ -413,31 +413,33 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
           // Nút
           Positioned(
             bottom: 50,
-            left: MediaQuery.of(context).size.width / 2 - (180) / 2,
-            child: Hero(
-              tag: 'create_room',
-              flightShuttleBuilder: (flightContext, animation, direction,
-                  fromContext, toContext) {
-                return Button(
+            left: 0,
+            right: 0,
+            child: Align(
+              alignment: Alignment.center,
+              child: Hero(
+                tag: 'create_room',
+                flightShuttleBuilder: (flightContext, animation, direction,
+                    fromContext, toContext) {
+                  return Button(
+                    onClick: (ctx) {
+                      _startClick(ctx);
+                    },
+                    title: 'Tạo phòng',
+                    imageAsset: 'assets/images/play.png',
+                    isWaiting: _isWaiting,
+                    isEnable: !_isWaiting,
+                  );
+                },
+                child: Button(
                   onClick: (ctx) {
                     _startClick(ctx);
                   },
                   title: 'Tạo phòng',
                   imageAsset: 'assets/images/play.png',
-                  width: 180,
                   isWaiting: _isWaiting,
                   isEnable: !_isWaiting,
-                );
-              },
-              child: Button(
-                onClick: (ctx) {
-                  _startClick(ctx);
-                },
-                title: 'Tạo phòng',
-                imageAsset: 'assets/images/play.png',
-                width: 180,
-                isWaiting: _isWaiting,
-                isEnable: !_isWaiting,
+                ),
               ),
             ),
           ),

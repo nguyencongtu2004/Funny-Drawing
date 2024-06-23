@@ -151,27 +151,6 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
     }
   }
 
-  /*bool _checkGuess(String guess, String wordToGuess) {
-    print('===========================================');
-    final words = allWords
-        .firstWhere((element) => element.keys.first == wordToGuess)
-        .values
-        .first
-        .toList();
-    if (guess.trim().toLowerCase() == wordToGuess.trim().toLowerCase()) {
-      print('true');
-      return true;
-    }
-    for (final word in words) {
-      if (word.trim().toLowerCase() == guess.trim().toLowerCase()) {
-        print('true');
-        return true;
-      }
-    }
-    print('false');
-    return false;
-  }*/
-
   @override
   Widget build(BuildContext context) {
     final width = widget.width;

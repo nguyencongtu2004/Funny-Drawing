@@ -75,33 +75,36 @@ class _Chat extends State<Chat> {
             // ranking
             const SizedBox(height: 10),
             SizedBox(
-              height: 100,
               width: width,
               child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                        for (final player in _playersInRoom)
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center, // Căn giữa theo chiều dọc
+                        for (final player in _playersInRoom) ...[
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center, // Căn giữa theo chiều dọc
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Player(player: User(
                                 id: player.id,
                                 name: player.name,
                                 avatarIndex: player.avatarIndex,
-                              ), sizeImg: 80),
-                              Text(player.point.toString(),
+                              ),
+                              sizeImg: 65),
+                          Text(player.point.toString(),
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
                                 color: Color(0xFFFFFFA1)),
                           )
                         ],
-                          )
-                      ],
+                      ),
+                      const SizedBox(width: 10)
+                    ]
+                  ],
                 ),
               ),
             ),

@@ -28,6 +28,13 @@ class MoreDrawer extends StatelessWidget {
     }
   }
 
+  final String youtubeLink = "https://www.youtube.com/watch?v=tiM2ZWLXKT4";
+  final String discordLink = "https://discord.gg/wNg6dnuEXV";
+  final String githubLink =
+      "https://github.com/BeIchTuan/SE346_DrawNGuess_Promax";
+  final String feedbackLink =
+      "https://docs.google.com/forms/d/e/1FAIpQLSeZGcU2gKAx-kC5a1EMJShbKoKFQVElw87Sk4NipiJpm1vVEw/viewform?usp=sf_link";
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -69,10 +76,11 @@ class MoreDrawer extends StatelessWidget {
             right: 0,
             child: Column(
               children: [
-                SizedBox(
-                  width: 160,
-                  height: 150,
-                  child: Image.asset('assets/images/logo.png'),
+                Center(
+                  child: SizedBox(
+                    height: 100,
+                    child: Image.asset('assets/images/new_logo.png'),
+                  ),
                 ),
                 const SizedBox(height: 10),
                 TextButton(
@@ -93,7 +101,8 @@ class MoreDrawer extends StatelessWidget {
                 const SizedBox(height: 5),
                 TextButton(
                     onPressed: () {
-                      _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
+                      _launchURL(feedbackLink);
+                      Navigator.of(context).pop();
                     },
                     child: Text(
                       'GÓP Ý',
@@ -108,45 +117,62 @@ class MoreDrawer extends StatelessWidget {
             bottom: 30,
             left: 0,
             right: 0,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: buttonSize,
-                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                /*Padding(
+                  padding: const EdgeInsets.only(left: 20),
+                  child: Text(
+                    'Liên kết ngoài:',
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.start,
                   ),
-                  child: Image.asset('assets/images/facebook.png'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: buttonSize,
-                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
-                  ),
-                  child: Image.asset('assets/images/youtube.png'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    _launchURL("https://www.youtube.com/watch?v=tiM2ZWLXKT4");
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: buttonSize,
-                    backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                    shadowColor: const Color.fromARGB(0, 0, 0, 0),
-                    surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
-                  ),
-                  child: Image.asset('assets/images/instagram.png'),
+                ),*/
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        _launchURL(discordLink);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        fixedSize: buttonSize,
+                        backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                        shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                        surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                      ),
+                      child: Image.asset('assets/images/discord.png'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _launchURL(youtubeLink);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.all(14),
+                        fixedSize: buttonSize,
+                        backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                        shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                        surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                      ),
+                      child: Image.asset('assets/images/youtube.png'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _launchURL(githubLink);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        fixedSize: buttonSize,
+                        backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                        shadowColor: const Color.fromARGB(0, 0, 0, 0),
+                        surfaceTintColor: const Color.fromARGB(0, 0, 0, 0),
+                        padding: const EdgeInsets.all(20),
+                      ),
+                      child: Image.asset('assets/images/github.png'),
+                    ),
+                  ],
                 ),
               ],
             ),
