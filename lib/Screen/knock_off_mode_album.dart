@@ -44,6 +44,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   var _showingIndex = 0;
   var _isPlayAgain = false;
   var _isEnd = false;
+  late int _curPlayer;
 
   Timer? _timer;
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
@@ -64,17 +65,22 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
 
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
+      // Room has been deleted
       if (event.snapshot.value == null) {
-        // Room has been deleted
         if (widget.selectedRoom.roomOwner != _userId) {
-          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
-              isKicked: true);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
             (route) => false,
           );
+          await _showDialog('Phòng đã bị xóa', 'Phòng đã bị xóa bởi chủ phòng',
+              isKicked: true);
         }
       }
+
+      final data = Map<String, dynamic>.from(
+        event.snapshot.value as Map<dynamic, dynamic>,
+      );
+      _curPlayer = data['curPlayer'] as int;
     });
 
     // Lấy thông tin người chơi và tranh trong phòng
@@ -103,6 +109,22 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+
+      // khi không còn ai trong phòng
+      if (data['noOneInRoom'] == true) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _knockoffModeDataRef.remove();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
+        if (_userId == widget.selectedRoom.roomOwner) {
+          _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+              isKicked: true);
+        }
+      }
 
       final albumShowingIndex = data['albumShowingIndex'];
       _isPlayAgain = data['playAgain'];
@@ -213,23 +235,20 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     final userId = ref.read(userProvider).id;
     if (userId == null) return;
 
-    if (widget.selectedRoom.roomOwner == userId) {
-      await _roomRef.remove();
-      await _playersInRoomRef.remove();
-      await _knockoffModeDataRef.remove();
-    } else {
-      final playerRef = database
-          .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
-      await playerRef.remove();
-
-      final currentPlayerCount =
-          (await _roomRef.child('curPlayer').get()).value as int;
-      if (currentPlayerCount > 0) {
-        await _roomRef.update({
-          'curPlayer': currentPlayerCount - 1,
+    final currentPlayerCount = _curPlayer;
+    if (currentPlayerCount > 0) {
+      // Nếu còn 2 người chơi thì xóa phòng
+      if (currentPlayerCount <= 2) {
+        _knockoffModeDataRef.update({
+          'noOneInRoom': true,
         });
+      } else {
+        // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
+        await _playersInRoomRef.child(userId).remove();
       }
     }
+
+    // Todo: Chuyển chủ phòng nếu chủ phòng thoát
   }
 
   late Completer<bool> _completer;

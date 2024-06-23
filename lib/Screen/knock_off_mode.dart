@@ -54,9 +54,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     _roomRef.onValue.listen((event) async {
       // Room has been deleted
       if (event.snapshot.value == null) {
-        /*final snapshot = await _knockoffModeDataRef.get();
-        final data = Map<String, dynamic>.from(snapshot.value as Map,);
-        final noOneInRoom = data['noOneInRoom'] as bool? ?? false;*/
         if (widget.selectedRoom.roomOwner != _userId) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (ctx) => const HomePage()),
@@ -111,6 +108,8 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+
+      // khi không còn ai trong phòng
       if (data['noOneInRoom'] == true) {
         _roomRef.remove();
         _playersInRoomRef.remove();
@@ -125,6 +124,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
               isKicked: true);
         }
       }
+
       _totalTurn = data['turn'] as int;
     });
     _startTimer();
@@ -158,21 +158,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
       }
     }
 
-    /*if (widget.selectedRoom.roomOwner == userId) {
-      await _roomRef.remove();
-      await _playersInRoomRef.remove();
-      await _knockoffModeDataRef.remove();
-    } else {
-      final playerRef = database
-          .child('/players_in_room/${widget.selectedRoom.roomId}/$userId');
-      await playerRef.remove();
-
-      final currentPlayerCount =
-          (await _roomRef.child('curPlayer').get()).value as int;
-      if (currentPlayerCount > 0) {
-        await _playersInRoomRef.child(userId).remove();
-      }
-    }*/
+    // Todo: Chuyển chủ phòng nếu chủ phòng thoát
   }
 
   late Completer<bool> _completer;

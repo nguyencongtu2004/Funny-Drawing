@@ -38,6 +38,7 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   late DatabaseReference _scoreRef;
   List<int> buttonStates = [1, 2, 3, 4, 5];
   var _selectedPoint = 0;
+  late final String _userId;
 
   List<Map<String, dynamic>> pictures = [];
   int _showingIndex = 0;
@@ -58,6 +59,7 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   @override
   void initState() {
     super.initState();
+    _userId = ref.read(userProvider).id!;
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
@@ -104,6 +106,22 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
         _masterpieceModeDataRef.onValue.listen((event) async {
       final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>);
+
+      // khi không còn ai trong phòng
+      if (data['noOneInRoom'] == true) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _masterpieceModeDataRef.remove();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
+        if (_userId == widget.selectedRoom.roomOwner) {
+          _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+              isKicked: true);
+        }
+      }
 
       // Cancel any existing debounce timer
       if (_debounceTimer?.isActive ?? false) _debounceTimer?.cancel();
@@ -221,8 +239,10 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
       }
     }
 
+    // Chuyển chủ phòng nếu chủ phòng thoát
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
+      print("Chu phong");
       for (var cp in _playersInRoom) {
         if (cp.id != roomOwner) {
           await _roomRef.update({
@@ -329,10 +349,11 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   Widget build(BuildContext context) {
     if (_showingIndex >= pictures.length ||
         pictures.length < _playersInRoom.length) {
-      return Stack(children: [
-        const Loading(
-            //text: 'đang ở scoring',
-            ),
+      return const Loading();
+
+      // debug only
+      /*return Stack(children: [
+        const Loading(),
         Positioned(
           top: 35,
           child: Container(
@@ -349,7 +370,7 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
             ),
           ),
         ),
-      ]);
+      ]);*/
     }
 
     final offsetList = decodeOffsetList(pictures[_showingIndex]['Offset']!);
@@ -495,7 +516,8 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
               ),
             ),
           ),
-        Positioned(
+        // debug only
+        /*Positioned(
           top: 35,
           child: Container(
             color: Colors.black54,
@@ -512,7 +534,7 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-        ),
+        ),*/
       ]),
     );
   }

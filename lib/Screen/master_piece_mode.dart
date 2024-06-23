@@ -107,6 +107,22 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
         event.snapshot.value as Map
       );
 
+      // khi không còn ai trong phòng
+      if (data['noOneInRoom'] == true) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _masterpieceModeDataRef.remove();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
+        if (_userId == widget.selectedRoom.roomOwner) {
+          _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+              isKicked: true);
+        }
+      }
+
       setState(() {
         _wordToDraw = data['wordToDraw'] as String;
       });
@@ -198,6 +214,8 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
         await _playersInRoomRef.child(userId).remove();
       }
     }
+
+    // Chuyển chủ phòng nếu chủ phòng thoát
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
       print("Chu phong");
@@ -209,7 +227,6 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
           break;
         }
       }
-
     }
   }
 

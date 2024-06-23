@@ -36,6 +36,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
   late DatabaseReference _playerInRoomIDRef;
   late DatabaseReference _masterpieceModeDataRef;
   late DatabaseReference _scoreRef;
+  late final String _userId;
 
   late int _curPlayer;
   late String roomOwner;
@@ -52,6 +53,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
   @override
   void initState() {
     super.initState();
+    _userId = ref.read(userProvider).id!;
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
@@ -87,6 +89,23 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+
+      // khi không còn ai trong phòng
+      if (data['noOneInRoom'] == true) {
+        _roomRef.remove();
+        _playersInRoomRef.remove();
+        _masterpieceModeDataRef.remove();
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (ctx) => const HomePage()),
+          (route) => false,
+        );
+        if (_userId == widget.selectedRoom.roomOwner) {
+          _showDialog('Thông báo', 'Phòng đã bị xóa vì không còn người chơi',
+              isKicked: true);
+        }
+      }
+
       if (data['playAgain'] == true) {
         _playAgain();
       }
@@ -121,6 +140,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
 
     // Chờ cho việc upload ảnh hoàn tất
     while (!(masterpieceData['uploadDone'] as bool)) {
+      print('Cho doi la khong hanh phuc');
       await Future.delayed(const Duration(milliseconds: 200));
     }
 
@@ -274,6 +294,20 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
       } else {
         // Nếu còn nhiều hơn 2 người chơi thì giảm số người chơi
         await _playersInRoomRef.child(userId).remove();
+      }
+    }
+
+    // Chuyển chủ phòng nếu chủ phòng thoát
+    await _playerInRoomIDRef.remove();
+    if (roomOwner == userId) {
+      print("Chu phong");
+      for (var cp in _playersInRoom) {
+        if (cp.id != roomOwner) {
+          await _roomRef.update({
+            'roomOwner': cp.id,
+          });
+          break;
+        }
       }
     }
   }
@@ -501,7 +535,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                       }
                     },
                     title: 'Chơi lại',
-                    imageAsset: 'assets/images/edit.png',
+                    imageAsset: 'assets/images/play-again.png',
                     width: 150,
                   )
                 ],

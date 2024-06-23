@@ -145,11 +145,12 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       final data = Map<String, dynamic>.from(
         event.snapshot.value as Map<dynamic, dynamic>,
       );
+
+      // khi không còn ai trong phòng
       if (data['noOneInRoom'] == true) {
         _roomRef.remove();
         _playersInRoomRef.remove();
         _chatRef.remove();
-        _drawingRef.remove();
         _normalModeDataRef.remove();
 
         Navigator.of(context).pushAndRemoveUntil(
@@ -161,12 +162,10 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       }
 
       wordToGuess = data['wordToDraw'];
-      hint = '';
       setState(() {
         _wordToDraw = data['wordToDraw'] as String;
       });
       final turn = data['turn'] as String;
-      final userGuessed = data['userGuessed'] as String?;
       final timeLeft = data['timeLeft'] as int;
       final pointLeft = data['point'] as int;
       setState(() {
@@ -379,6 +378,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
         await _playersInRoomRef.child(userId).remove();
       }
     }
+
+    // Chuyển chủ phòng nếu chủ phòng thoát
     await _playerInRoomIDRef.remove();
     if (roomOwner == userId) {
       print("Chu phong");
