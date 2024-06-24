@@ -678,6 +678,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           _playerDone = data['playerDone'] as int;
         });
         bool isNextTurn = (_currentTurn == _countTurn);
+
         for (var player in _playersInRoomId) {
           if (data[player]["timeLeft"] > 0) {
             isNextTurn = false;

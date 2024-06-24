@@ -77,7 +77,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
       }
     });
 
-    _chatRef = database.child('/chat/${widget.roomId}');
+    _chatRef = database.child('/normal_mode_data/${widget.roomId}/chat/');
     _normalModeDataRef = database.child('/normal_mode_data/${widget.roomId}');
     _roomRef = database.child('/rooms/${widget.roomId}');
     _playerInRoomIDRef = database.child(
@@ -141,16 +141,6 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
     _isEnable = true;
   }
 
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final width = widget.width;
@@ -179,7 +169,7 @@ class _ChatAreaState extends ConsumerState<ChatArea> {
           _normalModeDataRef.update({
             "point": _pointLeft - 1,
           });
-          ref.read(chatProvider.notifier).addMessage(ref.read(userProvider).id!,
+          ref.read(chatProvider.notifier).addMessage('system',
               '$userName đã đoán đúng', 'Hệ thống', widget.roomId, -1);
           _controller.clear();
           FocusScope.of(context).unfocus();

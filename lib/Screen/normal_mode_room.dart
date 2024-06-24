@@ -65,7 +65,8 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
     _drawingRef = database.child('/normal_mode_data/draw/');
-    _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
+    _chatRef =
+        database.child('/normal_mode_data/${widget.selectedRoom.roomId}/chat/');
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
     _playerInRoomIDRef = database.child(
@@ -150,7 +151,6 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
       if (data['noOneInRoom'] == true) {
         _roomRef.remove();
         _playersInRoomRef.remove();
-        _chatRef.remove();
         _normalModeDataRef.remove();
 
         Navigator.of(context).pushAndRemoveUntil(
@@ -217,7 +217,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
           });
         }
         ref.read(chatProvider.notifier).addMessage(
-            ref.read(userProvider).id!,
+            'answer',
             'Đáp án là: $wordToGuess',
             'Đáp án',
             widget.selectedRoom.roomId,
@@ -422,7 +422,7 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
             "point": _pointLeft - 1,
           });
           ref.read(chatProvider.notifier).addMessage(
-              ref.read(userProvider).id!,
+              'system',
               '$userName đã đoán đúng',
               'Hệ thống',
               widget.selectedRoom.roomId,

@@ -170,6 +170,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
 
       final Map<String, dynamic> playerRef;
       final Map<String, dynamic> album;
+
       if (Platform.isIOS) {
         playerRef = Map<String, dynamic>.from(snapshot.value as Map);
         print("ZCHECK - player ref ${playerRef}");
@@ -192,6 +193,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         pictures.add({
           'avatarIndex': player.avatarIndex.toString(),
           'name': player.name,
+          'id': player.id!,
           'Color': color,
           'Offset': offset,
         });
@@ -399,6 +401,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                   padding: const EdgeInsets.only(top: 110, bottom: 10),
                   initialItemCount: itemsToShow,
                   itemBuilder: (context, index, animation) {
+                    final id = picturesOfUsers[_showingIndex][index]['id']!;
                     final name = picturesOfUsers[_showingIndex][index]['name']!;
                     final avatarIndex =
                         picturesOfUsers[_showingIndex][index]['avatarIndex']!;
@@ -431,14 +434,32 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                       ? CrossAxisAlignment.end
                                       : CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      name,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall!
-                                          .copyWith(
-                                            color: Colors.black,
-                                          ),
+                                    Row(
+                                      mainAxisAlignment: index == 0
+                                          ? MainAxisAlignment.end
+                                          : MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleSmall!
+                                              .copyWith(
+                                                color: Colors.black,
+                                              ),
+                                        ),
+                                        if (id.contains('admin-')) ...[
+                                          const SizedBox(width: 3),
+                                          SizedBox(
+                                            width: 15,
+                                            height: 15,
+                                            child: Image.asset(
+                                                'assets/images/admin.png'),
+                                          )
+                                        ]
+                                      ],
                                     ),
                                     const SizedBox(height: 5),
                                     ClipRRect(
@@ -510,7 +531,10 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                             picturesOfUsers.length
                                         ? 'Tiếp tục'
                                         : 'Chơi lại',
-                                    imageAsset: 'assets/images/play-again.png',
+                                    imageAsset: _showingIndex + 1 !=
+                                            picturesOfUsers.length
+                                        ? null
+                                        : 'assets/images/play-again.png',
                                     borderRadius: 25,
                                   ),
                                   const SizedBox(height: 10),

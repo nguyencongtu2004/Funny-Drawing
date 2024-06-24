@@ -512,17 +512,34 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                                                   ),
                                                   // Tên người chơi
                                                   Expanded(
-                                                    child: Text(
-                                                      picAndScore['Name']
-                                                          as String,
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .titleLarge!
-                                                          .copyWith(
-                                                              color:
-                                                                  Colors.black),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                    child: Row(
+                                                      children: [
+                                                        Text(
+                                                          picAndScore['Name']
+                                                              as String,
+                                                          style: Theme.of(
+                                                                  context)
+                                                              .textTheme
+                                                              .titleLarge!
+                                                              .copyWith(
+                                                                  color: Colors
+                                                                      .black),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                        if (picAndScore['Id']!
+                                                            .contains(
+                                                                'admin-')) ...[
+                                                          const SizedBox(
+                                                              width: 5),
+                                                          SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child: Image.asset(
+                                                                'assets/images/admin.png'),
+                                                          )
+                                                        ],
+                                                      ],
                                                     ),
                                                   ),
                                                   // Điểm

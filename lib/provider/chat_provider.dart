@@ -22,8 +22,7 @@ class ChatNotifier extends StateNotifier<List<Map<String, dynamic>>> {
       "message": message,
       "timestamp": DateTime.now().millisecondsSinceEpoch,
     };
-    print("Chat: " + message);
-    final chatRef = database.child('/chat/$roomId');
+    final chatRef = database.child('/normal_mode_data/$roomId/chat/');
     chatRef.push().set(newChat);
   }
 

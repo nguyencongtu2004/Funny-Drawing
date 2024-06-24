@@ -106,6 +106,7 @@ flutter:
     - assets/images/youtube.png
     - assets/images/github.png
     - assets/images/discord.png
+    - assets/images/admin.png
 
     - assets/images/information.png
     - assets/images/more.png

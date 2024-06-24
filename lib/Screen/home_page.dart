@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:draw_and_guess_promax/Screen/master_piece_mode_rank.dart';
@@ -33,7 +34,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   // Tạo một GlobalKey cho Scaffold
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
+  Timer? _timer;
   @override
   void initState() {
     super.initState();
@@ -61,11 +62,19 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  Future<void> _setUser() async {
+  Future<void> _setUser({bool secret = false}) async {
     final user = ref.watch(userProvider);
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('hasData', true);
-    prefs.setString('id', user.id ?? await _getRandomId());
+    if (secret) {
+      var newId = 'admin-${await _getRandomId()}';
+      while (newId.substring(0, 12) == 'admin-admin-') {
+        newId = newId.substring(6, newId.length);
+      }
+      prefs.setString('id', newId);
+    } else {
+      prefs.setString('id', user.id ?? await _getRandomId());
+    }
     prefs.setInt('avatarIndex', _avatarIndex);
     prefs.setString('name', user.name);
   }
@@ -284,6 +293,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                           _pickAvatar(context);
                         }
                       },
+                      onTapDown: (details) {
+                        _timer = Timer(const Duration(seconds: 5), () async {
+                          await _setUser(secret: true);
+                          const snackBar = SnackBar(
+                            content: Text('Đã là admin'),
+                            duration: Duration(seconds: 1),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                        });
+                      },
+                      onTapUp: (details) {
+                        _timer?.cancel();
+                      },
+                      onTapCancel: () {
+                        _timer?.cancel();
+                      },
                       child: Container(
                         width: 123.20,
                         height: 123.20,
@@ -381,5 +406,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 }

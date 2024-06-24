@@ -30,13 +30,27 @@ class Player extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 5),
-        Text(
-          player.name,
-          style: Theme.of(context).textTheme.titleSmall!.copyWith(
-              color: player.id == roomOwner ? Colors.yellow : Colors.white),
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              player.name,
+              style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                  color: player.id == roomOwner ? Colors.yellow : Colors.white),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+            if (player.id!.contains('admin-')) ...[
+              const SizedBox(width: 3),
+              SizedBox(
+                width: 15,
+                height: 15,
+                child: Image.asset('assets/images/admin.png'),
+              )
+            ]
+          ],
         )
       ],
     );

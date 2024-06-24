@@ -93,7 +93,8 @@ class _Chat extends State<Chat> {
                                 name: player.name,
                                 avatarIndex: player.avatarIndex,
                               ),
-                              sizeImg: 65),
+                            sizeImg: 65,
+                          ),
                           Text(player.point.toString(),
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
