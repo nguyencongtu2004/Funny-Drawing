@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:draw_and_guess_promax/Screen/master_piece_mode_rank.dart';
 import 'package:draw_and_guess_promax/Widget/button.dart';
 import 'package:draw_and_guess_promax/Widget/loading.dart';
-import 'package:draw_and_guess_promax/Widget/masterpiece_mark_status.dart';
+import 'package:draw_and_guess_promax/Widget/masterpiece_scoring_status.dart';
 import 'package:draw_and_guess_promax/model/player_masterpiece_mode.dart';
 import 'package:draw_and_guess_promax/model/room.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -35,7 +35,6 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _playerInRoomIDRef;
   late DatabaseReference _masterpieceModeDataRef;
-  late DatabaseReference _scoreRef;
   List<int> buttonStates = [1, 2, 3, 4, 5];
   var _selectedPoint = 0;
   late final String _userId;
@@ -66,8 +65,6 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
         database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-    _scoreRef = database.child(
-        '/masterpiece_mode_data/${widget.selectedRoom.roomId}/score/${ref.read(userProvider).id}');
 
     // Cập nhật thời gian còn lại (chỉ chủ phòng mới được cập nhật trên Firebase)
     _startTimer();
@@ -483,8 +480,11 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
               color: Colors.transparent,
               child: Padding(
                   padding: const EdgeInsets.only(left: 15, top: 5),
-                  child: MasterpieceMarkStatus(
+                  child: MasterpieceScoringStatus(
                     timeLeft: _timeLeft,
+                    player: _playersInRoom.firstWhere((element) =>
+                        element.id == pictures[_showingIndex]['Id']),
+                    isMyTurn: _userId == pictures[_showingIndex]['Id'],
                   )),
             ),
           ),
@@ -495,32 +495,46 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
             bottom: 20,
             left: 0,
             right: 0,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    for (final number in buttonStates)
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.2 - 10,
-                        child: Button(
-                          title: '$number',
-                          color: number == _selectedPoint
-                              ? const Color(0xFF00C4A0)
-                              : Colors.grey,
-                          onClick: (ctx) {
-                            setState(() {
-                              _selectedPoint = number;
-                            });
-                          },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10, bottom: 10),
+                  child: Text(
+                    'Bức tranh này xứng đáng nhận được...',
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: Colors.black,
                         ),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        for (final number in buttonStates)
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.2 - 10,
+                            child: Button(
+                              title: '$number',
+                              color: number == _selectedPoint
+                                  ? const Color(0xFF00C4A0)
+                                  : Colors.grey,
+                              onClick: (ctx) {
+                                setState(() {
+                                  _selectedPoint = number;
+                                });
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         // debug only

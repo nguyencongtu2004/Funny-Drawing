@@ -1,5 +1,3 @@
-import 'package:draw_and_guess_promax/model/player_normal_mode.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MasterpieceModeStatus extends StatelessWidget {

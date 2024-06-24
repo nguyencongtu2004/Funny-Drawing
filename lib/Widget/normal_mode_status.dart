@@ -38,12 +38,29 @@ class NormalModeStatus extends StatelessWidget {
                 ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  isMyTurn ? 'Hãy vẽ: $word' : '${player.name} đang vẽ',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: Colors.black),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isMyTurn ? 'Hãy vẽ: $word' : '${player.name} đang vẽ',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge!
+                          .copyWith(color: const Color(0xFF00C4A1)),
+                    ),
+                    Text(
+                      isMyTurn
+                          ? 'Vẽ thật đẹp nhé'
+                          : 'Hãy đoán ${player.name} đang vẽ gì',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall!
+                          .copyWith(color: Colors.black),
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ],
                 ),
               )
             ],

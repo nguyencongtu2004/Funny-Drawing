@@ -50,12 +50,28 @@ class KnockoffModeStatus extends StatelessWidget {
                 ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  text,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge!
-                      .copyWith(color: Colors.black),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      text,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge!
+                          .copyWith(color: const Color(0xFF00C4A1)),
+                    ),
+                    if (isRememberRound && !isFirstRound)
+                      Text(
+                        'Bạn sẽ phải vẽ lại nó đấy',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(color: Colors.black),
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
+                      ),
+                  ],
                 ),
               )
             ],

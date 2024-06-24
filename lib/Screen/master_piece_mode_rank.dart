@@ -35,12 +35,12 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _playerInRoomIDRef;
   late DatabaseReference _masterpieceModeDataRef;
-  late DatabaseReference _scoreRef;
   late final String _userId;
 
   late int _curPlayer;
   late String roomOwner;
   List<Map<String, dynamic>> picturesAndScores = [];
+  var _wordToDraw = 'Gì vậy';
 
   final pageController = PageController(
     initialPage: 0,
@@ -61,8 +61,6 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
         database.child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
     _playerInRoomIDRef = database.child(
         '/players_in_room/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-    _scoreRef = database.child(
-        '/masterpiece_mode_data/${widget.selectedRoom.roomId}/score/${ref.read(userProvider).id}');
     roomOwner = widget.selectedRoom.roomOwner!;
     // Lắng nghe sự kiện thoát phòng
     _roomRef.onValue.listen((event) async {
@@ -109,6 +107,8 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
       if (data['playAgain'] == true) {
         _playAgain();
       }
+
+      _wordToDraw = data['wordToDraw'] as String;
     });
 
     _getPlayerInRoom();
@@ -399,9 +399,26 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                   colors: [Color(0xFF00C4A0), Color(0xFFD05700)],
                 ),
               )),
+          // Chủ đề
+          Positioned(
+            top: 100,
+            height: 50,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'Chủ đề: $_wordToDraw',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge!
+                    .copyWith(color: Colors.black),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
           // Trang chính
           Positioned(
-              top: 100,
+              top: 150,
               left: 0,
               right: 0,
               bottom: 100,
@@ -439,29 +456,77 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                                       color: Colors.white,
                                       width: widthOfPicture,
                                       height: heightOfPicture,
-                                      child: picAndScore['Offset']
-                                              .toString()
-                                              .isNotEmpty
-                                          ? CustomPaint(
-                                              painter: PaintCanvas(
-                                                points: scaleOffset(
-                                                    decodeOffsetList(
-                                                        picAndScore['Offset']),
-                                                    scale: scale),
-                                                paints: scalePaint(
-                                                    decodePaintList(
-                                                        picAndScore['Color']),
-                                                    scale: scale),
+                                      child: Stack(children: [
+                                        picAndScore['Offset']
+                                                .toString()
+                                                .isNotEmpty
+                                            ? CustomPaint(
+                                                painter: PaintCanvas(
+                                                  points: scaleOffset(
+                                                      decodeOffsetList(
+                                                          picAndScore[
+                                                              'Offset']),
+                                                      scale: scale),
+                                                  paints: scalePaint(
+                                                      decodePaintList(
+                                                          picAndScore['Color']),
+                                                      scale: scale),
+                                                ),
+                                                size: Size(widthOfPicture,
+                                                    heightOfPicture),
+                                              )
+                                            : Container(
+                                                width: widthOfPicture,
+                                                height: heightOfPicture,
+                                                color: Colors
+                                                    .transparent, // Placeholder while loading
                                               ),
-                                              size: Size(widthOfPicture,
-                                                  heightOfPicture),
-                                            )
-                                          : Container(
+                                        Positioned(
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            child: Container(
                                               width: widthOfPicture,
-                                              height: heightOfPicture,
-                                              color: Colors
-                                                  .transparent, // Placeholder while loading
-                                            ),
+                                              height: 50,
+                                              color: picAndScore['Rank'] == 1
+                                                  ? const Color(0xFFB78900)
+                                                      .withOpacity(0.2)
+                                                  : picAndScore['Rank'] == 2
+                                                      ? const Color(0xFF349AAC)
+                                                          .withOpacity(0.2)
+                                                      : picAndScore['Rank'] == 3
+                                                          ? const Color(
+                                                                  0xFF67CD34)
+                                                              .withOpacity(0.2)
+                                                          : Colors.black
+                                                              .withOpacity(0.2),
+                                              child: Center(
+                                                child: Text(
+                                                  'Hạng ${picAndScore['Rank']}',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge!
+                                                      .copyWith(
+                                                          color: picAndScore['Rank'] ==
+                                                                  1
+                                                              ? const Color(
+                                                                  0xFFB78900)
+                                                              : picAndScore[
+                                                                          'Rank'] ==
+                                                                      2
+                                                                  ? const Color(
+                                                                      0xFF349AAC)
+                                                                  : picAndScore[
+                                                                              'Rank'] ==
+                                                                          3
+                                                                      ? const Color(
+                                                                          0xFF67CD34)
+                                                                      : Colors
+                                                                          .white),
+                                                ),
+                                              ),
+                                            )),
+                                      ]),
                                     ),
                                   ),
                                   // Phần dưới với avatar, tên và điểm
@@ -567,18 +632,6 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                                                     picAndScore['Rank'] - 1),
                                               ),
                                             ],
-                                          ),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: Text(
-                                              'Hạng ${picAndScore['Rank']}',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleLarge!
-                                                  .copyWith(
-                                                      color: Colors.black),
-                                              textAlign: TextAlign.center,
-                                            ),
                                           ),
                                         ],
                                       ),

@@ -18,12 +18,23 @@ class PickAvatarDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Center(
-            child: Text(
-              'Chọn Avatar',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge!
-                  .copyWith(color: Colors.black),
+            child: Column(
+              children: [
+                Text(
+                  'Chọn Avatar',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge!
+                      .copyWith(color: Colors.black),
+                ),
+                Text(
+                  'Chọn nhân vật mà bạn thích',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall!
+                      .copyWith(color: Colors.black),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16.0),
