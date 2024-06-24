@@ -128,7 +128,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
 
   void updateTimePerRound() {
     switch (selecting.value) {
-      case 'Thường':
+      case 'Vẽ và đoán':
         timePerRound = 60;
         break;
       case 'Tam sao thất bản':
@@ -222,7 +222,7 @@ class _CreateRoomState extends ConsumerState<CreateRoom> {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Column(
                     children: [
-                      for (final mode in availabePlayMode)
+                      for (final mode in availablePlayMode)
                         Hero(
                           tag: mode.mode,
                           child: Padding(

@@ -52,7 +52,7 @@ class _RoomToPlayState extends State<RoomToPlay> {
                       width: 110,
                       child: Padding(
                         padding: const EdgeInsets.all(8),
-                        child: Image.asset(widget.mode == 'Thường'
+                        child: Image.asset(widget.mode == 'Vẽ và đoán'
                             ? 'assets/images/thuong_mode.png'
                             : widget.mode == 'Tam sao thất bản'
                                 ? 'assets/images/tam_sao_that_ban_mode.png'

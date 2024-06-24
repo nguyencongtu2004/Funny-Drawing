@@ -508,14 +508,15 @@ class _NormalModeRoomState extends ConsumerState<NormalModeRoom> {
                         ),
                         Expanded(
                           child: Text(
-                            'Thường',
-                            style: Theme
+                                  'Vẽ và đoán',
+                                  style: Theme
                                 .of(context)
                                 .textTheme
                                 .titleLarge!
                                 .copyWith(color: Colors.black),
                             overflow: TextOverflow.ellipsis,
-                          ),
+                                  textAlign: TextAlign.center,
+                                ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(10),

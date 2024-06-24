@@ -53,7 +53,6 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   final int _debounceDuration = 300; // duration in milliseconds
 
   late StreamSubscription _roomSubscription;
-  late StreamSubscription _playersInRoomSubscription;
   late StreamSubscription _masterpieceModeDataSubscription;
 
   @override
@@ -340,7 +339,6 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
   void dispose() {
     _timer?.cancel(); // Hủy Timer khi widget bị dispose
     _roomSubscription.cancel();
-    _playersInRoomSubscription.cancel();
     _masterpieceModeDataSubscription.cancel();
     super.dispose();
   }
@@ -444,6 +442,15 @@ class _MasterPieceScoringState extends ConsumerState<MasterPieceScoring> {
                           .titleLarge!
                           .copyWith(color: Colors.black),
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: SizedBox(
+                      height: 45,
+                      width: 45,
+                      child: null,
                     ),
                   ),
                 ],

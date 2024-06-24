@@ -170,6 +170,16 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
       if (picturesAndScores.isNotEmpty) {
         picturesAndScores
             .sort((a, b) => b['TotalScore'].compareTo(a['TotalScore']));
+
+        int rank = 1;
+        for (int i = 0; i < picturesAndScores.length; i++) {
+          if (i > 0 &&
+              picturesAndScores[i]['TotalScore'] !=
+                  picturesAndScores[i - 1]['TotalScore']) {
+            rank = i + 1;
+          }
+          picturesAndScores[i]['Rank'] = rank;
+        }
       }
     });
 
@@ -318,6 +328,40 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
     final double heightOfPicture = MediaQuery.of(context).size.height * 0.5;
     const double scale = 0.6;
 
+    Widget buildMedal(int index) {
+      switch (index) {
+        case 0:
+          return const Padding(
+            padding: EdgeInsets.only(right: 5),
+            child: Image(
+              image: AssetImage('assets/images/gold-medal.png'),
+              width: 30,
+              height: 30,
+            ),
+          );
+        case 1:
+          return const Padding(
+            padding: EdgeInsets.only(right: 5),
+            child: Image(
+              image: AssetImage('assets/images/silver-medal.png'),
+              width: 30,
+              height: 30,
+            ),
+          );
+        case 2:
+          return const Padding(
+            padding: EdgeInsets.only(right: 5),
+            child: Image(
+              image: AssetImage('assets/images/bronze-medal.png'),
+              width: 30,
+              height: 30,
+            ),
+          );
+        default:
+          return const SizedBox();
+      }
+    }
+
     if (picturesAndScores.isEmpty) {
       return const Loading();
     }
@@ -388,14 +432,6 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  // Hạng
-                                  Text(
-                                    'Hạng ${picturesAndScores.indexOf(picAndScore) + 1}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge!
-                                        .copyWith(color: Colors.black),
-                                  ),
                                   // Ảnh lớn ở giữa
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(15),
@@ -433,74 +469,105 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                                     padding: const EdgeInsets.only(right: 15),
                                     child: SizedBox(
                                       width: widthOfPicture + 50,
-                                      height: 90,
-                                      child: Stack(
-                                        alignment: Alignment.center,
+                                      height: 130,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.max,
                                         children: [
-                                          Container(
-                                              margin: const EdgeInsets.only(
-                                                  left: 30),
-                                              decoration: const BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.all(
-                                                  Radius.circular(45),
-                                                ),
-                                              ),
-                                              child: const SizedBox(
-                                                //height: double.infinity,
-                                                height: 50,
-                                                width: double.infinity,
-                                              )),
-                                          Row(
+                                          Stack(
+                                            alignment: Alignment.center,
                                             children: [
-                                              // Avatar
                                               Container(
-                                                width: 70,
-                                                height: 70,
-                                                margin:
-                                                    const EdgeInsets.all(10),
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  image: DecorationImage(
-                                                    image: AssetImage(
-                                                        'assets/images/avatars/avatar${picAndScore['AvatarIndex']}.png'),
-                                                    fit: BoxFit.fill,
+                                                  margin: const EdgeInsets.only(
+                                                      left: 30),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.all(
+                                                      Radius.circular(45),
+                                                    ),
                                                   ),
-                                                ),
+                                                  child: const SizedBox(
+                                                    //height: double.infinity,
+                                                    height: 50,
+                                                    width: double.infinity,
+                                                  )),
+                                              Row(
+                                                children: [
+                                                  // Avatar
+                                                  Container(
+                                                    width: 70,
+                                                    height: 70,
+                                                    margin:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      image: DecorationImage(
+                                                        image: AssetImage(
+                                                            'assets/images/avatars/avatar${picAndScore['AvatarIndex']}.png'),
+                                                        fit: BoxFit.fill,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  // Tên người chơi
+                                                  Expanded(
+                                                    child: Text(
+                                                      picAndScore['Name']
+                                                          as String,
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleLarge!
+                                                          .copyWith(
+                                                              color:
+                                                                  Colors.black),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  // Điểm
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            right: 20),
+                                                    child: Text(
+                                                      '${picAndScore['TotalScore']}',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleLarge!
+                                                          .copyWith(
+                                                              color:
+                                                                  Colors.black),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              // Tên người chơi
-                                              Expanded(
-                                                child: Text(
-                                                  picAndScore['Name'] as String,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleLarge!
-                                                      .copyWith(
-                                                          color: Colors.black),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              // Điểm
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    right: 20),
-                                                child: Text(
-                                                  '${picAndScore['TotalScore']}',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleLarge!
-                                                      .copyWith(
-                                                          color: Colors.black),
-                                                ),
+                                              // Đeo huy chương
+                                              Positioned(
+                                                bottom: 0,
+                                                left: 30,
+                                                child: buildMedal(
+                                                    picAndScore['Rank'] - 1),
                                               ),
                                             ],
-                                          )
+                                          ),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: Text(
+                                              'Hạng ${picAndScore['Rank']}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleLarge!
+                                                  .copyWith(
+                                                      color: Colors.black),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
+                                  //const SizedBox(height: 10),
                                 ],
                               ),
                             ),
@@ -537,7 +604,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                   },
                   title: 'Chơi lại',
                   imageAsset: 'assets/images/play-again.png',
-                  //width: 150,
+                  borderRadius: 25,
                 ),
               ),
             )
@@ -568,7 +635,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
                   flex: 1,
                   child: Center(
                     child: Text(
-                      'Tuyệt tác',
+                      'Tuyệt tác của mọi người',
                       style: Theme.of(context)
                           .textTheme
                           .titleLarge!
@@ -589,6 +656,7 @@ class _MasterPieceModeRankState extends ConsumerState<MasterPieceModeRank> {
   @override
   void dispose() {
     pageController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 

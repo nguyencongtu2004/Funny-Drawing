@@ -15,7 +15,7 @@ class _HowToPlayState extends State<HowToPlay>
     Navigator.pop(context);
   }
 
-  final _isExpanded = availabePlayMode.map((e) => false).toList();
+  final _isExpanded = availablePlayMode.map((e) => false).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,7 @@ class _HowToPlayState extends State<HowToPlay>
                 child: Column(
                   children: [
                     // Chế độ 1
-                    for (var i = 0; i < availabePlayMode.length; i++)
+                    for (var i = 0; i < availablePlayMode.length; i++)
                       GestureDetector(
                         onTap: () {
                           setState(() {
@@ -79,9 +79,9 @@ class _HowToPlayState extends State<HowToPlay>
                           alignment: Alignment.topCenter,
                           child: Center(
                             child: PlayModeDetail(
-                              mode: availabePlayMode[i].mode,
-                              description: availabePlayMode[i].description,
-                              howToPlay: availabePlayMode[i].howToPlay,
+                              mode: availablePlayMode[i].mode,
+                              description: availablePlayMode[i].description,
+                              howToPlay: availablePlayMode[i].howToPlay,
                               isVisible: _isExpanded[i],
                             ),
                           ),

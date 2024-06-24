@@ -330,6 +330,15 @@ class _MasterPieceModeState extends ConsumerState<MasterPieceMode> {
                                     .titleLarge!
                                     .copyWith(color: Colors.black),
                                 overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.all(10),
+                              child: SizedBox(
+                                height: 45,
+                                width: 45,
+                                child: null,
                               ),
                             ),
                           ],

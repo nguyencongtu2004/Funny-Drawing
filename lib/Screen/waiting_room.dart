@@ -41,12 +41,14 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   var currentPlayers = <User>[];
   var isWaitingStart = false;
   var isWaitingInvite = false;
+  late bool _isGuest;
   @override
   void initState() {
     super.initState();
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
+    _isGuest = widget.isGuest;
 
     _roomRef.onValue.listen((event) async {
       // Room has been deleted
@@ -66,6 +68,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
         if (data['isPlayed'] == true) {
           startMode(widget.selectedRoom.mode);
         }
+
+        _isGuest = data['roomOwner'] != ref.read(userProvider).id;
       }
     });
 
@@ -153,8 +157,8 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
   }
 
   Future<void> startMode(String mode) async {
-    // Khởi tạo trạng thái của phòng chế độ Thường
-    if (mode == 'Thường') {
+    // Khởi tạo trạng thái của phòng chế độ Vẽ và đoán
+    if (mode == 'Vẽ và đoán') {
       if (widget.selectedRoom.roomOwner == ref.read(userProvider).id) {
         var normalModeDataRef =
             database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
@@ -262,7 +266,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
 
         if (context.mounted && isQuit) {
           _playOutRoom(ref);
-          if (widget.isGuest) {
+          if (_isGuest) {
             Navigator.of(context).pop();
           } else {
             Navigator.of(context).pushAndRemoveUntil(
@@ -306,7 +310,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                               }
 
                               await _playOutRoom(ref);
-                              if (widget.isGuest) {
+                              if (_isGuest) {
                                 Navigator.of(context).pop();
                               } else {
                                 Navigator.of(context).pushAndRemoveUntil(
@@ -369,14 +373,14 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Hero(
-                      tag: widget.isGuest
+                      tag: _isGuest
                           ? widget.selectedRoom.roomId
                           : widget.selectedRoom.mode,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: RoomMode(
                           mode: widget.selectedRoom.mode,
-                          description: availabePlayMode
+                          description: availablePlayMode
                               .firstWhere((mode) =>
                                   mode.mode == widget.selectedRoom.mode)
                               .description,
@@ -405,7 +409,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3, // Số cột trong lưới
-                        crossAxisSpacing: 20, // Khoảng cách giữa các cột
+                        crossAxisSpacing: 0, // Khoảng cách giữa các cột
                         mainAxisSpacing: 20, // Khoảng cách giữa các hàng
                       ),
                       itemCount: currentPlayers.length,
@@ -426,7 +430,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
             ),
             // Nút
             // Khách tham gia phòng
-            if (widget.isGuest)
+            if (_isGuest)
               Positioned(
                 bottom: 50,
                 left: MediaQuery.of(context).size.width / 2 - (150) / 2,
@@ -494,7 +498,7 @@ class _WaitingRoomState extends ConsumerState<WaitingRoom> {
               left: 0,
               right: 0,
               child: Text(
-                widget.isGuest
+                _isGuest
                     ? 'Chờ chủ phòng bắt đầu...'
                     : currentPlayers.length < 2
                         ? 'Cần thêm 1 người để bắt đầu'

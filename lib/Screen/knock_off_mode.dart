@@ -314,21 +314,24 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
                                 .titleLarge!
                                 .copyWith(color: Colors.black),
                             overflow: TextOverflow.ellipsis,
-                          ),
+                                  textAlign: TextAlign.center,
+                                ),
                         ),
-                        if (_totalTurn! % 2 == 1 && _timeLeft > 0)
-                          Padding(
+                              //if (_totalTurn! % 2 == 1 && _timeLeft > 0)
+                              Padding(
                             padding: const EdgeInsets.all(10),
                             child: SizedBox(
                               height: 45,
                               width: 45,
-                              child: IconButton(
-                                tooltip: 'Hoàn thành vẽ',
+                                  child: _totalTurn! % 2 == 1 && _timeLeft > 0
+                                      ? IconButton(
+                                          tooltip: 'Hoàn thành vẽ',
                                 onPressed: _onCompleteDrawing,
                                 icon: Image.asset('assets/images/done.png'),
                                 iconSize: 45,
-                              ),
-                            ),
+                                        )
+                                      : null,
+                                ),
                           ),
                       ],
                     ),

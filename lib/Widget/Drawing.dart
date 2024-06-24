@@ -28,9 +28,7 @@ class Drawing extends ConsumerStatefulWidget {
 }
 
 class _Drawing extends ConsumerState<Drawing> {
-  late Offset _containerPosition;
   late bool _isSizeMenuVisible;
-  late Offset _containerPositionSize;
   late bool _isSelectMenuVisible;
   late Color _paintColor;
   late Color _preColor;
@@ -39,8 +37,8 @@ class _Drawing extends ConsumerState<Drawing> {
   late IconData _selectIcon;
   late DatabaseReference _normalModeDataRef;
   bool? _isMenuBarVisible;
-  final GlobalKey _sizemenu = GlobalKey();
-  final GlobalKey _selectmenu = GlobalKey();
+  final GlobalKey _sizeMenu = GlobalKey();
+  final GlobalKey _selectMenu = GlobalKey();
   final GlobalKey<_PaintBoardState> _paintBoardKey = GlobalKey();
   String chose = "Draw";
 
@@ -48,24 +46,22 @@ class _Drawing extends ConsumerState<Drawing> {
   void initState() {
     super.initState();
     _isSelectMenuVisible = false;
-    _containerPosition = Offset.zero;
     _paintColor = Colors.black;
     _preColor = Colors.black;
     _paintSize = 5;
     _selectIcon = Icons.draw;
     _isSizeMenuVisible = false;
-    _containerPositionSize = Offset.zero;
     _isErase = false;
 
     _normalModeDataRef =
         database.child('/normal_mode_data/${widget.selectedRoom.roomId}');
-    if (widget.selectedRoom.mode == 'Thường') {
+    if (widget.selectedRoom.mode == 'Vẽ và đoán') {
       _normalModeDataRef.onValue.listen((event) {
         final data = Map<String, dynamic>.from(
           event.snapshot.value as Map<dynamic, dynamic>,
         );
         setState(() {
-          _isMenuBarVisible = (widget.selectedRoom.mode != 'Thường' ||
+          _isMenuBarVisible = (widget.selectedRoom.mode != 'Vẽ và đoán' ||
               data['turn'] == ref.read(userProvider).id);
         });
       });
@@ -80,7 +76,6 @@ class _Drawing extends ConsumerState<Drawing> {
     setState(() {
       _isSelectMenuVisible = !_isSelectMenuVisible;
       if (_isSelectMenuVisible) _isSizeMenuVisible = false;
-      _containerPosition = position;
     });
   }
 
@@ -88,7 +83,6 @@ class _Drawing extends ConsumerState<Drawing> {
     setState(() {
       _isSizeMenuVisible = !_isSizeMenuVisible;
       if (_isSizeMenuVisible) _isSelectMenuVisible = false;
-      _containerPositionSize = position;
     });
   }
 
@@ -197,9 +191,9 @@ class _Drawing extends ConsumerState<Drawing> {
                               7.0), // Bán kính cong của đường viền
                         ),
                         child: IconButton(
-                          key: _selectmenu,
+                          key: _selectMenu,
                           onPressed: () {
-                            RenderBox buttonBox = _selectmenu.currentContext!
+                            RenderBox buttonBox = _selectMenu.currentContext!
                                 .findRenderObject() as RenderBox;
                             Offset buttonPosition =
                                 buttonBox.localToGlobal(Offset.zero);
@@ -223,12 +217,12 @@ class _Drawing extends ConsumerState<Drawing> {
                                 7.0), // Bán kính cong của đường viền
                           ),
                           child: GestureDetector(
-                            key: _selectmenu,
+                            key: _selectMenu,
                             onTap: () {
                               _setColor(
                                   Theme.of(context).scaffoldBackgroundColor);
                               _setSelectIcon(Icons.add);
-                              RenderBox buttonBox = _selectmenu.currentContext!
+                              RenderBox buttonBox = _selectMenu.currentContext!
                                   .findRenderObject() as RenderBox;
                               Offset buttonPosition =
                                   buttonBox.localToGlobal(Offset.zero);
@@ -252,9 +246,9 @@ class _Drawing extends ConsumerState<Drawing> {
                               7.0), // Bán kính cong của đường viền
                         ),
                         child: GestureDetector(
-                          key: _selectmenu,
+                          key: _selectMenu,
                           onTap: () {
-                            RenderBox buttonBox = _selectmenu.currentContext!
+                            RenderBox buttonBox = _selectMenu.currentContext!
                                 .findRenderObject() as RenderBox;
                             Offset buttonPosition =
                                 buttonBox.localToGlobal(Offset.zero);
@@ -280,9 +274,9 @@ class _Drawing extends ConsumerState<Drawing> {
                       ),
                       child: IconButton(
                         padding: const EdgeInsets.all(2),
-                        key: _sizemenu,
+                        key: _sizeMenu,
                         onPressed: () {
-                          RenderBox buttonBox = _sizemenu.currentContext!
+                          RenderBox buttonBox = _sizeMenu.currentContext!
                               .findRenderObject() as RenderBox;
                           Offset buttonPosition =
                               buttonBox.localToGlobal(Offset.zero);
@@ -396,7 +390,7 @@ class _Drawing extends ConsumerState<Drawing> {
         if (_isSizeMenuVisible)
           Positioned(
             left: 10,
-            bottom: widget.selectedRoom.mode == 'Thường' ? 195 : 100,
+            bottom: widget.selectedRoom.mode == 'Vẽ và đoán' ? 195 : 100,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -460,7 +454,7 @@ class _Drawing extends ConsumerState<Drawing> {
           Positioned(
             left: 10,
             right: 10,
-            bottom: widget.selectedRoom.mode == 'Thường' ? 200 : 105,
+            bottom: widget.selectedRoom.mode == 'Vẽ và đoán' ? 200 : 105,
             child: Container(
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
@@ -585,7 +579,6 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
   late DatabaseReference _knockoffModeDataRef;
   late DatabaseReference _masterpieceModeDataRef;
   late DatabaseReference _myDataRef;
-  late DatabaseReference _myAlbumRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late int _countTurn = 1;
@@ -601,7 +594,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     super.initState();
 
     // setup cho chế độ thường
-    if (widget.selectedRoom.mode == 'Thường') {
+    if (widget.selectedRoom.mode == 'Vẽ và đoán') {
       _drawingRef = database
           .child('/normal_mode_data/${widget.selectedRoom.roomId}/draw');
       _normalModeDataRef =
@@ -652,7 +645,6 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           database.child('/players_in_room/${widget.selectedRoom.roomId}');
       _myDataRef = database.child(
           '/knockoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-      _myAlbumRef = _myDataRef.child('/album');
       _knockoffModeDataRef =
           database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
 
@@ -747,7 +739,7 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           await _myDataRef.update({
             'timeLeft': -1,
           });
-          // Bất đồng bộ do đây là biến dùng chung
+
           await _knockoffModeDataRef.update({
             'playerDone': _playerDone + 1,
           });
@@ -766,7 +758,6 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
           database.child('/players_in_room/${widget.selectedRoom.roomId}');
       _myDataRef = database.child(
           '/knockoff_mode_data/${widget.selectedRoom.roomId}/${ref.read(userProvider).id}');
-      _myAlbumRef = _myDataRef.child('/album');
       _masterpieceModeDataRef = database
           .child('/masterpiece_mode_data/${widget.selectedRoom.roomId}');
       _masterpieceModeDataRef.onValue.listen((event) async {
@@ -783,16 +774,6 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
     }
   }
 
-  _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      duration: const Duration(seconds: 10),
-    ));
-  }
-
-
-
   Future<void> showPicture() async {
     // Hết lượt vẽ, xem album
     if (_currentTurn >= _playersInRoom.length * 2) {
@@ -806,53 +787,35 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
       return;
     }
 
-    if (Platform.isIOS) {
-      try {
-        DatabaseReference drawTurn = _knockoffModeDataRef.child(
-            '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
+    try {
+      DatabaseReference drawTurn = _knockoffModeDataRef.child(
+          '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
 
-        DataSnapshot snapshot = await drawTurn.get();
-        print(
-            "KIEMTRA - ID player : ${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}");
-        if (snapshot.exists) {
-          print("KIEMTRA - OK ko nao?");
-          final data = Map<String, dynamic>.from(snapshot.value as Map);
-          print("KIEMTRA - data: ${data}");
-          final album = Map<String, dynamic>.from(data[_playersInRoom[
+      DataSnapshot snapshot = await drawTurn.get();
+      if (snapshot.exists) {
+        final Map<String, dynamic> data;
+        final Map<String, dynamic> album;
+        final Map<String, dynamic> picture;
+        if (Platform.isIOS) {
+          data = Map<String, dynamic>.from(snapshot.value as Map);
+          album = Map<String, dynamic>.from(data[_playersInRoom[
                   (_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length]
               .id]["album"] as Map);
-          print("KIEMTRA - album: ${album}");
-          final picture = Map<String, dynamic>.from(
+          picture = Map<String, dynamic>.from(
               album["Turn ${_currentTurn - 1}"] as Map);
-          print("KIEMTRA - diem de xem: $picture");
-          points = decodeOffsetList(picture["Offset"]!);
-          paints = decodePaintList(picture["Color"]!);
         } else {
-          print('No data available.');
-        }
-      } catch (error) {
-        print('Lỗi: $error');
-      }
-    } else {
-      try {
-        DatabaseReference drawTurn = _knockoffModeDataRef.child(
-            '${_playersInRoom[(_indexCurrent + (_currentTurn ~/ 2)) % _playersInRoom.length].id}');
-
-        DataSnapshot snapshot = await drawTurn.get();
-        if (snapshot.exists) {
-          final data = Map<String, dynamic>.from(snapshot.value as Map);
-          final album = Map<String, dynamic>.from(data["album"] as Map);
-          final picture = Map<String, dynamic>.from(
+          data = Map<String, dynamic>.from(snapshot.value as Map);
+          album = Map<String, dynamic>.from(data["album"] as Map);
+          picture = Map<String, dynamic>.from(
               album["Turn ${_currentTurn - 1}"] as Map);
-
-          points = decodeOffsetList(picture["Offset"]!);
-          paints = decodePaintList(picture["Color"]!);
-        } else {
-          print('No data available.');
         }
-      } catch (error) {
-        print('Lỗi: $error');
+        points = decodeOffsetList(picture["Offset"]!);
+        paints = decodePaintList(picture["Color"]!);
+      } else {
+        print('No data available.');
       }
+    } catch (error) {
+      print('Lỗi: $error');
     }
   }
 
@@ -1015,12 +978,11 @@ class _PaintBoardState extends ConsumerState<PaintBoard> {
 
     bool canEdit() {
       switch (widget.selectedRoom.mode) {
-        case 'Thường':
+        case 'Vẽ và đoán':
           if (userTurn != ref.read(userProvider).id) return false;
           break;
         case 'Tam sao thất bản':
           if (_currentTurn % 2 == 0) return false;
-          //if (_timeLeft == -1) return false;
           break;
         case 'Tuyệt tác':
           break;

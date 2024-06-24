@@ -510,7 +510,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
                                             picturesOfUsers.length
                                         ? 'Tiếp tục'
                                         : 'Chơi lại',
-                                    width: 150,
+                                    imageAsset: 'assets/images/play-again.png',
                                     borderRadius: 25,
                                   ),
                                   const SizedBox(height: 10),

@@ -2,7 +2,7 @@ class Room {
   Room({
     this.roomOwner,
     this.roomId = '',
-    this.mode = 'Thường',
+    this.mode = 'Vẽ và đoán',
     this.curPlayer = 0,
     this.maxPlayer = 5,
     this.isPrivate = false,

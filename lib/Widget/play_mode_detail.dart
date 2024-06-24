@@ -26,7 +26,7 @@ class PlayModeDetail extends StatelessWidget {
                 width: 110,
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Image.asset(mode == 'Thường'
+                  child: Image.asset(mode == 'Vẽ và đoán'
                       ? 'assets/images/thuong_mode.png'
                       : mode == 'Tam sao thất bản'
                           ? 'assets/images/tam_sao_that_ban_mode.png'

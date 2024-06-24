@@ -76,7 +76,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
         filteredRoom = rooms
             .where((room) =>
                 room.curPlayer < room.maxPlayer &&
-                ((room.mode == 'Thường') ||
+                ((room.mode == 'Vẽ và đoán') ||
                     (room.mode == 'Tam sao thất bản' &&
                         room.isPlayed == false) ||
                     (room.mode == 'Tuyệt tác' && room.isPlayed == false)))
@@ -260,7 +260,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                   padding: const EdgeInsets.all(8),
                   children: [
                     Center(child: _buildDropdownMenuItem('Tất cả')),
-                    Center(child: _buildDropdownMenuItem('Thường')),
+                    Center(child: _buildDropdownMenuItem('Vẽ và đoán')),
                     Center(child: _buildDropdownMenuItem('Tam sao thất bản')),
                     Center(child: _buildDropdownMenuItem('Tuyệt tác')),
                   ],
@@ -434,7 +434,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          'Hiện không có phòng nào\nHãy làm mới hoặc thử thêm tạo phòng!',
+                          'Hiện không có phòng nào\nHãy làm mới hoặc tạo phòng!',
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium!

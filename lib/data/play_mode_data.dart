@@ -1,23 +1,22 @@
 import 'package:draw_and_guess_promax/model/play_mode.dart';
 
-final availabePlayMode = [
+final availablePlayMode = [
   PlayMode(
-    mode: 'Thường',
+    mode: 'Vẽ và đoán',
     description: 'Chế độ cơ bản nhất, vẽ và đoán từ.',
     howToPlay:
-        'Mỗi lượt sẽ có một người vẽ, và các người chơi còn lại phải đoán chính xác từ đó.\n\nNgười vẽ không được phép sử dụng các chữ cái, số hoặc hình ảnh thực tế trong bức tranh của mình.\n\nNgười vẽ chỉ được phép sử dụng các công cụ vẽ được cung cấp trong ứng dụng.\n\nNgười nào đoán đúng nhiều nhất và được nhiều người đoán đúng nhất bức tranh mình vẽ nhiều nhất thì được điểm càng cao.',
+        'Mỗi lượt chơi sẽ có một người vẽ, những người chơi còn lại phải đoán chính xác từ mà người vẽ đang cố miêu tả.\n\nNgười vẽ không được phép sử dụng các chữ cái, số trong bức tranh của mình.\n\nNgười nào càng đoán đúng nhiều bức tranh thì điểm nhận được sẽ càng cao.',
   ),
   PlayMode(
     mode: 'Tam sao thất bản',
-    description:
-        'Nghệ thuật biến một câu chuyện đơn giản thành... một vở kịch dài tập.',
+    description: 'Nghệ thuật biến chuyện đơn giản thành... một DRAMA!',
     howToPlay:
-        'Mỗi người sẽ đưa ra một từ hoặc một câu để người khác vẽ.\n\nNgười đầu tiên sẽ phải vẽ hình dựa trên từ đó và những người chơi sau sẽ phải nhìn hình của người trước và vẽ lại.\n\nNgười vẽ chỉ được phép sử dụng các công cụ vẽ được cung cấp trong ứng dụng.\n\nVà mỗi người sẽ được đoán 1 lần nhé! Càng đông càng vui nha!!!',
+        'Ở lượt đầu tiên, bạn được vẽ một bức tranh theo ý thích của mình\n\nSau đó những người còn lại sẽ vẽ bức tranh của họ dựa trên bức vừa rồi của bạn.\n\nVà bùm! Để xem cuối cùng bức tranh tuyệt vời của bạn trở thành gì nhé!',
   ),
   PlayMode(
     mode: 'Tuyệt tác',
-    description: 'Chọn 1 từ và biến nó thành tác phẩm nghệ thuật đỉnh cao.',
+    description: 'Cùng nhau tạo ra những tác phẩm nghệ thuật đỉnh cao.',
     howToPlay:
-        'Mỗi người sẽ đưa ra một từ hoặc một câu để người khác vẽ.\n\nMỗi người chơi sẽ vẽ hình dựa trên từ của người khác và số lần vẽ tương ứng với số người chơi có trong phòng.\n\nNgười vẽ chỉ được phép sử dụng các công cụ vẽ được cung cấp trong ứng dụng.\n\nTranh của bạn sẽ được các người chơi còn lại chấm và bạn cũng chấm các bức tranh còn lại sau khi kết thúc mỗi vòng!\n\nVẽ càng đẹp thì càng điểm cao thôi!',
+        'Hệ thống sẽ chọn ra một từ ngẫu nhiên một từ để mọi người cùng vẽ.\n\nSau khi hết giờ thì mọi người cùng nhau chấm điểm bức tranh của bạn để tìm ra bức tranh xuất sắc nhất.\n\nVẽ càng đẹp, càng điểm cao. Hãy cho họ thấy chất nghệ sĩ trong bạn!',
   ),
 ];
