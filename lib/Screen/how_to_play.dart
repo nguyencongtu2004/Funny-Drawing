@@ -15,9 +15,7 @@ class _HowToPlayState extends State<HowToPlay>
     Navigator.pop(context);
   }
 
-  bool _isExpanded1 = false;
-  bool _isExpanded2 = false;
-  bool _isExpanded3 = false;
+  final _isExpanded = availabePlayMode.map((e) => false).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -68,75 +66,27 @@ class _HowToPlayState extends State<HowToPlay>
                 child: Column(
                   children: [
                     // Chế độ 1
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isExpanded1 = !_isExpanded1;
-                        });
-                      },
-                      child: AnimatedSize(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                        alignment: Alignment.topCenter,
-                        child: Container(
+                    for (var i = 0; i < availabePlayMode.length; i++)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isExpanded[i] = !_isExpanded[i];
+                          });
+                        },
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                          alignment: Alignment.topCenter,
                           child: Center(
                             child: PlayModeDetail(
-                              mode: availabePlayMode[0].mode,
-                              description: availabePlayMode[0].description,
-                              howToPlay: availabePlayMode[0].howToPlay,
-                              isVisible: _isExpanded1,
+                              mode: availabePlayMode[i].mode,
+                              description: availabePlayMode[i].description,
+                              howToPlay: availabePlayMode[i].howToPlay,
+                              isVisible: _isExpanded[i],
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // Chế độ 2
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isExpanded2 = !_isExpanded2;
-                        });
-                      },
-                      child: AnimatedSize(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                        alignment: Alignment.topCenter,
-                        reverseDuration: const Duration(milliseconds: 300),
-                        child: Container(
-                          child: Center(
-                            child: PlayModeDetail(
-                              mode: availabePlayMode[1].mode,
-                              description: availabePlayMode[1].description,
-                              howToPlay: availabePlayMode[1].howToPlay,
-                              isVisible: _isExpanded2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Chế độ 3
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isExpanded3 = !_isExpanded3;
-                        });
-                      },
-                      child: AnimatedSize(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOutCubic,
-                        alignment: Alignment.topCenter,
-                        child: Container(
-                          child: Center(
-                            child: PlayModeDetail(
-                              mode: availabePlayMode[2].mode,
-                              description: availabePlayMode[2].description,
-                              howToPlay: availabePlayMode[2].howToPlay,
-                              isVisible: _isExpanded3,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 200),
                   ],
                 ),

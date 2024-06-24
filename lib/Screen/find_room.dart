@@ -44,38 +44,6 @@ class _FindRoomState extends ConsumerState<FindRoom> {
     database.child('/rooms').onValue.listen((event) {
       _onRefresh();
     });
-    /*database.child('/rooms').onValue.listen((event) {
-      final data = Map<String, dynamic>.from(
-          event.snapshot.value as Map<dynamic, dynamic>);
-
-      rooms = [];
-
-      for (final room in data.entries) {
-        final nextRoom = Room(
-          roomId: room.key,
-          roomOwner: room.value['roomOwner'],
-          mode: room.value['mode'],
-          curPlayer: room.value['curPlayer'],
-          maxPlayer: room.value['maxPlayer'],
-          isPrivate: room.value['isPrivate'],
-          password: room.value['password'],
-          isPlayed: room.value['isPlayed'],
-          timePerRound: room.value['timePerRound'],
-        );
-        rooms.add(nextRoom);
-      }
-
-      setState(() {
-      filteredRoom = rooms
-          .where((room) =>
-              room.curPlayer < room.maxPlayer &&
-              ((room.mode == 'Thường') ||
-                  (room.mode == 'Tam sao thất bản' && room.isPlayed == false) ||
-                  (room.mode == 'Tuyệt tác' && room.isPlayed == false)))
-          .toList();
-      itemsToShow = filteredRoom.length;
-      });
-    });*/
   }
 
   Future<void> _onRefresh() async {
@@ -466,7 +434,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          'Hiện không có phòng nào\nHãy làm mời hoặc thử tạo phòng mới!',
+                          'Hiện không có phòng nào\nHãy làm mới hoặc thử thêm tạo phòng!',
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium!
@@ -587,6 +555,7 @@ class _FindRoomState extends ConsumerState<FindRoom> {
   @override
   void dispose() {
     _timer?.cancel();
+
     super.dispose();
   }
 }

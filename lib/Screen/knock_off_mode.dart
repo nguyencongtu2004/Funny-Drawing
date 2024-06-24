@@ -23,14 +23,15 @@ class KnockoffMode extends ConsumerStatefulWidget {
 }
 
 class _KnockoffModeState extends ConsumerState<KnockoffMode> {
+  late String roomOwner = widget.selectedRoom.roomOwner!;
   late final String _userId;
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
   late DatabaseReference _knockoffModeDataRef;
+  late DatabaseReference _playerInRoomIDRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
-  late DatabaseReference _myAlbumRef;
   var _timeLeft = -1;
   int? _totalTurn;
   late int _curPlayer;
@@ -47,7 +48,6 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     _knockoffModeDataRef =
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
-    _myAlbumRef = _knockoffModeDataRef.child('/$_userId/album');
     _timeLeft = widget.selectedRoom.timePerRound;
 
     // Lắng nghe sự kiện thoát phòng
@@ -68,6 +68,7 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
         event.snapshot.value as Map<dynamic, dynamic>,
       );
       _curPlayer = data['curPlayer'] as int;
+      roomOwner = data['roomOwner']!;
     });
 
     // Lấy thông tin người chơi trong phòng
@@ -159,6 +160,19 @@ class _KnockoffModeState extends ConsumerState<KnockoffMode> {
     }
 
     // Todo: Chuyển chủ phòng nếu chủ phòng thoát
+    // Chuyển chủ phòng nếu chủ phòng thoát
+    await _playerInRoomIDRef.remove();
+    if (roomOwner == userId) {
+      print("Chu phong");
+      for (var cp in _playersInRoom) {
+        if (cp.id != roomOwner) {
+          await _roomRef.update({
+            'roomOwner': cp.id,
+          });
+          break;
+        }
+      }
+    }
   }
 
   late Completer<bool> _completer;

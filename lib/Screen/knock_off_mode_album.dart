@@ -32,11 +32,12 @@ class KnockoffModeAlbum extends ConsumerStatefulWidget {
 }
 
 class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
-  late final _userId;
+  late String roomOwner = widget.selectedRoom.roomOwner!;
+  late final String _userId;
   late DatabaseReference _roomRef;
   late DatabaseReference _playersInRoomRef;
-  late DatabaseReference _chatRef;
   late DatabaseReference _knockoffModeDataRef;
+  late DatabaseReference _playerInRoomIDRef;
   late final List<User> _playersInRoom = [];
   late List<String> _playersInRoomId = [];
   late DatabaseReference _myDataRef;
@@ -53,11 +54,10 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
   @override
   void initState() {
     super.initState();
-    _userId = ref.read(userProvider).id;
+    _userId = ref.read(userProvider).id!;
     _roomRef = database.child('/rooms/${widget.selectedRoom.roomId}');
     _playersInRoomRef =
         database.child('/players_in_room/${widget.selectedRoom.roomId}');
-    _chatRef = database.child('/chat/${widget.selectedRoom.roomId}');
     _knockoffModeDataRef =
         database.child('/knockoff_mode_data/${widget.selectedRoom.roomId}');
     _myDataRef = _knockoffModeDataRef.child('/$_userId');
@@ -80,6 +80,7 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
         event.snapshot.value as Map<dynamic, dynamic>,
       );
       _curPlayer = data['curPlayer'] as int;
+      roomOwner = data['roomOwner']!;
     });
 
     // Lấy thông tin người chơi và tranh trong phòng
@@ -256,6 +257,19 @@ class _KnockoffModeAlbumState extends ConsumerState<KnockoffModeAlbum> {
     }
 
     // Todo: Chuyển chủ phòng nếu chủ phòng thoát
+    // Chuyển chủ phòng nếu chủ phòng thoát
+    await _playerInRoomIDRef.remove();
+    if (roomOwner == userId) {
+      print("Chu phong");
+      for (var cp in _playersInRoom) {
+        if (cp.id != roomOwner) {
+          await _roomRef.update({
+            'roomOwner': cp.id,
+          });
+          break;
+        }
+      }
+    }
   }
 
   late Completer<bool> _completer;
